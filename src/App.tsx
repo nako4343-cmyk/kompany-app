@@ -233,6 +233,13 @@ export default function App() {
     }
   };
 
+  const handleMarkAllNotificationsRead = () => {
+    notifications.forEach(n => {
+      if (!n.isRead) api.markNotificationRead(n.id);
+    });
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
   // All useMemo hooks MUST run unconditionally before any early return
   const todayEvents = useMemo(() => events.filter(e => e.isToday), [events]);
   const savedEvents = useMemo(
@@ -1535,6 +1542,10 @@ export default function App() {
           else setActiveTab(tab);
         }}
         unreadChatCount={notifications.filter(n => !n.isRead && n.type === 'chat_message').length}
+        unreadNotificationCount={notifications.filter(n => !n.isRead).length}
+        notifications={notifications}
+        onNotificationClick={handleNotificationClick}
+        onMarkAllRead={handleMarkAllNotificationsRead}
       />
 
       {/* 4. MODALS & DRAWERS */}
@@ -1639,7 +1650,7 @@ export default function App() {
       {showDemoShareModal && (
         <DemoShareModal
           onClose={() => setShowDemoShareModal(false)}
-          sharedUrl="https://ais-pre-bnkp6fp5swj47aabsnu4xo-113973127590.europe-west2.run.app"
+          sharedUrl="https://nako4343-cmyk.github.io/kompany-app/"
         />
       )}
 

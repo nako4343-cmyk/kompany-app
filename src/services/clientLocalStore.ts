@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v5';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v6';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();

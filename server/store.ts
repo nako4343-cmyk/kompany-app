@@ -1422,6 +1422,22 @@ export class DataStore {
         this.rawEventsSecret.set(item.event.id, item.secret);
       }
     }
+
+    // Ensure rich unread notifications for testing the BottomNav badge
+    const annaNotifs = this.notifications.get(anna.id) || [];
+    if (!annaNotifs.some(n => n.id === 'notif-anna-2')) {
+      annaNotifs.push({
+        id: 'notif-anna-2',
+        userId: anna.id,
+        title: 'Новая заявка на спикизи-бар',
+        message: 'София Лебедева (рейтинг 4.98) хочет присоединиться к «Секретный спикизи-бар за книжным шкафом».',
+        type: 'application_received',
+        relatedEventId: 'ev-21',
+        isRead: false,
+        createdAt: new Date(Date.now() - 1800000).toISOString(),
+      });
+      this.notifications.set(anna.id, annaNotifs.map(n => ({ ...n, isRead: false })));
+    }
   }
 
   // --- PRIVACY SANITIZATION (The Core Security Law) ---

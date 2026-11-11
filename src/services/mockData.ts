@@ -2114,6 +2114,16 @@ export const initialData = {
           "relatedEventId": "ev-1",
           "isRead": false,
           "createdAt": "2026-11-11T07:24:59.958Z"
+        },
+        {
+          "id": "notif-anna-2",
+          "userId": "user-anna",
+          "title": "Новая заявка на спикизи-бар",
+          "message": "София Лебедева (рейтинг 4.98) хочет присоединиться к «Секретный спикизи-бар за книжным шкафом».",
+          "type": "application_received",
+          "relatedEventId": "ev-21",
+          "isRead": false,
+          "createdAt": "2026-11-11T12:26:01.183Z"
         }
       ]
     ],
