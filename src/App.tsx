@@ -130,7 +130,17 @@ export default function App() {
 
       api.aiGetRecommendations().then(recs => setAiRecommendations(recs)).catch(() => {});
     } catch (err) {
-      console.error('Initial load error:', err);
+      console.warn('Initial load handled with fallback:', err);
+      try {
+        const fallbackMe = await api.getMe();
+        if (fallbackMe) setCurrentUser(fallbackMe);
+        const fallbackUsers = await api.getAvailableUsers();
+        if (fallbackUsers) setAvailableUsers(fallbackUsers);
+        const fallbackEvents = await api.getEvents();
+        if (fallbackEvents) setEvents(fallbackEvents);
+      } catch (fallbackErr) {
+        console.error('Fallback load error:', fallbackErr);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -206,13 +216,23 @@ export default function App() {
   if (!currentUser) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4"
+        className="min-h-screen flex flex-col items-center justify-center p-4 gap-4"
         style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
       >
         <div className="flex items-center gap-3 text-sm font-medium">
           <RefreshCw className="w-5 h-5 animate-spin" style={{ color: 'var(--accent-primary)' }} />
           <span>Загрузка Kompany...</span>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            api.getMe().then(u => setCurrentUser(u)).catch(() => {});
+          }}
+          className="px-4 py-2 text-xs font-semibold rounded-xl text-white cursor-pointer transition-all shadow-xs"
+          style={{ backgroundColor: 'var(--accent-primary)' }}
+        >
+          Войти как Анна (Организатор)
+        </button>
       </div>
     );
   }

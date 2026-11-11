@@ -1,0 +1,405 @@
+import { 
+  UserProfile, 
+  EventItem, 
+  EventApplication, 
+  ChatMessage, 
+  UserReview, 
+  SafetyReport, 
+  AppNotification,
+  EventQuestion
+} from '../types/index.ts';
+import { initialData } from './mockData.ts';
+
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v1';
+
+export class ClientLocalStore {
+  users: Map<string, UserProfile> = new Map();
+  events: Map<string, EventItem> = new Map();
+  rawEventsSecret: Map<string, any> = new Map();
+  applications: Map<string, EventApplication> = new Map();
+  chatMessages: Map<string, ChatMessage[]> = new Map();
+  questions: Map<string, EventQuestion[]> = new Map();
+  reviews: Map<string, UserReview[]> = new Map();
+  reports: Map<string, SafetyReport> = new Map();
+  notifications: Map<string, AppNotification[]> = new Map();
+  activeUserId: string = 'user-anna';
+
+  constructor() {
+    this.init();
+  }
+
+  private init() {
+    if (typeof window === 'undefined') {
+      this.seedFromInitial();
+      return;
+    }
+
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.users = new Map(parsed.users || []);
+        this.events = new Map(parsed.events || []);
+        this.rawEventsSecret = new Map(parsed.rawEventsSecret || []);
+        this.applications = new Map(parsed.applications || []);
+        this.chatMessages = new Map(parsed.chatMessages || []);
+        this.questions = new Map(parsed.questions || []);
+        this.reviews = new Map(parsed.reviews || []);
+        this.reports = new Map(parsed.reports || []);
+        this.notifications = new Map(parsed.notifications || []);
+        this.activeUserId = parsed.activeUserId || 'user-anna';
+      } else {
+        this.seedFromInitial();
+        this.save();
+      }
+    } catch (e) {
+      console.warn('Failed to parse client store, reseeding:', e);
+      this.seedFromInitial();
+    }
+  }
+
+  private seedFromInitial() {
+    try {
+      this.users = new Map(initialData.users as any);
+      this.events = new Map(initialData.events as any);
+      this.rawEventsSecret = new Map(initialData.rawEventsSecret as any);
+      this.applications = new Map(initialData.applications as any);
+      this.chatMessages = new Map(initialData.chatMessages as any);
+      this.questions = new Map(initialData.questions as any);
+      this.reviews = new Map(initialData.reviews as any);
+      this.reports = new Map(initialData.reports as any);
+      this.notifications = new Map(initialData.notifications as any);
+      this.activeUserId = (initialData.activeUserId as any) || 'user-anna';
+    } catch (e) {
+      console.error('Seeding error:', e);
+    }
+  }
+
+  save() {
+    if (typeof window === 'undefined') return;
+    try {
+      const payload = {
+        users: Array.from(this.users.entries()),
+        events: Array.from(this.events.entries()),
+        rawEventsSecret: Array.from(this.rawEventsSecret.entries()),
+        applications: Array.from(this.applications.entries()),
+        chatMessages: Array.from(this.chatMessages.entries()),
+        questions: Array.from(this.questions.entries()),
+        reviews: Array.from(this.reviews.entries()),
+        reports: Array.from(this.reports.entries()),
+        notifications: Array.from(this.notifications.entries()),
+        activeUserId: this.activeUserId,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('Failed to save client store to localStorage:', e);
+    }
+  }
+
+  getMe(): UserProfile {
+    return this.users.get(this.activeUserId) || Array.from(this.users.values())[0];
+  }
+
+  getAvailableUsers(): UserProfile[] {
+    return Array.from(this.users.values());
+  }
+
+  switchUser(userId: string): { success: boolean; user: UserProfile } {
+    if (this.users.has(userId)) {
+      this.activeUserId = userId;
+      this.save();
+      return { success: true, user: this.users.get(userId)! };
+    }
+    return { success: false, user: this.getMe() };
+  }
+
+  updateProfile(data: Partial<UserProfile>): UserProfile {
+    const user = this.getMe();
+    if (user) {
+      Object.assign(user, data);
+      this.save();
+      return user;
+    }
+    return user;
+  }
+
+  getUserProfile(id: string): { profile: UserProfile; reviews: UserReview[] } {
+    const profile = this.users.get(id) || this.getMe();
+    const reviews = this.reviews.get(id) || [];
+    return { profile, reviews };
+  }
+
+  getEvents(filters?: { category?: string; city?: string; onlyToday?: boolean; query?: string }): EventItem[] {
+    let list = Array.from(this.events.values());
+    if (filters?.category) {
+      list = list.filter(e => e.category.toLowerCase() === filters.category?.toLowerCase());
+    }
+    if (filters?.city) {
+      list = list.filter(e => e.city.toLowerCase() === filters.city?.toLowerCase());
+    }
+    if (filters?.onlyToday) {
+      list = list.filter(e => e.isToday);
+    }
+    if (filters?.query) {
+      const q = filters.query.toLowerCase();
+      list = list.filter(e => e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  getEvent(id: string): { event: EventItem; myApplication: EventApplication | null } {
+    const event = this.events.get(id);
+    if (!event) throw new Error('Мероприятие не найдено');
+    const myApp = Array.from(this.applications.values()).find(a => a.eventId === id && a.userId === this.activeUserId) || null;
+    return { event, myApplication: myApp };
+  }
+
+  toggleSaveEvent(eventId: string): UserProfile {
+    const user = this.getMe();
+    if (user) {
+      const saved = new Set(user.savedEventIds || []);
+      if (saved.has(eventId)) {
+        saved.delete(eventId);
+      } else {
+        saved.add(eventId);
+      }
+      user.savedEventIds = Array.from(saved);
+      this.save();
+    }
+    return user;
+  }
+
+  getEventQuestions(eventId: string): EventQuestion[] {
+    return this.questions.get(eventId) || [];
+  }
+
+  askEventQuestion(eventId: string, question: string): EventQuestion {
+    const qList = this.questions.get(eventId) || [];
+    const newQ: EventQuestion = {
+      id: `q-${Date.now()}`,
+      eventId,
+      userId: this.activeUserId,
+      userName: this.getMe().name,
+      userAvatar: this.getMe().avatarUrl,
+      question,
+      createdAt: new Date().toISOString(),
+    };
+    qList.unshift(newQ);
+    this.questions.set(eventId, qList);
+    this.save();
+    return newQ;
+  }
+
+  answerEventQuestion(eventId: string, questionId: string, answer: string): EventQuestion {
+    const qList = this.questions.get(eventId) || [];
+    const q = qList.find(x => x.id === questionId);
+    if (q) {
+      q.answer = answer;
+      q.answeredAt = new Date().toISOString();
+      this.save();
+      return q;
+    }
+    throw new Error('Вопрос не найден');
+  }
+
+  applyToEvent(eventId: string, note: string): EventApplication {
+    const ev = this.events.get(eventId);
+    if (!ev) throw new Error('Мероприятие не найдено');
+
+    const app: EventApplication = {
+      id: `app-${Date.now()}`,
+      eventId,
+      userId: this.activeUserId,
+      status: 'pending',
+      note,
+      appliedAt: new Date().toISOString(),
+      user: this.getMe(),
+    };
+    this.applications.set(app.id, app);
+    this.save();
+    return app;
+  }
+
+  getEventApplications(eventId: string): EventApplication[] {
+    return Array.from(this.applications.values()).filter(a => a.eventId === eventId);
+  }
+
+  decideApplication(appId: string, action: 'accept' | 'reject'): EventApplication {
+    const app = this.applications.get(appId);
+    if (!app) throw new Error('Заявка не найдена');
+    app.status = action === 'accept' ? 'accepted' : 'rejected';
+    if (action === 'accept') {
+      const ev = this.events.get(app.eventId);
+      if (ev) {
+        ev.occupiedSpots = Math.min(ev.targetSpots, ev.occupiedSpots + 1);
+        if (!ev.participants) ev.participants = [];
+        ev.participants.push(app.user || this.getMe());
+      }
+    }
+    this.save();
+    return app;
+  }
+
+  getChatMessages(eventId: string): ChatMessage[] {
+    return this.chatMessages.get(eventId) || [];
+  }
+
+  sendChatMessage(eventId: string, text: string): ChatMessage {
+    const messages = this.chatMessages.get(eventId) || [];
+    const msg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      eventId,
+      senderId: this.activeUserId,
+      senderName: this.getMe().name,
+      senderAvatar: this.getMe().avatarUrl,
+      text,
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    messages.push(msg);
+    this.chatMessages.set(eventId, messages);
+    this.save();
+    return msg;
+  }
+
+  markAttendance(eventId: string, participantId: string, status: 'attended' | 'no_show'): UserProfile {
+    const user = this.users.get(participantId);
+    if (user && user.reliability) {
+      if (status === 'attended') {
+        user.reliability.eventsAttended += 1;
+      } else {
+        user.reliability.noShows += 1;
+      }
+      this.save();
+      return user;
+    }
+    return this.getMe();
+  }
+
+  submitReview(data: { eventId: string; targetUserId: string; rating: number; tags: string[]; text: string }): UserReview {
+    const list = this.reviews.get(data.targetUserId) || [];
+    const review: UserReview = {
+      id: `rev-${Date.now()}`,
+      eventId: data.eventId,
+      authorId: this.activeUserId,
+      authorName: this.getMe().name,
+      authorAvatar: this.getMe().avatarUrl,
+      targetUserId: data.targetUserId,
+      rating: data.rating,
+      tags: data.tags,
+      text: data.text,
+      createdAt: 'Только что',
+    };
+    list.unshift(review);
+    this.reviews.set(data.targetUserId, list);
+    this.save();
+    return review;
+  }
+
+  submitReport(data: { targetType: 'user' | 'event'; targetId: string; reason: string; details: string }): SafetyReport {
+    const report: SafetyReport = {
+      id: `rep-${Date.now()}`,
+      targetType: data.targetType,
+      targetId: data.targetId,
+      reporterId: this.activeUserId,
+      reason: data.reason,
+      details: data.details,
+      createdAt: new Date().toISOString(),
+      status: 'pending',
+    };
+    this.reports.set(report.id, report);
+    this.save();
+    return report;
+  }
+
+  blockUser(targetUserId: string): UserProfile {
+    const me = this.getMe();
+    if (!me.blockedUserIds) me.blockedUserIds = [];
+    if (!me.blockedUserIds.includes(targetUserId)) {
+      me.blockedUserIds.push(targetUserId);
+    }
+    this.save();
+    return me;
+  }
+
+  getNotifications(): AppNotification[] {
+    return this.notifications.get(this.activeUserId) || [];
+  }
+
+  markNotificationRead(id: string): { success: boolean } {
+    const list = this.notifications.get(this.activeUserId) || [];
+    const notif = list.find(n => n.id === id);
+    if (notif) notif.isRead = true;
+    this.save();
+    return { success: true };
+  }
+
+  createEvent(data: any): EventItem {
+    const newEvent: EventItem = {
+      id: `ev-${Date.now()}`,
+      title: data.title || 'Новая встреча',
+      category: data.category || 'Прогулка',
+      description: data.description || '',
+      date: data.date || 'Сегодня',
+      time: data.time || '19:00',
+      approximateLocation: data.approximateLocation || 'Центр города',
+      distanceKm: 1.2,
+      occupiedSpots: 1,
+      targetSpots: data.targetSpots || 4,
+      costType: data.costType || 'split',
+      estimatedBudget: data.estimatedBudget || 'По чеку',
+      vibe: data.vibe || 'Дружеская',
+      organizerId: this.activeUserId,
+      organizerName: this.getMe().name,
+      organizerAvatar: this.getMe().avatarUrl,
+      organizerReliability: this.getMe().reliability?.score || 4.9,
+      coverImageUrl: data.coverImageUrl || './assets/images/hero_community_event_1794332913246.jpg',
+      tags: data.tags || ['Общение', 'Уют'],
+      isToday: true,
+      hasPreApprovalQuestions: false,
+      safetyStatus: 'verified',
+    };
+    this.events.set(newEvent.id, newEvent);
+    this.save();
+    return newEvent;
+  }
+
+  cancelEvent(id: string, _reason?: string): EventItem {
+    const ev = this.events.get(id);
+    if (ev) {
+      ev.isCancelled = true;
+      this.save();
+      return ev;
+    }
+    throw new Error('Мероприятие не найдено');
+  }
+
+  aiDescribeEvent(params: any) {
+    return {
+      description: `Приглашаю собраться душевной компанией на "${params.title}". Пообщаемся, приятно проведем время и найдем общие темы для беседы!`,
+      suggestedAgenda: [
+        '19:00 — Сбор и знакомство участников',
+        '19:30 — Основная программа и обсуждение',
+        '21:00 — Свободное общение и обмен контактами'
+      ],
+      suggestedIcebreaker: 'Расскажите о своем самом запоминающемся событии за этот год!',
+      safetyTip: 'Точный адрес встречи откроется только одобренным участникам за 2 часа до начала.',
+    };
+  }
+
+  aiGetRecommendations() {
+    return [
+      { eventId: 'ev-1', matchReason: 'Подходит по вашим интересам к ресторанам и душевным встречам', matchScore: 94 },
+      { eventId: 'ev-2', matchReason: 'Любите настолки? В этой компании уже есть участники со схожим профилем', matchScore: 89 },
+    ];
+  }
+
+  getAdminOverview() {
+    return {
+      eventsCount: this.events.size,
+      usersCount: this.users.size,
+      reportsCount: this.reports.size,
+    };
+  }
+}
+
+export const clientLocalStore = new ClientLocalStore();

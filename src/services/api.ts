@@ -8,6 +8,16 @@ import {
   AppNotification,
   EventQuestion
 } from '../types/index.ts';
+import { clientLocalStore } from './clientLocalStore.ts';
+
+// Check if app is hosted statically without a live Express server (e.g. GitHub Pages)
+const isStaticHost = typeof window !== 'undefined' && (
+  window.location.hostname.includes('github.io') ||
+  window.location.hostname.includes('netlify.app') ||
+  window.location.hostname.includes('surge.sh') ||
+  window.location.hostname.includes('vercel.app') ||
+  window.location.protocol === 'file:'
+);
 
 class ApiService {
   private currentUserId: string = 'user-anna';
@@ -15,6 +25,7 @@ class ApiService {
   setUserId(id: string) {
     this.currentUserId = id;
     localStorage.setItem('kompany_user_id', id);
+    clientLocalStore.activeUserId = id;
   }
 
   getUserId(): string {
@@ -26,23 +37,132 @@ class ApiService {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const headers = new Headers(options.headers || {});
-    headers.set('x-user-id', this.getUserId());
-    if (!headers.has('Content-Type') && options.body && typeof options.body === 'string') {
-      headers.set('Content-Type', 'application/json');
+    if (isStaticHost) {
+      return this.dispatchStatic(endpoint, options) as Promise<T>;
     }
 
-    const res = await fetch(endpoint, {
-      ...options,
-      headers,
-    });
+    try {
+      const headers = new Headers(options.headers || {});
+      headers.set('x-user-id', this.getUserId());
+      if (!headers.has('Content-Type') && options.body && typeof options.body === 'string') {
+        headers.set('Content-Type', 'application/json');
+      }
 
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error || `Ошибка сервера: ${res.status}`);
+      const res = await fetch(endpoint, {
+        ...options,
+        headers,
+      });
+
+      if (!res.ok) {
+        // If server returned 404 on API endpoint, fall back to local store
+        if (res.status === 404 || res.status === 502) {
+          return this.dispatchStatic(endpoint, options) as Promise<T>;
+        }
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Ошибка сервера: ${res.status}`);
+      }
+
+      return res.json();
+    } catch (err) {
+      // In case of any network failure (CORS/offline), use local store fallback
+      console.warn(`API call ${endpoint} failed, using local store fallback:`, err);
+      return this.dispatchStatic(endpoint, options) as Promise<T>;
+    }
+  }
+
+  private async dispatchStatic(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const url = new URL(endpoint, 'http://localhost');
+    const path = url.pathname;
+    const method = (options.method || 'GET').toUpperCase();
+    const body = options.body ? JSON.parse(options.body as string) : {};
+
+    // 1. Auth & Users
+    if (path === '/api/auth/me') return clientLocalStore.getMe();
+    if (path === '/api/auth/available-users') return clientLocalStore.getAvailableUsers();
+    if (path === '/api/auth/switch-user') return clientLocalStore.switchUser(body.userId);
+    if (path === '/api/auth/update-profile') return clientLocalStore.updateProfile(body);
+    if (path.startsWith('/api/users/')) {
+      const id = path.replace('/api/users/', '');
+      return clientLocalStore.getUserProfile(id);
     }
 
-    return res.json();
+    // 2. Events
+    if (path === '/api/events') {
+      if (method === 'POST') return clientLocalStore.createEvent(body);
+      const category = url.searchParams.get('category') || undefined;
+      const city = url.searchParams.get('city') || undefined;
+      const onlyToday = url.searchParams.get('onlyToday') === 'true';
+      const query = url.searchParams.get('q') || undefined;
+      return clientLocalStore.getEvents({ category, city, onlyToday, query });
+    }
+    if (path.endsWith('/toggle-save')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.toggleSaveEvent(eventId);
+    }
+    if (path.endsWith('/cancel')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.cancelEvent(eventId, body.reason);
+    }
+    if (path.endsWith('/questions')) {
+      const eventId = path.split('/')[3];
+      if (method === 'POST') return clientLocalStore.askEventQuestion(eventId, body.question);
+      return clientLocalStore.getEventQuestions(eventId);
+    }
+    if (path.includes('/questions/') && path.endsWith('/answer')) {
+      const parts = path.split('/');
+      const eventId = parts[3];
+      const qId = parts[5];
+      return clientLocalStore.answerEventQuestion(eventId, qId, body.answer);
+    }
+    if (path.endsWith('/apply')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.applyToEvent(eventId, body.note);
+    }
+    if (path.endsWith('/applications')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.getEventApplications(eventId);
+    }
+    if (path.startsWith('/api/applications/') && path.endsWith('/decision')) {
+      const appId = path.split('/')[3];
+      return clientLocalStore.decideApplication(appId, body.action);
+    }
+    if (path.endsWith('/chat')) {
+      const eventId = path.split('/')[3];
+      if (method === 'POST') return clientLocalStore.sendChatMessage(eventId, body.text);
+      return clientLocalStore.getChatMessages(eventId);
+    }
+    if (path.endsWith('/attendance')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.markAttendance(eventId, body.participantId, body.status);
+    }
+    if (path.startsWith('/api/events/')) {
+      const id = path.replace('/api/events/', '');
+      return clientLocalStore.getEvent(id);
+    }
+
+    // 3. Reviews & Reports
+    if (path === '/api/reviews') return clientLocalStore.submitReview(body);
+    if (path === '/api/reports') return clientLocalStore.submitReport(body);
+    if (path === '/api/blocks') return clientLocalStore.blockUser(body.targetUserId);
+
+    // 4. Notifications
+    if (path === '/api/notifications') return clientLocalStore.getNotifications();
+    if (path.startsWith('/api/notifications/') && path.endsWith('/read')) {
+      const id = path.split('/')[3];
+      return clientLocalStore.markNotificationRead(id);
+    }
+
+    // 5. AI Helpers
+    if (path === '/api/ai/describe') return clientLocalStore.aiDescribeEvent(body);
+    if (path === '/api/ai/recommendations') return clientLocalStore.aiGetRecommendations();
+
+    // 6. Admin
+    if (path === '/api/admin/overview') return clientLocalStore.getAdminOverview();
+    if (path.includes('/admin/reports/') && path.endsWith('/action')) {
+      return { success: true };
+    }
+
+    return {};
   }
 
   // Auth & User
