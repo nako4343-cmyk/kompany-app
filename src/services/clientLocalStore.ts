@@ -6,11 +6,13 @@ import {
   UserReview, 
   SafetyReport, 
   AppNotification,
-  EventQuestion
+  EventQuestion,
+  EventCategory,
+  EventBudgetTier
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v1';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v2';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -178,9 +180,9 @@ export class ClientLocalStore {
     const newQ: EventQuestion = {
       id: `q-${Date.now()}`,
       eventId,
-      userId: this.activeUserId,
-      userName: this.getMe().name,
-      userAvatar: this.getMe().avatarUrl,
+      askerId: this.activeUserId,
+      askerName: this.getMe().name,
+      askerAvatar: this.getMe().avatarUrl,
       question,
       createdAt: new Date().toISOString(),
     };
@@ -206,14 +208,27 @@ export class ClientLocalStore {
     const ev = this.events.get(eventId);
     if (!ev) throw new Error('Мероприятие не найдено');
 
+    const me = this.getMe();
     const app: EventApplication = {
       id: `app-${Date.now()}`,
       eventId,
+      eventTitle: ev.title,
       userId: this.activeUserId,
       status: 'pending',
       note,
-      appliedAt: new Date().toISOString(),
-      user: this.getMe(),
+      createdAt: new Date().toISOString(),
+      user: {
+        id: me.id,
+        name: me.name,
+        age: me.age,
+        avatarUrl: me.avatarUrl,
+        city: me.city,
+        bio: me.bio,
+        interests: me.interests,
+        reliability: me.reliability,
+        isPhoneVerified: me.isPhoneVerified,
+        isEmailVerified: me.isEmailVerified,
+      },
     };
     this.applications.set(app.id, app);
     this.save();
@@ -231,9 +246,17 @@ export class ClientLocalStore {
     if (action === 'accept') {
       const ev = this.events.get(app.eventId);
       if (ev) {
-        ev.occupiedSpots = Math.min(ev.targetSpots, ev.occupiedSpots + 1);
-        if (!ev.participants) ev.participants = [];
-        ev.participants.push(app.user || this.getMe());
+        ev.occupiedSpots = Math.min(ev.totalSpots, ev.occupiedSpots + 1);
+        if (!ev.approvedParticipants) ev.approvedParticipants = [];
+        ev.approvedParticipants.push({
+          id: app.user.id,
+          name: app.user.name,
+          age: app.user.age,
+          avatarUrl: app.user.avatarUrl,
+          reliability: app.user.reliability,
+        });
+        if (!ev.approvedParticipantIds) ev.approvedParticipantIds = [];
+        ev.approvedParticipantIds.push(app.user.id);
       }
     }
     this.save();
@@ -253,7 +276,7 @@ export class ClientLocalStore {
       senderName: this.getMe().name,
       senderAvatar: this.getMe().avatarUrl,
       text,
-      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     messages.push(msg);
     this.chatMessages.set(eventId, messages);
@@ -277,9 +300,11 @@ export class ClientLocalStore {
 
   submitReview(data: { eventId: string; targetUserId: string; rating: number; tags: string[]; text: string }): UserReview {
     const list = this.reviews.get(data.targetUserId) || [];
+    const ev = this.events.get(data.eventId);
     const review: UserReview = {
       id: `rev-${Date.now()}`,
       eventId: data.eventId,
+      eventTitle: ev?.title || 'Встреча в компании',
       authorId: this.activeUserId,
       authorName: this.getMe().name,
       authorAvatar: this.getMe().avatarUrl,
@@ -296,12 +321,18 @@ export class ClientLocalStore {
   }
 
   submitReport(data: { targetType: 'user' | 'event'; targetId: string; reason: string; details: string }): SafetyReport {
+    const validReason = (['scam', 'harassment', 'illegal', 'commercial_spam', 'discrimination', 'other'].includes(data.reason) 
+      ? data.reason 
+      : 'other') as SafetyReport['reason'];
+
     const report: SafetyReport = {
       id: `rep-${Date.now()}`,
       targetType: data.targetType,
       targetId: data.targetId,
+      targetTitle: data.targetType === 'event' ? (this.events.get(data.targetId)?.title || 'Событие') : 'Пользователь',
       reporterId: this.activeUserId,
-      reason: data.reason,
+      reporterName: this.getMe().name,
+      reason: validReason,
       details: data.details,
       createdAt: new Date().toISOString(),
       status: 'pending',
@@ -334,39 +365,48 @@ export class ClientLocalStore {
   }
 
   createEvent(data: any): EventItem {
+    const me = this.getMe();
     const newEvent: EventItem = {
       id: `ev-${Date.now()}`,
       title: data.title || 'Новая встреча',
-      category: data.category || 'Прогулка',
+      category: (data.category || 'Прогулка') as EventCategory,
       description: data.description || '',
       date: data.date || 'Сегодня',
       time: data.time || '19:00',
-      approximateLocation: data.approximateLocation || 'Центр города',
+      approximateArea: data.approximateArea || 'Центр города, ~1.5 км от вас',
       distanceKm: 1.2,
       occupiedSpots: 1,
-      targetSpots: data.targetSpots || 4,
-      costType: data.costType || 'split',
-      estimatedBudget: data.estimatedBudget || 'По чеку',
-      vibe: data.vibe || 'Дружеская',
+      totalSpots: data.totalSpots || 4,
+      budget: (data.budget || '1 000–3 000 ₽') as EventBudgetTier,
+      city: data.city || 'Москва',
       organizerId: this.activeUserId,
-      organizerName: this.getMe().name,
-      organizerAvatar: this.getMe().avatarUrl,
-      organizerReliability: this.getMe().reliability?.score || 4.9,
-      coverImageUrl: data.coverImageUrl || './assets/images/hero_community_event_1794332913246.jpg',
-      tags: data.tags || ['Общение', 'Уют'],
+      organizer: {
+        id: me.id,
+        name: me.name,
+        age: me.age,
+        avatarUrl: me.avatarUrl,
+        reliability: me.reliability,
+        isPhoneVerified: me.isPhoneVerified,
+        isEmailVerified: me.isEmailVerified,
+      },
+      imageUrl: data.imageUrl || './assets/images/hero_community_event_1794332913246.jpg',
       isToday: true,
-      hasPreApprovalQuestions: false,
-      safetyStatus: 'verified',
+      status: 'open',
+      requirements: data.requirements || 'Пунктуальность и хорошее настроение',
+      rules: ['Безопасность', 'Взаимное уважение'],
+      approvedParticipantIds: [this.activeUserId],
+      createdAt: new Date().toISOString(),
     };
     this.events.set(newEvent.id, newEvent);
     this.save();
     return newEvent;
   }
 
-  cancelEvent(id: string, _reason?: string): EventItem {
+  cancelEvent(id: string, reason?: string): EventItem {
     const ev = this.events.get(id);
     if (ev) {
-      ev.isCancelled = true;
+      ev.status = 'cancelled';
+      ev.cancelledReason = reason;
       this.save();
       return ev;
     }
