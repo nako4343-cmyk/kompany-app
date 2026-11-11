@@ -441,13 +441,23 @@ app.post('/api/ai/recommendations', async (req: Request, res: Response) => {
 });
 
 // Download build archive for 1-click external deployment (Netlify/Vercel)
-app.get('/api/download/build', (_req: Request, res: Response) => {
+app.get('/api/download/build', (req: Request, res: Response) => {
+  const format = req.query.format === 'tar' ? 'tar' : 'zip';
+  if (format === 'tar') {
+    const archivePath = path.resolve(process.cwd(), 'dist-bundle.tar.gz');
+    if (fs.existsSync(archivePath)) {
+      return res.download(archivePath, 'kompany-build.tar.gz');
+    }
+  }
+  const zipPath = path.resolve(process.cwd(), 'dist-bundle.zip');
+  if (fs.existsSync(zipPath)) {
+    return res.download(zipPath, 'kompany-build.zip');
+  }
   const archivePath = path.resolve(process.cwd(), 'dist-bundle.tar.gz');
   if (fs.existsSync(archivePath)) {
-    res.download(archivePath, 'kompany-build.tar.gz');
-  } else {
-    res.status(404).json({ error: 'Архив сборки не найден' });
+    return res.download(archivePath, 'kompany-build.tar.gz');
   }
+  res.status(404).json({ error: 'Архив сборки не найден' });
 });
 
 // 9. Admin Console & KPIs

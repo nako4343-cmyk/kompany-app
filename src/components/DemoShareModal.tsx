@@ -314,12 +314,12 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
                 <div className="pt-2 flex flex-wrap gap-2">
                   <a
                     href="/api/download/build"
-                    download="kompany-build.tar.gz"
+                    download="kompany-build.zip"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs cursor-pointer active:scale-95"
                     style={{ backgroundColor: 'var(--accent-primary)' }}
                   >
                     <Download className="w-4 h-4" />
-                    <span>Скачать архив сайта (.tar.gz, 260 KB)</span>
+                    <span>Скачать архив сайта (.ZIP, 275 KB)</span>
                   </a>
 
                   <a
@@ -339,7 +339,7 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
                 </div>
 
                 <span className="text-[11px] block pt-1" style={{ color: 'var(--text-muted)' }}>
-                  Шаг: скачайте архив, распакуйте и перетащите папку <b>dist</b> на страницу Netlify Drop — получите постоянную ссылку вида <code>kompany.netlify.app</code>!
+                  Шаг: скачайте архив <code>kompany-build.zip</code>, распакуйте его и просто перетащите полученную папку на страницу Netlify Drop — через 5 секунд получите бесплатную постоянную ссылку, доступную с любых телефонов!
                 </span>
               </div>
 
