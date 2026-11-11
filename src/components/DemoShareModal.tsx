@@ -19,8 +19,8 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-  // Default shared URL
-  const demoUrl = propUrl || 'https://ais-pre-bnkp6fp5swj47aabsnu4xo-113973127590.europe-west2.run.app';
+  // Default shared URL pointing to the live GitHub Pages site
+  const demoUrl = propUrl || 'https://nako4343-cmyk.github.io/kompany-app/';
 
   useEffect(() => {
     QRCode.toDataURL(demoUrl, {
@@ -362,13 +362,42 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
                     2
                   </div>
                   <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                    Vercel или GitHub
+                    Ваш GitHub Репозиторий и GitHub Pages
                   </h3>
                 </div>
 
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  В проект уже добавлены файлы конфигурации <code>vercel.json</code> и <code>netlify.toml</code>. При импорте репозитория в Vercel сборка и деплой пройдут автоматически одной кнопкой.
+                  Проект успешно выгружен в ваш личный GitHub! Включена автоматическая публикация на <b>GitHub Pages</b>:
                 </p>
+
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <a
+                    href="https://nako4343-cmyk.github.io/kompany-app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer active:scale-95"
+                    style={{ backgroundColor: 'var(--accent-primary)' }}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Открыть демо на GitHub Pages</span>
+                    <ExternalLink className="w-3 h-3 opacity-80" />
+                  </a>
+
+                  <a
+                    href="https://github.com/nako4343-cmyk/kompany-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border cursor-pointer hover:opacity-95"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Репозиторий на GitHub</span>
+                  </a>
+                </div>
               </div>
 
               {/* AI Studio Official Share Option */}
