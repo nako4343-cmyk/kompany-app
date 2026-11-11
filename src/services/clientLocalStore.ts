@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v2';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v5';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -50,6 +50,10 @@ export class ClientLocalStore {
         this.reports = new Map(parsed.reports || []);
         this.notifications = new Map(parsed.notifications || []);
         this.activeUserId = parsed.activeUserId || 'user-anna';
+        if (this.events.size < 20) {
+          this.seedFromInitial();
+          this.save();
+        }
       } else {
         this.seedFromInitial();
         this.save();
@@ -98,12 +102,45 @@ export class ClientLocalStore {
     }
   }
 
+  sanitizeEvent(event: EventItem, viewerUserId?: string): EventItem {
+    const uid = viewerUserId || this.activeUserId;
+    const isOrganizer = Boolean(uid && event.organizerId === uid);
+    const isApprovedParticipant = Boolean(uid && (event.approvedParticipantIds || []).includes(uid));
+    const hasFullAccess = isOrganizer || isApprovedParticipant;
+
+    const participants = (event.approvedParticipantIds || [])
+      .map(id => this.users.get(id))
+      .filter((u): u is UserProfile => Boolean(u))
+      .map(u => ({
+        id: u.id,
+        name: u.name,
+        age: u.age,
+        avatarUrl: u.avatarUrl,
+        occupation: u.occupation || 'Участник',
+        onlineStatus: u.onlineStatus || (u.id === this.activeUserId ? 'online' : 'recent'),
+        lastSeen: u.lastSeen || (u.id === this.activeUserId ? 'Онлайн сейчас' : 'Был(а) недавно'),
+        reliability: u.reliability,
+      }));
+
+    const secret = this.rawEventsSecret.get(event.id);
+
+    return {
+      ...event,
+      approvedParticipants: participants,
+      exactVenue: hasFullAccess ? secret?.exactVenue : undefined,
+      exactAddress: hasFullAccess ? secret?.exactAddress : undefined,
+      organizerPhone: hasFullAccess && secret?.allowPhoneSharing ? secret?.organizerPhone : undefined,
+      privateInstructions: hasFullAccess ? secret?.privateInstructions : undefined,
+    };
+  }
+
   getMe(): UserProfile {
     return this.users.get(this.activeUserId) || Array.from(this.users.values())[0];
   }
 
   getAvailableUsers(): UserProfile[] {
-    return Array.from(this.users.values());
+    const demoIds = ['user-anna', 'user-mikhail', 'user-elena', 'user-admin'];
+    return Array.from(this.users.values()).filter(u => demoIds.includes(u.id));
   }
 
   switchUser(userId: string): { success: boolean; user: UserProfile } {
@@ -133,7 +170,7 @@ export class ClientLocalStore {
 
   getEvents(filters?: { category?: string; city?: string; onlyToday?: boolean; query?: string }): EventItem[] {
     let list = Array.from(this.events.values());
-    if (filters?.category) {
+    if (filters?.category && filters.category !== 'Все') {
       list = list.filter(e => e.category.toLowerCase() === filters.category?.toLowerCase());
     }
     if (filters?.city) {
@@ -144,14 +181,21 @@ export class ClientLocalStore {
     }
     if (filters?.query) {
       const q = filters.query.toLowerCase();
-      list = list.filter(e => e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q));
+      list = list.filter(
+        e =>
+          e.title.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          e.approximateArea.toLowerCase().includes(q) ||
+          e.category.toLowerCase().includes(q)
+      );
     }
-    return list;
+    return list.map(ev => this.sanitizeEvent(ev, this.activeUserId));
   }
 
   getEvent(id: string): { event: EventItem; myApplication: EventApplication | null } {
-    const event = this.events.get(id);
-    if (!event) throw new Error('Мероприятие не найдено');
+    const rawEvent = this.events.get(id);
+    if (!rawEvent) throw new Error('Мероприятие не найдено');
+    const event = this.sanitizeEvent(rawEvent, this.activeUserId);
     const myApp = Array.from(this.applications.values()).find(a => a.eventId === id && a.userId === this.activeUserId) || null;
     return { event, myApplication: myApp };
   }

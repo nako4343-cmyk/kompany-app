@@ -167,6 +167,208 @@ export const initialData = {
         "favoriteCategories": [],
         "savedEventIds": []
       }
+    ],
+    [
+      "user-external-1",
+      {
+        "id": "user-external-1",
+        "name": "Дмитрий Морозов",
+        "age": 30,
+        "city": "Москва",
+        "occupation": "Продуктовый менеджер",
+        "companyOrIndustry": "IT / Маркетплейс",
+        "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+        "photos": [
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80"
+        ],
+        "bio": "Люблю гастрономические открытия, сквош, падел и квизы по пятницам.",
+        "interests": [
+          "Ресторан / Бар",
+          "Спорт",
+          "Квиз / Интеллект",
+          "Путешествие"
+        ],
+        "reliability": {
+          "score": 4.94,
+          "eventsAttended": 16,
+          "eventsOrganized": 4,
+          "cancellations": 0,
+          "noShows": 0,
+          "attendanceRate": 100,
+          "positiveReviewsCount": 15
+        },
+        "onlineStatus": "online",
+        "lastSeen": "Онлайн сейчас",
+        "isPhoneVerified": true,
+        "isEmailVerified": true,
+        "isIdentityVerified": true,
+        "email": "dmitry.pm@example.com",
+        "role": "user",
+        "status": "active",
+        "blockedUserIds": []
+      }
+    ],
+    [
+      "user-external-2",
+      {
+        "id": "user-external-2",
+        "name": "София Лебедева",
+        "age": 25,
+        "city": "Москва",
+        "occupation": "Кинопродюсер & Фотограф",
+        "companyOrIndustry": "Независимая студия",
+        "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+        "photos": [
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80"
+        ],
+        "bio": "Снимаю на пленку 35мм, коллекционирую винил и обожаю авторское кино и камерные концерты.",
+        "interests": [
+          "Кино / Концерт",
+          "Прогулка",
+          "Искусство",
+          "Ресторан / Бар"
+        ],
+        "reliability": {
+          "score": 4.98,
+          "eventsAttended": 12,
+          "eventsOrganized": 5,
+          "cancellations": 0,
+          "noShows": 0,
+          "attendanceRate": 100,
+          "positiveReviewsCount": 14
+        },
+        "onlineStatus": "online",
+        "lastSeen": "Онлайн сейчас",
+        "isPhoneVerified": true,
+        "isEmailVerified": true,
+        "isIdentityVerified": true,
+        "email": "sofia.film@example.com",
+        "role": "user",
+        "status": "active",
+        "blockedUserIds": []
+      }
+    ],
+    [
+      "user-external-3",
+      {
+        "id": "user-external-3",
+        "name": "Артём Громов",
+        "age": 27,
+        "city": "Москва",
+        "occupation": "Геймдизайнер",
+        "companyOrIndustry": "Indie Game Studio",
+        "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+        "photos": [
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80"
+        ],
+        "bio": "Мастер подземелий в D&D, фанат кооперативных настолок, велопрогулок и хорошего крафта.",
+        "interests": [
+          "Настольные игры",
+          "Квиз / Интеллект",
+          "Прогулка",
+          "Пикник / Шашлыки"
+        ],
+        "reliability": {
+          "score": 4.91,
+          "eventsAttended": 19,
+          "eventsOrganized": 7,
+          "cancellations": 1,
+          "noShows": 0,
+          "attendanceRate": 97,
+          "positiveReviewsCount": 18
+        },
+        "onlineStatus": "recent",
+        "lastSeen": "Был(а) 10 мин назад",
+        "isPhoneVerified": true,
+        "isEmailVerified": true,
+        "isIdentityVerified": true,
+        "email": "artem.gamedev@example.com",
+        "role": "user",
+        "status": "active",
+        "blockedUserIds": []
+      }
+    ],
+    [
+      "user-external-4",
+      {
+        "id": "user-external-4",
+        "name": "Полина Романова",
+        "age": 26,
+        "city": "Москва",
+        "occupation": "Шеф-кондитер & Фуд-стилист",
+        "companyOrIndustry": "Гастро-ателье",
+        "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+        "photos": [
+          "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80"
+        ],
+        "bio": "Знаю все секретные пекарни и винные бары города. Люблю бег по утрам и выезды на природу.",
+        "interests": [
+          "Ресторан / Бар",
+          "Пикник / Шашлыки",
+          "Спорт",
+          "День рождения"
+        ],
+        "reliability": {
+          "score": 5,
+          "eventsAttended": 11,
+          "eventsOrganized": 3,
+          "cancellations": 0,
+          "noShows": 0,
+          "attendanceRate": 100,
+          "positiveReviewsCount": 12
+        },
+        "onlineStatus": "online",
+        "lastSeen": "Онлайн сейчас",
+        "isPhoneVerified": true,
+        "isEmailVerified": true,
+        "isIdentityVerified": true,
+        "email": "polina.pastry@example.com",
+        "role": "user",
+        "status": "active",
+        "blockedUserIds": []
+      }
+    ],
+    [
+      "user-external-5",
+      {
+        "id": "user-external-5",
+        "name": "Максим Волков",
+        "age": 31,
+        "city": "Москва",
+        "occupation": "Тревел-фотограф & Гид",
+        "companyOrIndustry": "Авторские экспедиции",
+        "avatarUrl": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=400&q=80",
+        "photos": [
+          "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=800&q=80"
+        ],
+        "bio": "Объехал 40 регионов России. Собираю компании на хайкинг, сап-борды и уикенды в малых исторических городах.",
+        "interests": [
+          "Путешествие",
+          "Спорт",
+          "Пикник / Шашлыки",
+          "Прогулка"
+        ],
+        "reliability": {
+          "score": 4.97,
+          "eventsAttended": 22,
+          "eventsOrganized": 11,
+          "cancellations": 0,
+          "noShows": 0,
+          "attendanceRate": 100,
+          "positiveReviewsCount": 25
+        },
+        "onlineStatus": "recent",
+        "lastSeen": "Был(а) 25 мин назад",
+        "isPhoneVerified": true,
+        "isEmailVerified": true,
+        "isIdentityVerified": true,
+        "email": "maxim.travel@example.com",
+        "role": "user",
+        "status": "active",
+        "blockedUserIds": []
+      }
     ]
   ],
   "events": [
@@ -374,6 +576,1038 @@ export const initialData = {
         "musicOrMood": "Солнечная поляна, фрисби, гриль и инди-плейлист на колонке",
         "icebreakerQuestion": "Какое ваше идеальное место для короткого путешествия на выходные?"
       }
+    ],
+    [
+      "ev-5",
+      {
+        "id": "ev-5",
+        "title": "Дегустация грузинских вин и хачапури из дровяной печи",
+        "category": "Ресторан / Бар",
+        "description": "Собираемся небольшой компанией любителей грузинской кухни! В программе лодочки по-аджарски, пхали, хинкали и сет из 4 автохтонных вин из квеври с рассказом сомелье.",
+        "date": "2026-11-11",
+        "time": "20:00",
+        "isToday": true,
+        "totalSpots": 6,
+        "occupiedSpots": 4,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Чистые пруды, ~1.4 км",
+        "distanceKm": 1.4,
+        "imageUrl": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-4",
+        "organizer": {
+          "id": "user-external-4",
+          "name": "Полина Романова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 11,
+            "eventsOrganized": 3,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 12
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Гастро-вечер",
+        "musicOrMood": "Грузинское многоголосие в современной обработке, аромат свежей выпечки",
+        "icebreakerQuestion": "Какое блюдо вы готовы заказывать в каждом новом ресторане?",
+        "requirements": "Любовь к грузинской кухне и душевным тостам",
+        "rules": [
+          "Блюда в стол делим поровну",
+          "Подтверждение участия за 2 часа"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-external-1",
+          "user-external-2"
+        ],
+        "createdAt": "2026-11-11T06:47:48.827Z"
+      }
+    ],
+    [
+      "ev-6",
+      {
+        "id": "ev-6",
+        "title": "Вечерний падел-теннис для начинающих (корт забронирован)",
+        "category": "Спорт",
+        "description": "Забронировали крытый панорамный корт на 1.5 часа! Ищем еще одного-двух игроков для парной игры 2 на 2. Ракетки и мячи есть на месте, правила супер простые — втягиваешься за 5 минут.",
+        "date": "2026-11-11",
+        "time": "21:00",
+        "isToday": true,
+        "totalSpots": 4,
+        "occupiedSpots": 3,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Лужники, ~2.9 км",
+        "distanceKm": 2.9,
+        "imageUrl": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-1",
+        "organizer": {
+          "id": "user-external-1",
+          "name": "Дмитрий Морозов",
+          "age": 30,
+          "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.94,
+            "eventsAttended": 16,
+            "eventsOrganized": 4,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 15
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Динамичный спорт, смех и смузи после матча",
+        "icebreakerQuestion": "Какой вид спорта вы давно хотели попробовать?",
+        "requirements": "Кроссовки со светлой подошвой, спортивная форма",
+        "rules": [
+          "Аренда корта делится на 4 игроков (~1 100 ₽ с человека)",
+          "Приходим за 15 минут на разминку"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-external-5"
+        ],
+        "createdAt": "2026-11-11T04:47:48.827Z"
+      }
+    ],
+    [
+      "ev-7",
+      {
+        "id": "ev-7",
+        "title": "Вечерняя фотопрогулка по переулкам Китай-города (пленка и смартфон)",
+        "category": "Прогулка",
+        "description": "Гуляем по старым московским дворикам, палатам XVII века и атмосферным лестницам. Фотографируем друг друга на пленку и телефон, ловим золотой час и завершаем маршрут чаем в секретной чайной.",
+        "date": "2026-11-11",
+        "time": "18:30",
+        "isToday": true,
+        "totalSpots": 6,
+        "occupiedSpots": 4,
+        "budget": "Бесплатно",
+        "city": "Москва",
+        "approximateArea": "Китай-город, ~1.1 км",
+        "distanceKm": 1.1,
+        "imageUrl": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-2",
+        "organizer": {
+          "id": "user-external-2",
+          "name": "София Лебедева",
+          "age": 25,
+          "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.98,
+            "eventsAttended": 12,
+            "eventsOrganized": 5,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 14
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Спокойная беседа",
+        "musicOrMood": "Щелчки затвора камеры, тихие дворики и эстетика старого города",
+        "icebreakerQuestion": "Какой ваш самый любимый уголок или переулок в городе?",
+        "requirements": "Любая камера или просто телефон, удобная обувь",
+        "rules": [
+          "Прогулка бесплатная, чай в конце — по желанию"
+        ],
+        "approvedParticipantIds": [
+          "user-elena",
+          "user-anna",
+          "user-external-3"
+        ],
+        "createdAt": "2026-11-11T02:47:48.827Z"
+      }
+    ],
+    [
+      "ev-8",
+      {
+        "id": "ev-8",
+        "title": "Кино-музыкальный квиз «Угадай саундтрек и кадр за 10 секунд»",
+        "category": "Квиз / Интеллект",
+        "description": "В нашей команде \"Ночные совы\" освободилось 2 места на сегодняшний кино-музыкальный квиз! 7 раундов про культовые фильмы, сериалы и хиты 90-х–2020-х. Без душной энциклопедичности — чистый кайф.",
+        "date": "2026-11-11",
+        "time": "19:30",
+        "isToday": true,
+        "totalSpots": 8,
+        "occupiedSpots": 6,
+        "budget": "до 1 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Тверская / Пушкинская, ~1.6 км",
+        "distanceKm": 1.6,
+        "imageUrl": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-3",
+        "organizer": {
+          "id": "user-external-3",
+          "name": "Артём Громов",
+          "age": 27,
+          "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.91,
+            "eventsAttended": 19,
+            "eventsOrganized": 7,
+            "cancellations": 1,
+            "noShows": 0,
+            "attendanceRate": 97,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Интеллектуальная игра",
+        "musicOrMood": "Азарт угадывания с первых нот, командный драйв и закуски",
+        "icebreakerQuestion": "Какой фильм или сериал вы пересматривали больше трех раз?",
+        "requirements": "Хорошее настроение и любовь к кино или музыке",
+        "rules": [
+          "Взнос организаторам квиза — 700 ₽ с человека",
+          "Сбор за 15 минут до старта первого раунда"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-external-1",
+          "user-external-2",
+          "user-external-4"
+        ],
+        "createdAt": "2026-11-11T00:47:48.827Z"
+      }
+    ],
+    [
+      "ev-9",
+      {
+        "id": "ev-9",
+        "title": "Именинный бранч с панкейками и спешелти-кофе на веранде",
+        "category": "День рождения",
+        "description": "Праздную свой день рождения в формате утреннего солнечного бранча! Будем пить фильтр-кофе, есть бенедикты и воздушные панкейки с ягодами, болтать об искусстве, путешествиях и планах на лето.",
+        "date": "2026-11-12",
+        "time": "12:00",
+        "isToday": false,
+        "totalSpots": 5,
+        "occupiedSpots": 3,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Патриаршие пруды, ~2.1 км",
+        "distanceKm": 2.1,
+        "imageUrl": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-2",
+        "organizer": {
+          "id": "user-external-2",
+          "name": "София Лебедева",
+          "age": 25,
+          "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.98,
+            "eventsAttended": 12,
+            "eventsOrganized": 5,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 14
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Праздничный вайб",
+        "musicOrMood": "Аромат свежеобжаренной арабики, цветы на столе и утреннее солнце",
+        "icebreakerQuestion": "Из чего состоит ваш идеальный неспешный завтрак?",
+        "requirements": "Легкость на подъем и любовь к долгим завтракам",
+        "rules": [
+          "С меня праздничный торт для всех гостей, кофе и основные блюда — каждый за себя"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-elena"
+        ],
+        "createdAt": "2026-11-10T22:47:48.827Z"
+      }
+    ],
+    [
+      "ev-10",
+      {
+        "id": "ev-10",
+        "title": "Вечер психологических игр «Бункер» и «Нечто» в лофте",
+        "category": "Настольные игры",
+        "description": "Собираем большую компанию на дискуссионные настолки! В «Бункере» прокачиваем красноречие и убеждаем остальных, почему именно ваш персонаж спасет человечество. Будет пицца и лимонады!",
+        "date": "2026-11-11",
+        "time": "20:30",
+        "isToday": true,
+        "totalSpots": 10,
+        "occupiedSpots": 8,
+        "budget": "до 1 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Красный Октябрь, ~2.3 км",
+        "distanceKm": 2.3,
+        "imageUrl": "./assets/images/event_board_games_1794332913325.jpg",
+        "organizerId": "user-external-3",
+        "organizer": {
+          "id": "user-external-3",
+          "name": "Артём Громов",
+          "age": 27,
+          "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.91,
+            "eventsAttended": 19,
+            "eventsOrganized": 7,
+            "cancellations": 1,
+            "noShows": 0,
+            "attendanceRate": 97,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Интеллектуальная игра",
+        "musicOrMood": "Горячие дебаты, неожиданные сюжетные повороты и смех до слез",
+        "icebreakerQuestion": "Какой самый необычный навык помог бы вам выжить на необитаемом острове?",
+        "requirements": "Желание общаться и шутить",
+        "rules": [
+          "Скидываемся по 800 ₽ на аренду лофта и горячую пиццу"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-external-1",
+          "user-elena",
+          "user-external-4",
+          "user-external-5"
+        ],
+        "createdAt": "2026-11-10T21:47:48.827Z"
+      }
+    ],
+    [
+      "ev-11",
+      {
+        "id": "ev-11",
+        "title": "Ретроспектива Хаяо Миядзаки на большом экране + обсуждение за раменом",
+        "category": "Кино / Концерт",
+        "description": "Идем смотреть «Унесенные призраками» в камерном кинозале на японском языке с русскими субтитрами, а сразу после сеанса заглянем в соседнюю раменную обсудить символизм фильма.",
+        "date": "2026-11-12",
+        "time": "19:45",
+        "isToday": false,
+        "totalSpots": 6,
+        "occupiedSpots": 4,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Бауманская / Сад Баумана, ~2.7 км",
+        "distanceKm": 2.7,
+        "imageUrl": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-elena",
+        "organizer": {
+          "id": "user-elena",
+          "name": "Елена Кузнецова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 8,
+            "eventsOrganized": 1,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 9
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Спокойная беседа",
+        "musicOrMood": "Волшебная музыка Дзё Хисаиси и уютная атмосфера старого кинотеатра",
+        "icebreakerQuestion": "Какой мультфильм или фильм из детства до сих пор вдохновляет вас?",
+        "requirements": "Не опаздывать к началу сеанса",
+        "rules": [
+          "Билеты берем в одном ряду (600 ₽), рамен после кино — по желанию"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-external-2",
+          "user-external-3"
+        ],
+        "createdAt": "2026-11-10T20:47:48.827Z"
+      }
+    ],
+    [
+      "ev-12",
+      {
+        "id": "ev-12",
+        "title": "Выезд в Суздаль на выходные: сыроварня, сапы по Каменке и закаты",
+        "category": "Путешествие",
+        "description": "Едем на двух машинах в Суздаль на субботу и воскресенье! Забронировали большой деревянный гостевой дом с верандой. В планах: прогулка на сапах по реке с видом на монастыри, дегустация фермерских сыров и вечер у камина.",
+        "date": "2026-11-13",
+        "time": "08:30",
+        "isToday": false,
+        "totalSpots": 6,
+        "occupiedSpots": 4,
+        "budget": "5 000+ ₽",
+        "city": "Москва",
+        "approximateArea": "Сбор у м. Курская, ~2.6 км",
+        "distanceKm": 2.6,
+        "imageUrl": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-5",
+        "organizer": {
+          "id": "user-external-5",
+          "name": "Максим Волков",
+          "age": 31,
+          "avatarUrl": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.97,
+            "eventsAttended": 22,
+            "eventsOrganized": 11,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 25
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Роуд-трип плейлист в машине, туман над рекой и деревянное зодчество",
+        "icebreakerQuestion": "Какая поездка на машине запомнилась вам больше всего?",
+        "requirements": "Готовность к раннему выезду в субботу утром",
+        "rules": [
+          "Бензин и аренду гостевого дома делим поровну (~5 500 ₽ с человека за всё)"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-mikhail",
+          "user-external-4"
+        ],
+        "createdAt": "2026-11-10T18:47:48.827Z"
+      }
+    ],
+    [
+      "ev-13",
+      {
+        "id": "ev-13",
+        "title": "Корейское барбекю и рамен-тур в аутентичном бистро",
+        "category": "Ресторан / Бар",
+        "description": "Ищем компанию из 4 человек, чтобы занять стол со встроенным корейским грилем! Будем сами жарить мраморные слайсы, заворачивать в листья салата с кимчи и пробовать домашний рамен.",
+        "date": "2026-11-11",
+        "time": "19:00",
+        "isToday": true,
+        "totalSpots": 4,
+        "occupiedSpots": 3,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Цветной бульвар, ~1.5 км",
+        "distanceKm": 1.5,
+        "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-mikhail",
+        "organizer": {
+          "id": "user-mikhail",
+          "name": "Михаил Соколов",
+          "age": 29,
+          "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.88,
+            "eventsAttended": 9,
+            "eventsOrganized": 2,
+            "cancellations": 1,
+            "noShows": 0,
+            "attendanceRate": 95,
+            "positiveReviewsCount": 10
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Гастро-вечер",
+        "musicOrMood": "Шипение гриля, неоновые вывески Сеула и пряные соусы",
+        "icebreakerQuestion": "Любите ли вы острую азиатскую кухню от 1 до 10?",
+        "requirements": "Аппетит и интерес к азиатской гастрономии",
+        "rules": [
+          "Сет для гриля делим на всех участников стола"
+        ],
+        "approvedParticipantIds": [
+          "user-external-1",
+          "user-external-3"
+        ],
+        "createdAt": "2026-11-11T07:47:48.827Z"
+      }
+    ],
+    [
+      "ev-14",
+      {
+        "id": "ev-14",
+        "title": "Утренняя пробежка 5 км в разговорном темпе + фильтр-кофе и круассаны",
+        "category": "Спорт",
+        "description": "Бежим легкие 5 км по набережной в комфортном разговорном темпе (6:15–6:30 мин/км), делаем суставную разминку, а на финише идем пить спешелти-кофе со свежими миндальными круассанами.",
+        "date": "2026-11-12",
+        "time": "09:30",
+        "isToday": false,
+        "totalSpots": 8,
+        "occupiedSpots": 5,
+        "budget": "до 1 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Парк Горького / Набережная, ~2.8 км",
+        "distanceKm": 2.8,
+        "imageUrl": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-4",
+        "organizer": {
+          "id": "user-external-4",
+          "name": "Полина Романова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 11,
+            "eventsOrganized": 3,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 12
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Свежий утренний воздух у воды, заряд бодрости и горячий кофе",
+        "icebreakerQuestion": "Что помогает вам просыпаться по утрам в отличном настроении?",
+        "requirements": "Темп спокойный — никто никого не бросает позади",
+        "rules": [
+          "Пробежка бесплатная, кофе на финише по желанию"
+        ],
+        "approvedParticipantIds": [
+          "user-external-1",
+          "user-external-5",
+          "user-elena",
+          "user-mikhail"
+        ],
+        "createdAt": "2026-11-11T03:47:48.827Z"
+      }
+    ],
+    [
+      "ev-15",
+      {
+        "id": "ev-15",
+        "title": "Закатный заплыв на сап-бордах и пикник с чаем на берегу",
+        "category": "Пикник / Шашлыки",
+        "description": "Плывем встречать закат по тихим живописным заливам! Инструктор выдаст устойчивые доски и спасательные жилеты, а после прогулки устроим пикник на деревянном пирсе с травяным чаем и ягодами.",
+        "date": "2026-11-14",
+        "time": "17:30",
+        "isToday": false,
+        "totalSpots": 6,
+        "occupiedSpots": 5,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Серебряный Бор, ~5.4 км",
+        "distanceKm": 5.4,
+        "imageUrl": "https://images.unsplash.com/photo-1526188717906-ab4a2f949f48?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-5",
+        "organizer": {
+          "id": "user-external-5",
+          "name": "Максим Волков",
+          "age": 31,
+          "avatarUrl": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.97,
+            "eventsAttended": 22,
+            "eventsOrganized": 11,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 25
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Розовый закат на воде, сосны и полное ощущение отпуска",
+        "icebreakerQuestion": "Море, горы или лесное озеро — где вы отдыхаете душой лучше всего?",
+        "requirements": "Сменная одежда на всякий случай, умение плавать",
+        "rules": [
+          "Прокат SUP-борда на 2 часа — 1 800 ₽, чай и угощения берем с собой"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-elena",
+          "user-external-2",
+          "user-external-1"
+        ],
+        "createdAt": "2026-11-10T16:47:48.827Z"
+      }
+    ],
+    [
+      "ev-16",
+      {
+        "id": "ev-16",
+        "title": "Прогулка по скрытым парадным и доходным домам эпохи модерна",
+        "category": "Прогулка",
+        "description": "Как архитектор, покажу вам 7 невероятных доходных домов начала XX века с витражами, метлахской плиткой и чугунными лестницами, мимо которых все обычно проходят не глядя.",
+        "date": "2026-11-12",
+        "time": "16:00",
+        "isToday": false,
+        "totalSpots": 7,
+        "occupiedSpots": 5,
+        "budget": "Бесплатно",
+        "city": "Москва",
+        "approximateArea": "Сретенка / Чистые пруды, ~1.3 км",
+        "distanceKm": 1.3,
+        "imageUrl": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-elena",
+        "organizer": {
+          "id": "user-elena",
+          "name": "Елена Кузнецова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 8,
+            "eventsOrganized": 1,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 9
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Спокойная беседа",
+        "musicOrMood": "Вдохновляющая архитектура модерна, истории жильцов и кофе по пути",
+        "icebreakerQuestion": "В доме какой эпохи вы бы хотели пожить хотя бы неделю?",
+        "requirements": "Тишина и уважение к жителям внутри подъездов",
+        "rules": [
+          "Некоммерческая дружеская прогулка, после зайдем в кофейню"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-external-2",
+          "user-mikhail",
+          "user-external-1"
+        ],
+        "createdAt": "2026-11-10T14:47:48.827Z"
+      }
+    ],
+    [
+      "ev-17",
+      {
+        "id": "ev-17",
+        "title": "Боулинг, ретро-аркады и неаполитанская пицца в честь 30-летия!",
+        "category": "День рождения",
+        "description": "Отмечаю юбилей без скучных банкетов! Забронировал две дорожки боулинга, жетоны на ретро-автоматы (аэрохоккей, пинбол, гонки) и гору горячей пиццы из дровяной печи. Буду рад новым друзьям!",
+        "date": "2026-11-13",
+        "time": "20:00",
+        "isToday": false,
+        "totalSpots": 8,
+        "occupiedSpots": 6,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Парк Культуры, ~2.4 км",
+        "distanceKm": 2.4,
+        "imageUrl": "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-1",
+        "organizer": {
+          "id": "user-external-1",
+          "name": "Дмитрий Морозов",
+          "age": 30,
+          "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.94,
+            "eventsAttended": 16,
+            "eventsOrganized": 4,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 15
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Праздничный вайб",
+        "musicOrMood": "Страйки, неоновый свет аркадных автоматов и фанк-музыка",
+        "icebreakerQuestion": "В какой аркадной игре вам нет равных?",
+        "requirements": "Азарт и праздничное настроение",
+        "rules": [
+          "Дорожки боулинга с меня как с именинника, напитки и кухня — в складчину"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-mikhail",
+          "user-external-3",
+          "user-external-4",
+          "user-elena"
+        ],
+        "createdAt": "2026-11-10T11:47:48.827Z"
+      }
+    ],
+    [
+      "ev-18",
+      {
+        "id": "ev-18",
+        "title": "Ваншот Dungeons & Dragons для новичков (готовые герои и кубики)",
+        "category": "Настольные игры",
+        "description": "Провожу атмосферное детективное приключение в мире D&D на один вечер (4 часа). Ничего учить заранее не нужно: я подготовил красивых персонажей, миниатюры, карты, звуковое сопровождение и наборы кубиков!",
+        "date": "2026-11-13",
+        "time": "15:00",
+        "isToday": false,
+        "totalSpots": 5,
+        "occupiedSpots": 4,
+        "budget": "до 1 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Менделеевская / Новослободская, ~2.2 км",
+        "distanceKm": 2.2,
+        "imageUrl": "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-3",
+        "organizer": {
+          "id": "user-external-3",
+          "name": "Артём Громов",
+          "age": 27,
+          "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.91,
+            "eventsAttended": 19,
+            "eventsOrganized": 7,
+            "cancellations": 1,
+            "noShows": 0,
+            "attendanceRate": 97,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Интеллектуальная игра",
+        "musicOrMood": "Фэнтези-саундтрек, броски двадцатигранного кубика и командное приключение",
+        "icebreakerQuestion": "Кем бы вы были в фэнтези-мире: магом, следопытом, бардом или плутом?",
+        "requirements": "Фантазия и уважение к ходу других игроков",
+        "rules": [
+          "Оплата только за комнату в клубе (~600 ₽ с человека), чай и печенье включены"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-external-2",
+          "user-elena"
+        ],
+        "createdAt": "2026-11-10T08:47:48.827Z"
+      }
+    ],
+    [
+      "ev-19",
+      {
+        "id": "ev-19",
+        "title": "Джаз при свечах в тропической оранжерее: саксофон и рояль",
+        "category": "Кино / Концерт",
+        "description": "Вечер классического нью-йоркского джаза среди живых пальм, орхидей и сотен свечей. Идем красивой компанией насладиться живым звуком, сделать фотографии в саду и после концерта выпить какао.",
+        "date": "2026-11-11",
+        "time": "20:00",
+        "isToday": true,
+        "totalSpots": 4,
+        "occupiedSpots": 3,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Проспект Мира, ~2.8 км",
+        "distanceKm": 2.8,
+        "imageUrl": "./assets/images/event_live_concert_1794332915302.jpg",
+        "organizerId": "user-anna",
+        "organizer": {
+          "id": "user-anna",
+          "name": "Анна Воронова",
+          "age": 28,
+          "avatarUrl": "./assets/images/avatar_host_anna_1794332914629.jpg",
+          "reliability": {
+            "score": 4.95,
+            "eventsAttended": 14,
+            "eventsOrganized": 6,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Праздничный вайб",
+        "musicOrMood": "Мягкий саксофон, тропическая зелень и мерцание свечей",
+        "icebreakerQuestion": "Какая музыка мгновенно поднимает вам настроение после рабочего дня?",
+        "requirements": "Коктейльный или smart-casual стиль приветствуется",
+        "rules": [
+          "Билеты в партер (1 900 ₽), встречаемся за 25 минут чтобы погулять по саду"
+        ],
+        "approvedParticipantIds": [
+          "user-external-2",
+          "user-external-1"
+        ],
+        "createdAt": "2026-11-11T08:47:48.827Z"
+      }
+    ],
+    [
+      "ev-20",
+      {
+        "id": "ev-20",
+        "title": "Однодневный хайкинг вдоль берега Оки и обед на костре в сосновом бору",
+        "category": "Путешествие",
+        "description": "Проходим живописный лесной маршрут 14 км по песчаным тропам вдоль высокого берега Оки, заходим в заповедник и устраиваем большой привал с походным супом и кофе в гейзерной турке на горелке.",
+        "date": "2026-11-14",
+        "time": "08:45",
+        "isToday": false,
+        "totalSpots": 8,
+        "occupiedSpots": 6,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Выезд с Курского вокзала, ~2.5 км",
+        "distanceKm": 2.5,
+        "imageUrl": "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-5",
+        "organizer": {
+          "id": "user-external-5",
+          "name": "Максим Волков",
+          "age": 31,
+          "avatarUrl": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.97,
+            "eventsAttended": 22,
+            "eventsOrganized": 11,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 25
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Запах сосновой хвои, панорама реки и горячий кофе из кружки",
+        "icebreakerQuestion": "Самое красивое природное место, которое вы видели своими глазами?",
+        "requirements": "Треккинговые ботинки или кроссовки с протектором, термос с водой",
+        "rules": [
+          "Электричка-экспресс + общие продукты на привал (~1 400 ₽ с человека)"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-elena",
+          "user-external-1",
+          "user-external-3",
+          "user-external-4"
+        ],
+        "createdAt": "2026-11-10T06:47:48.827Z"
+      }
+    ],
+    [
+      "ev-21",
+      {
+        "id": "ev-21",
+        "title": "Секретный спикизи-бар за книжным шкафом: дегустация авторских миксов",
+        "category": "Ресторан / Бар",
+        "description": "Идем в атмосферный бар без вывески, вход в который спрятан за старинным книжным шкафом. В меню как сложные ботанические безалкогольные миксы, так и авторская классика + тапас.",
+        "date": "2026-11-11",
+        "time": "21:00",
+        "isToday": true,
+        "totalSpots": 5,
+        "occupiedSpots": 3,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Покровка / Маросейка, ~0.9 км",
+        "distanceKm": 0.9,
+        "imageUrl": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-anna",
+        "organizer": {
+          "id": "user-anna",
+          "name": "Анна Воронова",
+          "age": 28,
+          "avatarUrl": "./assets/images/avatar_host_anna_1794332914629.jpg",
+          "reliability": {
+            "score": 4.95,
+            "eventsAttended": 14,
+            "eventsOrganized": 6,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Гастро-вечер",
+        "musicOrMood": "Виниловый фанк, приглушенный свет и камерные разговоры",
+        "icebreakerQuestion": "Если бы вы открыли свое заведение, каким бы оно было?",
+        "requirements": "21+, уважительное общение",
+        "rules": [
+          "Каждый оплачивает свой заказ по меню"
+        ],
+        "approvedParticipantIds": [
+          "user-external-1",
+          "user-external-4"
+        ],
+        "createdAt": "2026-11-11T09:47:48.827Z"
+      }
+    ],
+    [
+      "ev-22",
+      {
+        "id": "ev-22",
+        "title": "Боулдеринг на скалодроме для любого уровня + пуэр в чайной зоне",
+        "category": "Спорт",
+        "description": "Лазаем простые и средние трассы на невысоком скалодроме с мягкими матами (страховка веревками не нужна). Очень весело разгадывать трассы вместе и подсказывать зацепки!",
+        "date": "2026-11-12",
+        "time": "19:30",
+        "isToday": false,
+        "totalSpots": 6,
+        "occupiedSpots": 4,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Савеловская / Динамо, ~3.6 км",
+        "distanceKm": 3.6,
+        "imageUrl": "https://images.unsplash.com/photo-1522163182402-834f871fd851?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-mikhail",
+        "organizer": {
+          "id": "user-mikhail",
+          "name": "Михаил Соколов",
+          "age": 29,
+          "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.88,
+            "eventsAttended": 9,
+            "eventsOrganized": 2,
+            "cancellations": 1,
+            "noShows": 0,
+            "attendanceRate": 95,
+            "positiveReviewsCount": 10
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Спортивный азарт, поддержка команды и китайский чай после тренировки",
+        "icebreakerQuestion": "Боитесь ли вы высоты или наоборот любите забираться повыше?",
+        "requirements": "Удобные спортивные штаны и футболка, скальные туфли дают в прокате",
+        "rules": [
+          "Вход на скалодром и прокат скальников (~1 200 ₽)"
+        ],
+        "approvedParticipantIds": [
+          "user-external-5",
+          "user-elena",
+          "user-external-3"
+        ],
+        "createdAt": "2026-11-11T01:47:48.827Z"
+      }
+    ],
+    [
+      "ev-23",
+      {
+        "id": "ev-23",
+        "title": "Гриль-пикник в лесной беседке у озера: халуми, стейки и гитара",
+        "category": "Пикник / Шашлыки",
+        "description": "Арендовали уютную деревянную беседку с мангалом на берегу лесного озера! Жарим сыр халуми, овощи на гриле, стейки, завариваем облепиховый чай и поем любимые песни под акустическую гитару.",
+        "date": "2026-11-15",
+        "time": "14:30",
+        "isToday": false,
+        "totalSpots": 10,
+        "occupiedSpots": 7,
+        "budget": "1 000–3 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Мещерский парк, ~6.2 км",
+        "distanceKm": 6.2,
+        "imageUrl": "./assets/images/event_outdoor_picnic_1794332913731.jpg",
+        "organizerId": "user-external-4",
+        "organizer": {
+          "id": "user-external-4",
+          "name": "Полина Романова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 11,
+            "eventsOrganized": 3,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 12
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Праздничный вайб",
+        "musicOrMood": "Треск углей, сосновый лес, гитара и авторские соусы от шефа",
+        "icebreakerQuestion": "Какую песню у костра вы знаете наизусть от начала до конца?",
+        "requirements": "Теплый свитер на вечер и отличное настроение",
+        "rules": [
+          "Закупку продуктов и аренду беседки делим поровну (~1 600 ₽ с человека)"
+        ],
+        "approvedParticipantIds": [
+          "user-anna",
+          "user-mikhail",
+          "user-elena",
+          "user-external-1",
+          "user-external-2",
+          "user-external-5"
+        ],
+        "createdAt": "2026-11-10T01:47:48.827Z"
+      }
+    ],
+    [
+      "ev-24",
+      {
+        "id": "ev-24",
+        "title": "Вечерний велозаезд по огням набережных от Сити до Зарядья",
+        "category": "Прогулка",
+        "description": "Катим неспешным прогулочным темпом по самым красивым освещенным велодорожкам вдоль Москвы-реки! Можно на своем велосипеде или взять городской электровелосипед в прокате прямо на старте.",
+        "date": "2026-11-11",
+        "time": "21:30",
+        "isToday": true,
+        "totalSpots": 8,
+        "occupiedSpots": 5,
+        "budget": "Бесплатно",
+        "city": "Москва",
+        "approximateArea": "Пресненская наб. / Лужники, ~3.1 км",
+        "distanceKm": 3.1,
+        "imageUrl": "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80",
+        "organizerId": "user-external-5",
+        "organizer": {
+          "id": "user-external-5",
+          "name": "Максим Волков",
+          "age": 31,
+          "avatarUrl": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=400&q=80",
+          "reliability": {
+            "score": 4.97,
+            "eventsAttended": 22,
+            "eventsOrganized": 11,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 25
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Активный движ",
+        "musicOrMood": "Огни ночного города в воде, теплый ветер и остановки на смотровых",
+        "icebreakerQuestion": "Ваш любимый маршрут для вечерней прогулки по городу?",
+        "requirements": "Велосипед или городской велопрокат, передний/задний фонарик",
+        "rules": [
+          "Едем аккуратно колонной, ждем всех на светофорах и мостах"
+        ],
+        "approvedParticipantIds": [
+          "user-mikhail",
+          "user-external-1",
+          "user-external-3",
+          "user-external-2"
+        ],
+        "createdAt": "2026-11-11T10:47:48.827Z"
+      }
     ]
   ],
   "rawEventsSecret": [
@@ -414,6 +1648,206 @@ export const initialData = {
         "exactAddress": "Ленинский проспект, 18 (вход через парковую аллею)",
         "organizerPhone": "+7 (916) 555-01-92",
         "privateInstructions": "Геометка будет отправлена в групповой чат за 30 минут. Ищите большой бирюзовый плед и серый мангал.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-5",
+      {
+        "exactVenue": "Винный погребок \"Мегобари\", зал с камином",
+        "exactAddress": "ул. Маросейка, 15 (м. Китай-город / Чистые пруды)",
+        "organizerPhone": "+7 (916) 210-45-11",
+        "privateInstructions": "Стол №7 в дальнем зале у кирпичной арки, бронь на имя Полины.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-6",
+      {
+        "exactVenue": "Падел-клуб \"Лужники\", корт №3",
+        "exactAddress": "Лужнецкая набережная, 24, стр. 4",
+        "organizerPhone": "+7 (926) 881-34-90",
+        "privateInstructions": "Встречаемся у стойки ресепшена в 20:45. Раздевалки на 1 этаже.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-7",
+      {
+        "exactVenue": "Сквер у памятника Кириллу и Мефодию (выход №10)",
+        "exactAddress": "Славянская площадь, д. 2 (м. Китай-город)",
+        "organizerPhone": "+7 (905) 334-12-77",
+        "privateInstructions": "Я буду в бежевом тренче с пленочным фотоаппаратом Olympus на ремне.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-8",
+      {
+        "exactVenue": "Гастропаб \"Крафт и Квиз\", стол команды №12 \"Ночные совы\"",
+        "exactAddress": "Страстной бульвар, 8А (м. Чеховская)",
+        "organizerPhone": "+7 (999) 114-56-23",
+        "privateInstructions": "На входе хостес покажет стол №12 в центре зала возле экрана.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-9",
+      {
+        "exactVenue": "Кафе \"Утро на Патриарших\", светлый зал у панорамных окон",
+        "exactAddress": "Малый Козихинский пер., 10",
+        "organizerPhone": "+7 (905) 334-12-77",
+        "privateInstructions": "Круглый стол на 5 персон у окна с букетом пионов.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-10",
+      {
+        "exactVenue": "Игровой лофт \"Мансарда\", 3 этаж",
+        "exactAddress": "Берсеневская наб., 6, стр. 3",
+        "organizerPhone": "+7 (999) 114-56-23",
+        "privateInstructions": "Вход через арку со стороны набережной, код домофона 42#. Поднимайтесь на мансарду.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-11",
+      {
+        "exactVenue": "Кинотеатр в Саду им. Баумана, малый зал, ряд 5",
+        "exactAddress": "ул. Старая Басманная, 15А",
+        "organizerPhone": "+7 (903) 777-34-21",
+        "privateInstructions": "Встречаемся в фойе у кофейной стойки за 15 минут до показа.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-12",
+      {
+        "exactVenue": "Парковка у ТЦ \"Атриум\" со стороны Земляного Вала",
+        "exactAddress": "ул. Земляной Вал, 33 (м. Курская)",
+        "organizerPhone": "+7 (915) 602-88-19",
+        "privateInstructions": "Синий кроссовер Subaru Outback, встречаемся у кофейни на 1 этаже перед выездом.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-13",
+      {
+        "exactVenue": "Корейское бистро \"Seoul Grill\", гриль-стол №4",
+        "exactAddress": "Цветной бульвар, 21, стр. 2",
+        "organizerPhone": "+7 (925) 444-12-88",
+        "privateInstructions": "Бронь на имя Михаила. Заходите внутрь мимо неоновой вывески.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-14",
+      {
+        "exactVenue": "Кофейный поинт у главного входа в Парк Горького (слева от арки)",
+        "exactAddress": "ул. Крымский Вал, 9",
+        "organizerPhone": "+7 (916) 210-45-11",
+        "privateInstructions": "Есть шкафчики для хранения вещей в беговом центре рядом со стартом.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-15",
+      {
+        "exactVenue": "Станция SUP-серфинга \"Серебряный причал\", пляж №3",
+        "exactAddress": "4-я линия Хорошёвского Серебряного Бора, вл. 19",
+        "organizerPhone": "+7 (915) 602-88-19",
+        "privateInstructions": "Встречаемся у деревянного шатра проката, выдают гермомешки для телефонов.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-16",
+      {
+        "exactVenue": "У входа в театр Et Cetera во Фроловом переулке",
+        "exactAddress": "Фролов пер., 2 (м. Тургеневская)",
+        "organizerPhone": "+7 (903) 777-34-21",
+        "privateInstructions": "Встречаемся у главных колонн театра, маршрут займет около 1.5 часов.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-17",
+      {
+        "exactVenue": "Боулинг-лаунж \"Страйк & Пицца\", дорожки №5 и №6",
+        "exactAddress": "Комсомольский проспект, 28 (м. Фрунзенская / Парк Культуры)",
+        "organizerPhone": "+7 (926) 881-34-90",
+        "privateInstructions": "Спускайтесь на -1 этаж к зоне неонового бара, дорожки прямо напротив.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-18",
+      {
+        "exactVenue": "Клуб ролевых игр \"Таверна Восьмигранник\", VIP-комната \"Замок\"",
+        "exactAddress": "ул. Новослободская, 36/1, стр. 1",
+        "organizerPhone": "+7 (999) 114-56-23",
+        "privateInstructions": "2 этаж, дверь с деревянной вывеской дракона.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-19",
+      {
+        "exactVenue": "Тропическая оранжерея Ботанического сада, исторический павильон",
+        "exactAddress": "Проспект Мира, 26, стр. 1",
+        "organizerPhone": "+7 (916) 555-01-92",
+        "privateInstructions": "Вход через стеклянный атриум оранжереи, встречаемся у фонтана внутри.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-20",
+      {
+        "exactVenue": "Курский вокзал, зал ожидания экспрессов у выхода к платформам",
+        "exactAddress": "ул. Земляной Вал, 29",
+        "organizerPhone": "+7 (915) 602-88-19",
+        "privateInstructions": "Берем билеты во 2 вагон экспресса на Серпухов. Я с зеленым туристическим рюкзаком Osprey.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-21",
+      {
+        "exactVenue": "Спикизи-гостиная \"Кабинет Архивариуса\"",
+        "exactAddress": "ул. Покровка, 17 (вход через букинистическую лавку)",
+        "organizerPhone": "+7 (916) 555-01-92",
+        "privateInstructions": "Внутри лавки потяните за том энциклопедии на третьей полке слева. Бронь на Анну.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-22",
+      {
+        "exactVenue": "Скалодром \"Limestone\", зона отдыха у чайного бара",
+        "exactAddress": "Ленинградский проспект, 36, стр. 29",
+        "organizerPhone": "+7 (925) 444-12-88",
+        "privateInstructions": "Встречаемся в 19:20 у ресепшена, после разминки идем к сектору \"Новичок\".",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-23",
+      {
+        "exactVenue": "Пикниковая зона \"Лесная бухта\", беседка №4 у воды",
+        "exactAddress": "Мещерский парк, вход со стороны Новомещерского проезда, 15",
+        "organizerPhone": "+7 (916) 210-45-11",
+        "privateInstructions": "От парковки 400 метров по деревянному настилу вдоль берега озера.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-24",
+      {
+        "exactVenue": "Смотровая площадка у моста \"Багратион\" со стороны Пресненской набережной",
+        "exactAddress": "Пресненская набережная, 2",
+        "organizerPhone": "+7 (915) 602-88-19",
+        "privateInstructions": "Рядом со станцией городского велопроката №142 у спуска к воде.",
         "allowPhoneSharing": true
       }
     ]

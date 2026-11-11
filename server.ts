@@ -45,15 +45,18 @@ app.post('/api/auth/switch-user', (req: Request, res: Response) => {
 });
 
 app.get('/api/auth/available-users', (_req: Request, res: Response) => {
-  const users = Array.from(store.users.values()).map(u => ({
-    id: u.id,
-    name: u.name,
-    role: u.role,
-    avatarUrl: u.avatarUrl,
-    age: u.age,
-    bio: u.bio,
-    reliability: u.reliability,
-  }));
+  const demoIds = ['user-anna', 'user-mikhail', 'user-elena', 'user-admin'];
+  const users = Array.from(store.users.values())
+    .filter(u => demoIds.includes(u.id))
+    .map(u => ({
+      id: u.id,
+      name: u.name,
+      role: u.role,
+      avatarUrl: u.avatarUrl,
+      age: u.age,
+      bio: u.bio,
+      reliability: u.reliability,
+    }));
   res.json(users);
 });
 
