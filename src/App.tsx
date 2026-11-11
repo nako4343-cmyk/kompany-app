@@ -24,6 +24,7 @@ import { MapView } from './components/MapView.tsx';
 import { OnlineStatusBadge } from './components/OnlineStatusBadge.tsx';
 import { EventItem, UserProfile, AppNotification, UserReview } from './types/index.ts';
 import { api } from './services/api.ts';
+import { clientLocalStore } from './services/clientLocalStore.ts';
 
 const CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'Все', label: 'Все события' },
@@ -54,17 +55,37 @@ const ALL_INTEREST_OPTIONS = [
   'Технологии',
 ];
 
+// Helper function to test interest match for an event against user profile
+const isEventInterestMatch = (ev: EventItem, user: UserProfile | null): boolean => {
+  if (!user) return false;
+  const userInterests = (user.interests || []).map(i => i.toLowerCase());
+  const cat = (ev.category || '').toLowerCase();
+  const title = (ev.title || '').toLowerCase();
+  const desc = (ev.description || '').toLowerCase();
+  const vibe = (ev.vibe || '').toLowerCase();
+  return userInterests.some(i => 
+    cat.includes(i) || i.includes(cat) || 
+    title.includes(i) || 
+    desc.includes(i) || 
+    vibe.includes(i)
+  );
+};
+
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [aiRecommendations, setAiRecommendations] = useState<Array<{ eventId: string; matchReason: string; matchScore: number }>>([]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => clientLocalStore.getMe());
+  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>(() => clientLocalStore.getAvailableUsers());
+  const [events, setEvents] = useState<EventItem[]>(() => clientLocalStore.getEvents());
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => clientLocalStore.getNotifications());
+  const [aiRecommendations, setAiRecommendations] = useState<Array<{ eventId: string; matchReason: string; matchScore: number }>>(() => clientLocalStore.aiGetRecommendations());
   
   // Color Palette State
   const [activePalette, setActivePalette] = useState<ColorPaletteId>(() => {
-    const saved = localStorage.getItem('kompany_palette') as ColorPaletteId;
-    return saved || 'sunset';
+    try {
+      const saved = localStorage.getItem('kompany_palette') as ColorPaletteId;
+      return saved || 'sunset';
+    } catch {
+      return 'sunset';
+    }
   });
 
   // Navigation & Filters
@@ -73,7 +94,7 @@ export default function App() {
   const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [feedViewMode, setFeedViewMode] = useState<'cards' | 'map'>('cards');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
@@ -93,7 +114,10 @@ export default function App() {
   const [activeChatEventId, setActiveChatEventId] = useState<string | null>(null);
   const [inspectedUserId, setInspectedUserId] = useState<string | null>(null);
   const [reviewModalData, setReviewModalData] = useState<{ eventId: string; targetUserId: string; targetUserName: string; eventName?: string } | null>(null);
-  const [myReviews, setMyReviews] = useState<UserReview[]>([]);
+  const [myReviews, setMyReviews] = useState<UserReview[]>(() => {
+    const me = clientLocalStore.getMe();
+    return me ? clientLocalStore.getUserProfile(me.id).reviews : [];
+  });
   const [reportModalData, setReportModalData] = useState<{ targetType: 'user' | 'event'; targetId: string; targetTitle: string } | null>(null);
   const [showSafetyGuide, setShowSafetyGuide] = useState<boolean>(false);
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
@@ -102,7 +126,11 @@ export default function App() {
   // Sync palette to document root
   useEffect(() => {
     document.documentElement.setAttribute('data-palette', activePalette);
-    localStorage.setItem('kompany_palette', activePalette);
+    try {
+      localStorage.setItem('kompany_palette', activePalette);
+    } catch {
+      // ignore storage errors in private mode
+    }
   }, [activePalette]);
 
   // Initial load
@@ -113,9 +141,9 @@ export default function App() {
         api.getAvailableUsers(),
         api.getNotifications(),
       ]);
-      setCurrentUser(me);
-      setAvailableUsers(userList);
-      setNotifications(notifs);
+      if (me) setCurrentUser(me);
+      if (Array.isArray(userList)) setAvailableUsers(userList);
+      if (Array.isArray(notifs)) setNotifications(notifs);
 
       if (me) {
         api.getUserProfile(me.id).then(res => setMyReviews(res.reviews || [])).catch(() => {});
@@ -126,21 +154,13 @@ export default function App() {
         onlyToday: selectedCategory === 'Сегодня' || activeTab === 'today',
         query: searchQuery || undefined,
       });
-      setEvents(evList);
+      if (Array.isArray(evList)) setEvents(evList);
 
-      api.aiGetRecommendations().then(recs => setAiRecommendations(recs)).catch(() => {});
+      api.aiGetRecommendations().then(recs => {
+        if (Array.isArray(recs)) setAiRecommendations(recs);
+      }).catch(() => {});
     } catch (err) {
       console.warn('Initial load handled with fallback:', err);
-      try {
-        const fallbackMe = await api.getMe();
-        if (fallbackMe) setCurrentUser(fallbackMe);
-        const fallbackUsers = await api.getAvailableUsers();
-        if (fallbackUsers) setAvailableUsers(fallbackUsers);
-        const fallbackEvents = await api.getEvents();
-        if (fallbackEvents) setEvents(fallbackEvents);
-      } catch (fallbackErr) {
-        console.error('Fallback load error:', fallbackErr);
-      }
     } finally {
       setIsLoading(false);
     }
@@ -213,53 +233,18 @@ export default function App() {
     }
   };
 
-  if (!currentUser) {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center p-4 gap-4"
-        style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
-      >
-        <div className="flex items-center gap-3 text-sm font-medium">
-          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: 'var(--accent-primary)' }} />
-          <span>Загрузка Kompany...</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            api.getMe().then(u => setCurrentUser(u)).catch(() => {});
-          }}
-          className="px-4 py-2 text-xs font-semibold rounded-xl text-white cursor-pointer transition-all shadow-xs"
-          style={{ backgroundColor: 'var(--accent-primary)' }}
-        >
-          Войти как Анна (Организатор)
-        </button>
-      </div>
-    );
-  }
-
+  // All useMemo hooks MUST run unconditionally before any early return
   const todayEvents = useMemo(() => events.filter(e => e.isToday), [events]);
-  const savedEvents = useMemo(() => events.filter(e => currentUser.savedEventIds?.includes(e.id)), [events, currentUser.savedEventIds]);
+  const savedEvents = useMemo(
+    () => events.filter(e => currentUser?.savedEventIds?.includes(e.id)),
+    [events, currentUser?.savedEventIds]
+  );
   
   const baseFeedEvents = useMemo(() => {
     if (activeTab === 'today') return todayEvents;
     if (selectedCategory === 'Сохраненные') return savedEvents;
     return events;
   }, [activeTab, selectedCategory, todayEvents, savedEvents, events]);
-
-  // Helper function to test interest match for an event against user profile
-  const isEventInterestMatch = (ev: EventItem, user: UserProfile): boolean => {
-    const userInterests = (user.interests || []).map(i => i.toLowerCase());
-    const cat = ev.category.toLowerCase();
-    const title = ev.title.toLowerCase();
-    const desc = ev.description.toLowerCase();
-    const vibe = (ev.vibe || '').toLowerCase();
-    return userInterests.some(i => 
-      cat.includes(i) || i.includes(cat) || 
-      title.includes(i) || 
-      desc.includes(i) || 
-      vibe.includes(i)
-    );
-  };
 
   // Pre-calculate counts for quick filters
   const quickFilterCounts = useMemo(() => {
@@ -280,17 +265,15 @@ export default function App() {
     let list = [...baseFeedEvents];
 
     if (quickFilter === 'nearby') {
-      // 'только поблизости': events within 3.0 km or closest first
       const nearbyList = list.filter(e => e.distanceKm <= 3.0);
       const target = nearbyList.length > 0 ? nearbyList : list;
       return target.sort((a, b) => a.distanceKm - b.distanceKm);
     }
 
     if (quickFilter === 'popular') {
-      // 'самые популярные': sort by number of occupied spots and occupancy rate
       return list.sort((a, b) => {
-        const rateA = a.occupiedSpots / a.totalSpots;
-        const rateB = b.occupiedSpots / b.totalSpots;
+        const rateA = a.occupiedSpots / (a.totalSpots || 1);
+        const rateB = b.occupiedSpots / (b.totalSpots || 1);
         if (b.occupiedSpots !== a.occupiedSpots) {
           return b.occupiedSpots - a.occupiedSpots;
         }
@@ -299,14 +282,13 @@ export default function App() {
     }
 
     if (quickFilter === 'interests') {
-      // 'наиболее подходящие по интересам': match against user.interests & AI recommendations
-      const userInterests = (currentUser.interests || []).map(i => i.toLowerCase());
+      const userInterests = (currentUser?.interests || []).map(i => i.toLowerCase());
 
       const getScore = (ev: EventItem): number => {
         let score = 0;
-        const cat = ev.category.toLowerCase();
-        const title = ev.title.toLowerCase();
-        const desc = ev.description.toLowerCase();
+        const cat = (ev.category || '').toLowerCase();
+        const title = (ev.title || '').toLowerCase();
+        const desc = (ev.description || '').toLowerCase();
         const vibe = (ev.vibe || '').toLowerCase();
 
         for (const interest of userInterests) {
@@ -329,8 +311,22 @@ export default function App() {
     return list;
   }, [baseFeedEvents, quickFilter, currentUser, aiRecommendations]);
 
+  if (!currentUser) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-4 gap-4"
+        style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
+      >
+        <div className="flex items-center gap-3 text-sm font-medium">
+          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: 'var(--accent-primary)' }} />
+          <span>Загрузка Kompany...</span>
+        </div>
+      </div>
+    );
+  }
+
   const myOrganizedEvents = events.filter(e => e.organizerId === currentUser.id);
-  const myJoinedEvents = events.filter(e => e.approvedParticipantIds.includes(currentUser.id));
+  const myJoinedEvents = events.filter(e => (e.approvedParticipantIds || []).includes(currentUser.id));
 
   return (
     <div
@@ -421,7 +417,7 @@ export default function App() {
                 }}
               >
                 <img
-                  src="/src/assets/images/hero_community_event_1794332913246.jpg"
+                  src="./assets/images/hero_community_event_1794332913246.jpg"
                   alt="Дружеская компания за ужином"
                   className="absolute inset-0 w-full h-full object-cover opacity-45 mix-blend-luminosity"
                 />
