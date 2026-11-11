@@ -1,0 +1,6 @@
+{
+  "name": "Kompany",
+  "description": "Сервис для поиска компании на праздники, выходные и мероприятия с защитой контактов и точного адреса до взаимного подтверждения.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

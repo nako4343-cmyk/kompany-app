@@ -1,0 +1,84 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Unbounded', 'Plus Jakarta Sans', sans-serif;
+}
+
+:root,
+[data-palette="sunset"] {
+  --bg-canvas: #FAF7F2;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F3EFE6;
+  --text-primary: #181512;
+  --text-secondary: #5C554E;
+  --text-muted: #8C847B;
+  --border-subtle: #E6E0D5;
+  --accent-primary: #E04F33;
+  --accent-hover: #C83E23;
+  --accent-soft: #FFF1EE;
+  --accent-text: #9E2B15;
+  --accent-secondary: #15803D;
+  --hero-grad-from: #1C1613;
+  --hero-grad-via: #2E1F18;
+  --badge-glow: rgba(224, 79, 51, 0.25);
+}
+
+[data-palette="cobalt"] {
+  --bg-canvas: #F4F6FB;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #EAEFF8;
+  --text-primary: #0D1321;
+  --text-secondary: #4A5568;
+  --text-muted: #718096;
+  --border-subtle: #DCE3F0;
+  --accent-primary: #3B44F6;
+  --accent-hover: #2932DF;
+  --accent-soft: #EEF0FF;
+  --accent-text: #232B99;
+  --accent-secondary: #0D9488;
+  --hero-grad-from: #0B1026;
+  --hero-grad-via: #19224D;
+  --badge-glow: rgba(59, 68, 246, 0.25);
+}
+
+[data-palette="midnight"] {
+  --bg-canvas: #0D0F14;
+  --bg-surface: #161922;
+  --bg-elevated: #1F2430;
+  --text-primary: #F7F8FA;
+  --text-secondary: #A6B0C3;
+  --text-muted: #6C7689;
+  --border-subtle: #262C3A;
+  --accent-primary: #FF5E3A;
+  --accent-hover: #FF7455;
+  --accent-soft: rgba(255, 94, 58, 0.14);
+  --accent-text: #FF947B;
+  --accent-secondary: #10B981;
+  --hero-grad-from: #090A0F;
+  --hero-grad-via: #1D1623;
+  --badge-glow: rgba(255, 94, 58, 0.35);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text-primary);
+  background-color: var(--bg-canvas);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Custom scrollbar for mobile drawers & horizontal feeds */
+::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
