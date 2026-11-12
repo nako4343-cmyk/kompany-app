@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Shield, Users, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { X, Send, Shield, Users, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { ChatMessage, EventItem, UserProfile } from '../types/index.ts';
 import { api } from '../services/api.ts';
 
@@ -8,6 +9,15 @@ interface ChatModalProps {
   currentUser: UserProfile;
   onClose: () => void;
 }
+
+const QUICK_REPLIES: string[] = [
+  'Привет!',
+  'Сколько человек уже идет?',
+  'Во сколько начало?',
+  'Где именно встречаемся?',
+  'Я уже в пути, скоро буду!',
+  'Что нужно взять с собой?',
+];
 
 export const ChatModal: React.FC<ChatModalProps> = ({
   eventId,
@@ -18,8 +28,10 @@ export const ChatModal: React.FC<ChatModalProps> = ({
   const [event, setEvent] = useState<EventItem | null>(null);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const loadChat = async () => {
     try {
@@ -42,25 +54,49 @@ export const ChatModal: React.FC<ChatModalProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const sendMessageText = async (rawText: string) => {
+    const trimmed = rawText.trim();
+    if (!trimmed || isSending) return;
+
+    setIsSending(true);
+    setErrorMsg('');
+
+    try {
+      const newMsg = await api.sendChatMessage(eventId, trimmed);
+      setMessages(prev => [...prev, newMsg]);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Ошибка отправки');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
     const text = inputText;
     setInputText('');
+    await sendMessageText(text);
+  };
 
-    try {
-      const newMsg = await api.sendChatMessage(eventId, text);
-      setMessages(prev => [...prev, newMsg]);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Ошибка отправки');
-    }
+  const handleQuickReply = async (replyText: string) => {
+    await sendMessageText(replyText);
+    inputRef.current?.focus();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs">
-      <div
-        className="w-full max-w-lg h-[92vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom duration-200"
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.98 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-lg h-[92vh] sm:h-[82vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
@@ -85,7 +121,11 @@ export const ChatModal: React.FC<ChatModalProps> = ({
               </h2>
               <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-semibold">
                 <Shield className="w-3 h-3 shrink-0" />
-                <span className="truncate">Закрытое пространство для одобренных участников</span>
+                <span className="truncate">
+                  {event
+                    ? `Участников: ${event.occupiedSpots} из ${event.totalSpots} · Начало в ${event.time}`
+                    : 'Закрытое пространство для одобренных участников'}
+                </span>
               </div>
             </div>
           </div>
@@ -140,14 +180,18 @@ export const ChatModal: React.FC<ChatModalProps> = ({
               }
 
               return (
-                <div
+                <motion.div
                   key={msg.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.16 }}
                   className={`flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isMine && (
                     <img
                       src={msg.senderAvatar}
                       alt={msg.senderName}
+                      referrerPolicy="no-referrer"
                       className="w-7 h-7 rounded-full object-cover shrink-0 mb-1"
                     />
                   )}
@@ -176,11 +220,47 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                       {msg.timestamp}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               );
             })
           )}
           <div ref={messagesEndRef} />
+        </div>
+
+        {/* Quick Replies Bar */}
+        <div
+          className="px-3.5 pt-2.5 pb-2 border-t shrink-0"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          <div className="flex items-center gap-1.5 mb-2">
+            <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+            <span className="text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+              Быстрые ответы:
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            {QUICK_REPLIES.map(reply => (
+              <motion.button
+                key={reply}
+                type="button"
+                disabled={isSending}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => handleQuickReply(reply)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors cursor-pointer disabled:opacity-50"
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {reply}
+              </motion.button>
+            ))}
+          </div>
         </div>
 
         {/* Input Footer */}
@@ -193,6 +273,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({
           }}
         >
           <input
+            ref={inputRef}
             type="text"
             value={inputText}
             onChange={e => setInputText(e.target.value)}
@@ -206,14 +287,14 @@ export const ChatModal: React.FC<ChatModalProps> = ({
           />
           <button
             type="submit"
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || isSending}
             className="p-3 rounded-xl disabled:opacity-40 text-white transition-colors cursor-pointer"
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             <Send className="w-4 h-4" />
           </button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

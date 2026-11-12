@@ -1890,6 +1890,199 @@
         "createdAt": "2026-11-11T07:24:59.958Z",
         "attendanceStatus": "not_marked"
       }
+    ],
+    [
+      "app-demo-anna-pending",
+      {
+        "id": "app-demo-anna-pending",
+        "eventId": "ev-3",
+        "eventTitle": "Акустический вечер инди-музыки в уютном баре",
+        "userId": "user-anna",
+        "user": {
+          "id": "user-anna",
+          "name": "Анна Воронова",
+          "age": 28,
+          "avatarUrl": "./assets/images/avatar_host_anna_1794332914629.jpg",
+          "city": "Москва",
+          "bio": "Люблю открывать новые гастрономические места, слушать джаз и собирать уютные душевные компании. Работаю в креативе.",
+          "interests": [
+            "Рестораны / Бары",
+            "День рождения",
+            "Кино / Концерт",
+            "Искусство",
+            "Прогулка"
+          ],
+          "reliability": {
+            "score": 4.95,
+            "eventsAttended": 14,
+            "eventsOrganized": 6,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "note": "Привет, Елена! Обожаю камерную инди-музыку и живой звук, с радостью составлю компанию на вечер!",
+        "status": "pending",
+        "createdAt": "2026-11-11T15:30:00.000Z",
+        "attendanceStatus": "not_marked"
+      }
+    ],
+    [
+      "app-demo-anna-rejected",
+      {
+        "id": "app-demo-anna-rejected",
+        "eventId": "ev-6",
+        "eventTitle": "Вечерний падел-теннис для начинающих (корт забронирован)",
+        "userId": "user-anna",
+        "user": {
+          "id": "user-anna",
+          "name": "Анна Воронова",
+          "age": 28,
+          "avatarUrl": "./assets/images/avatar_host_anna_1794332914629.jpg",
+          "city": "Москва",
+          "bio": "Люблю открывать новые гастрономические места, слушать джаз и собирать уютные душевные компании. Работаю в креативе.",
+          "interests": [
+            "Рестораны / Бары",
+            "День рождения",
+            "Кино / Концерт",
+            "Искусство",
+            "Прогулка"
+          ],
+          "reliability": {
+            "score": 4.95,
+            "eventsAttended": 14,
+            "eventsOrganized": 6,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "note": "Хотела бы попробовать падел-теннис впервые, если еще осталось место на корте!",
+        "status": "rejected",
+        "createdAt": "2026-11-11T15:30:00.000Z",
+        "attendanceStatus": "not_marked"
+      }
+    ],
+    [
+      "app-demo-mikhail-rejected",
+      {
+        "id": "app-demo-mikhail-rejected",
+        "eventId": "ev-3",
+        "eventTitle": "Акустический вечер инди-музыки в уютном баре",
+        "userId": "user-mikhail",
+        "user": {
+          "id": "user-mikhail",
+          "name": "Михаил Соколов",
+          "age": 29,
+          "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+          "city": "Москва",
+          "bio": "Недавно переехал в Москву из Новосибирска. Увлекаюсь сложными настолками, хайкингом и хорошим кофе.",
+          "interests": [
+            "Настольные игры",
+            "Квиз / Интеллект",
+            "Спорт",
+            "Путешествие",
+            "Кино / Концерт"
+          ],
+          "reliability": {
+            "score": 4.88,
+            "eventsAttended": 9,
+            "eventsOrganized": 2,
+            "cancellations": 1,
+            "noShows": 0,
+            "attendanceRate": 95,
+            "positiveReviewsCount": 10
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "note": "Привет! Буду рядом после работы, с удовольствием послушаю акустический сет.",
+        "status": "rejected",
+        "createdAt": "2026-11-11T15:30:00.000Z",
+        "attendanceStatus": "not_marked"
+      }
+    ],
+    [
+      "app-demo-elena-pending",
+      {
+        "id": "app-demo-elena-pending",
+        "eventId": "ev-2",
+        "eventTitle": "Настольные игры: Покорение Марса и Кодовые Имена",
+        "userId": "user-elena",
+        "user": {
+          "id": "user-elena",
+          "name": "Елена Кузнецова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
+          "city": "Москва",
+          "bio": "Архитектор, обожаю выставки, виниловые пластинки и пикники в парках. Всегда за активные приключения!",
+          "interests": [
+            "Пикник / Шашлыки",
+            "Кино / Концерт",
+            "Прогулка",
+            "Ресторан / Бар"
+          ],
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 8,
+            "eventsOrganized": 1,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 9
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "note": "Привет, Михаил! Очень хочу сыграть партию в «Покорение Марса», быстро схватываю правила.",
+        "status": "pending",
+        "createdAt": "2026-11-11T15:30:00.000Z",
+        "attendanceStatus": "not_marked"
+      }
+    ],
+    [
+      "app-demo-elena-rejected",
+      {
+        "id": "app-demo-elena-rejected",
+        "eventId": "ev-8",
+        "eventTitle": "Кино-музыкальный квиз «Угадай саундтрек и кадр за 10 секунд»",
+        "userId": "user-elena",
+        "user": {
+          "id": "user-elena",
+          "name": "Елена Кузнецова",
+          "age": 26,
+          "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
+          "city": "Москва",
+          "bio": "Архитектор, обожаю выставки, виниловые пластинки и пикники в парках. Всегда за активные приключения!",
+          "interests": [
+            "Пикник / Шашлыки",
+            "Кино / Концерт",
+            "Прогулка",
+            "Ресторан / Бар"
+          ],
+          "reliability": {
+            "score": 5,
+            "eventsAttended": 8,
+            "eventsOrganized": 1,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 9
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "note": "Обожаю музыкальные квизы и саундтреки из кино, возьмете в команду?",
+        "status": "rejected",
+        "createdAt": "2026-11-11T15:30:00.000Z",
+        "attendanceStatus": "not_marked"
+      }
     ]
   ],
   "chatMessages": [
