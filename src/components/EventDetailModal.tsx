@@ -146,7 +146,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Kompany App//RU',
+      'PRODID:-//Kompa App//RU',
       'BEGIN:VEVENT',
       `SUMMARY:${activeEvent.title}`,
       `DESCRIPTION:${activeEvent.description.replace(/\n/g, ' ')} \\nЛокация: ${activeEvent.exactVenue || ''} \\nИнструкция: ${activeEvent.privateInstructions || ''}`,

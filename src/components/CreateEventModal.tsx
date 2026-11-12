@@ -897,7 +897,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold block mb-0.5" style={{ color: 'var(--text-primary)' }}>
-                    Принцип безопасности Kompany + Яндекс Карты
+                    Принцип безопасности Kompa + Яндекс Карты
                   </span>
                   <span style={{ color: 'var(--text-secondary)' }}>
                     Выберите место на Яндекс Картах. Точный адрес, пин и ссылка на карту откроются ТОЛЬКО тем участникам, чьи заявки вы лично подтвердите.

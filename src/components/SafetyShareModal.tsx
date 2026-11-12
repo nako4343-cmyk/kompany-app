@@ -10,7 +10,7 @@ interface SafetyShareModalProps {
 export const SafetyShareModal: React.FC<SafetyShareModalProps> = ({ event, onClose }) => {
   const [copied, setCopied] = useState(false);
 
-  const shareText = `🛡️ Защитная карточка встречи через Kompany:
+  const shareText = `🛡️ Защитная карточка встречи через Kompa:
 Мероприятие: «${event.title}»
 Организатор: ${event.organizer.name} (Рейтинг: ★${event.organizer.reliability.score}, ${event.organizer.reliability.attendanceRate}% явка)
 Время: ${event.isToday ? 'Сегодня' : event.date} в ${event.time}

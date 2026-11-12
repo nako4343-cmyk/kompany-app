@@ -19,7 +19,7 @@ export const BillSplitterModal: React.FC<BillSplitterModalProps> = ({
   const grandTotal = totalAmount + tipsAmount;
   const perPerson = Math.ceil(grandTotal / (participantsCount || 1));
 
-  const splitText = `Калькулятор счета Kompany:
+  const splitText = `Калькулятор счета Kompa:
 Общая сумма счета: ${totalAmount.toLocaleString()} ₽
 ${includeTips ? `Чаевые (10%): ${tipsAmount.toLocaleString()} ₽\n` : ''}Итого к оплате: ${grandTotal.toLocaleString()} ₽
 Количество участников: ${participantsCount} чел.

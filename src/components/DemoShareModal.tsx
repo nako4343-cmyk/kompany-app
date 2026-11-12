@@ -59,8 +59,8 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Kompany — Демо-версия сервиса',
-          text: 'Зацени сервис для поиска компании на выходные и праздники с безопасным скрытием адреса и точных контактов!',
+          title: 'Kompa — Компания — найди с кем пойти сегодня вечером (без дейтинга)',
+          text: 'Закрытый поиск компании в бар, на настолки, концерты и дни рождения. Точный адрес и чат открываются только после одобрения организатором.',
           url: demoUrl,
         });
       } catch (err) {
@@ -72,7 +72,7 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
   };
 
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(demoUrl)}&text=${encodeURIComponent(
-    'Зацени демо Kompany — сервис для поиска компании на события с безопасным скрытием адреса и отзывов о встречах!'
+    'Kompa — найди с кем пойти сегодня вечером (без дейтинга)! Закрытый поиск компании в бар, на настолки, концерты и дни рождения.'
   )}`;
 
   return (

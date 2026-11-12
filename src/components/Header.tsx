@@ -142,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-lg shadow-sm"
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
-            К
+            K
           </motion.div>
           <div>
             <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="font-display font-extrabold text-base tracking-tight"
                 style={{ color: 'var(--text-primary)' }}
               >
-                Компания
+                Kompa
               </span>
               <span
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
                   color: 'var(--accent-text)',
                 }}
               >
-                Москва
+                {lang === 'en' ? 'Moscow' : 'Москва'}
               </span>
             </div>
             <p

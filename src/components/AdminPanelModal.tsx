@@ -64,7 +64,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-bold leading-none">
-                Панель безопасности и модерации Kompany
+                Панель безопасности и модерации Kompa
               </h2>
               <span className="text-[10px] text-slate-400">
                 Контроль качества, жалоб и защита пользователей
