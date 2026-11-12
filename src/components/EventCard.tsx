@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Unlock, Compass, ArrowUpRight, Bookmark, Star, Radio, Clock, XCircle, CheckCircle2 } from 'lucide-react';
 import { EventItem, UserProfile } from '../types/index.ts';
 import { EventSlotsTimeline } from './EventSlotsTimeline.tsx';
@@ -14,6 +14,32 @@ interface EventCardProps {
   matchReason?: string;
 }
 
+interface ConfettiSpec {
+  id: number;
+  x: number;
+  y: number;
+  rotate: number;
+  color: string;
+  shape: 'circle' | 'square' | 'pill';
+  delay: number;
+  size: number;
+}
+
+const CONFETTI_SPECS: ConfettiSpec[] = [
+  { id: 1, x: -72, y: -58, rotate: -140, color: '#F97316', shape: 'pill', delay: 0, size: 7 },
+  { id: 2, x: -48, y: -76, rotate: 95, color: '#F59E0B', shape: 'circle', delay: 0.03, size: 6 },
+  { id: 3, x: -24, y: -64, rotate: 180, color: '#10B981', shape: 'square', delay: 0.05, size: 6 },
+  { id: 4, x: 0, y: -82, rotate: -90, color: '#EC4899', shape: 'pill', delay: 0.02, size: 7 },
+  { id: 5, x: 26, y: -70, rotate: 135, color: '#6366F1', shape: 'circle', delay: 0.04, size: 6 },
+  { id: 6, x: 52, y: -78, rotate: -160, color: '#38BDF8', shape: 'square', delay: 0.01, size: 6 },
+  { id: 7, x: 76, y: -54, rotate: 110, color: '#F59E0B', shape: 'pill', delay: 0.06, size: 7 },
+  { id: 8, x: -60, y: -36, rotate: 210, color: '#EC4899', shape: 'circle', delay: 0.07, size: 5 },
+  { id: 9, x: -16, y: -44, rotate: -120, color: '#F97316', shape: 'square', delay: 0.04, size: 5 },
+  { id: 10, x: 18, y: -48, rotate: 165, color: '#10B981', shape: 'pill', delay: 0.05, size: 6 },
+  { id: 11, x: 62, y: -34, rotate: -195, color: '#6366F1', shape: 'circle', delay: 0.08, size: 5 },
+  { id: 12, x: 38, y: -62, rotate: 85, color: '#F43F5E', shape: 'square', delay: 0.03, size: 6 },
+];
+
 export const EventCard: React.FC<EventCardProps> = ({
   event,
   currentUser,
@@ -22,6 +48,9 @@ export const EventCard: React.FC<EventCardProps> = ({
   isRecommended,
   matchReason,
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [burstKey, setBurstKey] = useState(0);
+
   const isOrganizer = currentUser.id === event.organizerId;
   const isApproved = event.approvedParticipantIds.includes(currentUser.id);
   const appStatus = isApproved ? 'accepted' : (event.myApplicationStatus ?? null);
@@ -38,20 +67,102 @@ export const EventCard: React.FC<EventCardProps> = ({
     return `${day} ${months[d.getMonth()]}, ${timeStr}`;
   };
 
+  const handleHoverStart = () => {
+    setIsHovered(true);
+    setBurstKey(prev => prev + 1);
+  };
+
+  const handleHoverEnd = () => {
+    setIsHovered(false);
+  };
+
   return (
     <motion.article
       layout
       initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: isHovered ? [1, 1.012, 1.006] : 1,
+      }}
+      whileHover={{ y: -5 }}
+      whileTap={{ scale: 0.99 }}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
+      transition={{
+        duration: 0.28,
+        ease: [0.16, 1, 0.3, 1],
+        scale: isHovered
+          ? { duration: 1.6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+          : { duration: 0.2 },
+      }}
       onClick={() => onOpenDetails(event)}
-      className="group rounded-3xl border transition-shadow duration-200 overflow-hidden cursor-pointer flex flex-col hover:shadow-xl"
+      className="relative group rounded-3xl border transition-shadow duration-300 overflow-hidden cursor-pointer flex flex-col hover:shadow-2xl"
       style={{
         backgroundColor: 'var(--bg-surface)',
-        borderColor: 'var(--border-subtle)',
+        borderColor: isHovered ? 'var(--accent-primary)' : 'var(--border-subtle)',
       }}
     >
+      {/* Subtle Ambient Pulse Glow Overlay on Hover */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            key="hover-pulse-aura"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.12, 0.26, 0.12] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+            className="pointer-events-none absolute inset-0 z-10 rounded-3xl"
+            style={{
+              boxShadow: 'inset 0 0 28px var(--accent-soft)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Confetti Burst Overlay on Hover / Tap */}
+      <AnimatePresence>
+        {isHovered && burstKey > 0 && (
+          <div
+            key={`confetti-burst-${burstKey}`}
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-14 right-14 z-30 flex items-center justify-center"
+          >
+            {CONFETTI_SPECS.map(particle => (
+              <motion.span
+                key={particle.id}
+                initial={{ opacity: 1, x: 0, y: 0, scale: 0.2, rotate: 0 }}
+                animate={{
+                  opacity: [1, 1, 0],
+                  x: particle.x,
+                  y: [0, particle.y, particle.y + 24],
+                  scale: [0.4, 1.15, 0.6],
+                  rotate: particle.rotate,
+                }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: 0.85,
+                  delay: particle.delay,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className={`absolute block shadow-xs ${
+                  particle.shape === 'circle'
+                    ? 'rounded-full'
+                    : particle.shape === 'pill'
+                    ? 'rounded-full'
+                    : 'rounded-[2px]'
+                }`}
+                style={{
+                  width: particle.shape === 'pill' ? `${particle.size * 1.6}px` : `${particle.size}px`,
+                  height: `${particle.size}px`,
+                  backgroundColor: particle.color,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Visual Media Frame */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
         <img
@@ -94,9 +205,12 @@ export const EventCard: React.FC<EventCardProps> = ({
             {onToggleSave && (
               <motion.button
                 type="button"
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.85 }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  setBurstKey(prev => prev + 1);
+                  setIsHovered(true);
                   onToggleSave(event.id);
                 }}
                 title={isSaved ? 'Убрать из сохраненных' : 'Сохранить мероприятие'}
@@ -125,7 +239,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       {/* Card Body */}
-      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+      <div className="p-5 flex-1 flex flex-col justify-between gap-4 relative z-20">
         <div>
           {isRecommended && matchReason && (
             <div
@@ -143,7 +257,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           {/* Event Headline */}
           <h3
             className="text-base font-display font-bold leading-snug line-clamp-2 transition-colors"
-            style={{ color: 'var(--text-primary)' }}
+            style={{ color: isHovered ? 'var(--accent-primary)' : 'var(--text-primary)' }}
           >
             {event.title}
           </h3>
@@ -271,10 +385,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                   Вы хост
                 </span>
               ) : appStatus === 'accepted' ? (
-                <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
+                <motion.span
+                  animate={isHovered ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+                  transition={{ duration: 1.2, repeat: isHovered ? Infinity : 0 }}
+                  className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1.5 whitespace-nowrap"
+                >
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                   <span>Принят</span>
-                </span>
+                </motion.span>
               ) : appStatus === 'pending' ? (
                 <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
                   <Clock className="w-3.5 h-3.5 shrink-0" />
@@ -297,10 +415,23 @@ export const EventCard: React.FC<EventCardProps> = ({
                 </span>
               ) : (
                 <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
+                  animate={
+                    isHovered
+                      ? {
+                          scale: [1, 1.05, 1],
+                        }
+                      : { scale: 1 }
+                  }
+                  transition={{
+                    duration: 1.1,
+                    repeat: isHovered ? Infinity : 0,
+                    ease: 'easeInOut',
+                  }}
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    setBurstKey(prev => prev + 1);
                     onOpenDetails(event);
                   }}
                   className="px-4 py-2 rounded-2xl text-xs font-bold text-white transition-colors flex items-center gap-1 shadow-sm whitespace-nowrap cursor-pointer"
