@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, Lock, Unlock, Sparkles, ArrowUpRight, Bookmark } from 'lucide-react';
 import { EventItem, UserProfile } from '../types/index.ts';
+import { EventSlotsTimeline } from './EventSlotsTimeline.tsx';
 
 interface EventCardProps {
   event: EventItem;
@@ -210,40 +211,13 @@ export const EventCard: React.FC<EventCardProps> = ({
             </div>
           </div>
 
-          {/* Confirmed Company Faces & Occupations Peek */}
-          {event.approvedParticipants && event.approvedParticipants.length > 0 && (
-            <div
-              className="p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2"
-              style={{
-                backgroundColor: 'var(--bg-elevated)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="flex -space-x-2 shrink-0 overflow-hidden">
-                  {event.approvedParticipants.slice(0, 3).map((p) => (
-                    <img
-                      key={p.id}
-                      src={p.avatarUrl}
-                      alt={p.name}
-                      referrerPolicy="no-referrer"
-                      className="w-6 h-6 rounded-full object-cover border-2"
-                      style={{ borderColor: 'var(--bg-surface)' }}
-                      title={`${p.name} (${p.occupation || 'Участник'})`}
-                    />
-                  ))}
-                </div>
-                <div className="text-[11px] truncate" style={{ color: 'var(--text-secondary)' }}>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Идут {event.approvedParticipants.length} чел.:{' '}
-                  </span>
-                  <span>
-                    {event.approvedParticipants.map(p => p.occupation ? `${p.name.split(' ')[0]} (${p.occupation.split(' ')[0]})` : p.name.split(' ')[0]).join(', ')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Visual Slots Timeline & Event Schedule */}
+          <EventSlotsTimeline
+            event={event}
+            compact={true}
+            isOrganizer={isOrganizer}
+            onSlotClick={() => onOpenDetails(event)}
+          />
 
           {/* Capacity Progress & Interactive Button */}
           <div className="flex items-center justify-between gap-3">

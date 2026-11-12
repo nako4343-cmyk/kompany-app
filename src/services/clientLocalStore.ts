@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v6';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v7';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -30,6 +30,21 @@ export class ClientLocalStore {
     this.init();
   }
 
+  resetToInitial() {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem('kompany_client_store_v6');
+        localStorage.removeItem('kompany_client_store_v5');
+        localStorage.removeItem('kompany_user_id');
+      }
+    } catch {
+      // ignore
+    }
+    this.seedFromInitial();
+    this.save();
+  }
+
   private init() {
     if (typeof window === 'undefined') {
       this.seedFromInitial();
@@ -40,17 +55,28 @@ export class ClientLocalStore {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        this.users = new Map(parsed.users || []);
-        this.events = new Map(parsed.events || []);
-        this.rawEventsSecret = new Map(parsed.rawEventsSecret || []);
-        this.applications = new Map(parsed.applications || []);
-        this.chatMessages = new Map(parsed.chatMessages || []);
-        this.questions = new Map(parsed.questions || []);
-        this.reviews = new Map(parsed.reviews || []);
-        this.reports = new Map(parsed.reports || []);
-        this.notifications = new Map(parsed.notifications || []);
+        if (Array.isArray(parsed.users) && parsed.users.length > 0) {
+          this.users = new Map(parsed.users);
+        } else {
+          this.users = new Map(initialData.users as any);
+        }
+
+        if (Array.isArray(parsed.events) && parsed.events.length > 0) {
+          this.events = new Map(parsed.events);
+        } else {
+          this.events = new Map(initialData.events as any);
+        }
+
+        this.rawEventsSecret = new Map(Array.isArray(parsed.rawEventsSecret) ? parsed.rawEventsSecret : initialData.rawEventsSecret as any);
+        this.applications = new Map(Array.isArray(parsed.applications) ? parsed.applications : initialData.applications as any);
+        this.chatMessages = new Map(Array.isArray(parsed.chatMessages) ? parsed.chatMessages : initialData.chatMessages as any);
+        this.questions = new Map(Array.isArray(parsed.questions) ? parsed.questions : initialData.questions as any);
+        this.reviews = new Map(Array.isArray(parsed.reviews) ? parsed.reviews : initialData.reviews as any);
+        this.reports = new Map(Array.isArray(parsed.reports) ? parsed.reports : initialData.reports as any);
+        this.notifications = new Map(Array.isArray(parsed.notifications) ? parsed.notifications : initialData.notifications as any);
         this.activeUserId = parsed.activeUserId || 'user-anna';
-        if (this.events.size < 20) {
+
+        if (this.users.size === 0 || this.events.size < 20 || !this.users.has(this.activeUserId)) {
           this.seedFromInitial();
           this.save();
         }
@@ -61,6 +87,7 @@ export class ClientLocalStore {
     } catch (e) {
       console.warn('Failed to parse client store, reseeding:', e);
       this.seedFromInitial();
+      this.save();
     }
   }
 
@@ -135,7 +162,20 @@ export class ClientLocalStore {
   }
 
   getMe(): UserProfile {
-    return this.users.get(this.activeUserId) || Array.from(this.users.values())[0];
+    let u = this.users.get(this.activeUserId);
+    if (!u && this.users.size > 0) {
+      u = Array.from(this.users.values())[0];
+      if (u) this.activeUserId = u.id;
+    }
+    if (!u) {
+      this.seedFromInitial();
+      u = this.users.get(this.activeUserId) || Array.from(this.users.values())[0];
+    }
+    if (!u) {
+      const fallback = initialData.users[0]?.[1] as unknown as UserProfile;
+      return fallback;
+    }
+    return u;
   }
 
   getAvailableUsers(): UserProfile[] {

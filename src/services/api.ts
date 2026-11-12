@@ -74,7 +74,18 @@ class ApiService {
     const url = new URL(endpoint, 'http://localhost');
     const path = url.pathname;
     const method = (options.method || 'GET').toUpperCase();
-    const body = options.body ? JSON.parse(options.body as string) : {};
+    let body: any = {};
+    if (options.body) {
+      if (typeof options.body === 'string') {
+        try {
+          body = JSON.parse(options.body);
+        } catch {
+          body = {};
+        }
+      } else {
+        body = options.body;
+      }
+    }
 
     // 1. Auth & Users
     if (path === '/api/auth/me') return clientLocalStore.getMe();

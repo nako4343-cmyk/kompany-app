@@ -72,7 +72,7 @@ const isEventInterestMatch = (ev: EventItem, user: UserProfile | null): boolean 
 };
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => clientLocalStore.getMe());
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => clientLocalStore.getMe());
   const [availableUsers, setAvailableUsers] = useState<UserProfile[]>(() => clientLocalStore.getAvailableUsers());
   const [events, setEvents] = useState<EventItem[]>(() => clientLocalStore.getEvents());
   const [notifications, setNotifications] = useState<AppNotification[]>(() => clientLocalStore.getNotifications());
@@ -318,22 +318,9 @@ export default function App() {
     return list;
   }, [baseFeedEvents, quickFilter, currentUser, aiRecommendations]);
 
-  if (!currentUser) {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center p-4 gap-4"
-        style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
-      >
-        <div className="flex items-center gap-3 text-sm font-medium">
-          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: 'var(--accent-primary)' }} />
-          <span>Загрузка Kompany...</span>
-        </div>
-      </div>
-    );
-  }
-
-  const myOrganizedEvents = events.filter(e => e.organizerId === currentUser.id);
-  const myJoinedEvents = events.filter(e => (e.approvedParticipantIds || []).includes(currentUser.id));
+  const activeUser = currentUser || clientLocalStore.getMe();
+  const myOrganizedEvents = events.filter(e => e.organizerId === activeUser.id);
+  const myJoinedEvents = events.filter(e => (e.approvedParticipantIds || []).includes(activeUser.id));
 
   return (
     <div

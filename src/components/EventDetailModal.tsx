@@ -9,6 +9,7 @@ import { api } from '../services/api.ts';
 import { SafetyShareModal } from './SafetyShareModal.tsx';
 import { BillSplitterModal } from './BillSplitterModal.tsx';
 import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
+import { EventSlotsTimeline } from './EventSlotsTimeline.tsx';
 
 interface EventDetailModalProps {
   event: EventItem;
@@ -573,7 +574,24 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             </button>
           </div>
 
-          {/* 4. PARTICIPANTS ROSTER */}
+          {/* 4. VISUAL SLOTS TIMELINE & SCHEDULE */}
+          <EventSlotsTimeline
+            event={activeEvent}
+            compact={false}
+            isOrganizer={isOrganizer}
+            onSlotClick={(slotIndex, slot) => {
+              if (slot?.isOccupied) {
+                if (slot.isOrganizer) {
+                  onOpenUserProfile(activeEvent.organizerId);
+                } else {
+                  const p = activeEvent.approvedParticipants?.[slotIndex - 1];
+                  if (p) onOpenUserProfile(p.id);
+                }
+              }
+            }}
+          />
+
+          {/* 5. PARTICIPANTS ROSTER */}
           <div>
             <div className="flex items-center justify-between mb-2 tabular-nums">
               <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
