@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Compass, Flame, Target, SlidersHorizontal, X, MapPin } from 'lucide-react';
+import { AppLanguage, UI_TEXT } from '../i18n/translations.ts';
 
 export type QuickFilterType = 'all' | 'nearby' | 'popular' | 'interests';
 
@@ -16,6 +17,7 @@ interface QuickFiltersBarProps {
   currentUserInterests?: string[];
   totalEventsCount: number;
   filteredCount: number;
+  lang?: AppLanguage;
 }
 
 export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
@@ -25,7 +27,10 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
   currentUserInterests = [],
   totalEventsCount: _totalEventsCount,
   filteredCount,
+  lang = 'ru',
 }) => {
+  const t = UI_TEXT[lang];
+
   const filterOptions: Array<{
     id: QuickFilterType;
     label: string;
@@ -34,25 +39,25 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
   }> = [
     {
       id: 'all',
-      label: 'Все',
+      label: t.quickAll,
       icon: <SlidersHorizontal className="w-3.5 h-3.5" />,
       count: counts.all,
     },
     {
       id: 'nearby',
-      label: 'Поблизости',
+      label: t.quickNearby,
       icon: <Compass className="w-3.5 h-3.5" />,
       count: counts.nearby,
     },
     {
       id: 'popular',
-      label: 'Популярные',
+      label: t.quickPopular,
       icon: <Flame className="w-3.5 h-3.5" />,
       count: counts.popular,
     },
     {
       id: 'interests',
-      label: 'По интересам',
+      label: t.quickInterests,
       icon: <Target className="w-3.5 h-3.5" />,
       count: counts.interests,
     },
@@ -62,7 +67,7 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
     <div className="space-y-2.5 mb-5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full">
-          {filterOptions.map(opt => {
+          {filterOptions.map((opt) => {
             const isActive = activeFilter === opt.id;
             return (
               <motion.button
@@ -72,9 +77,13 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                 onClick={() => onChangeFilter(opt.id)}
                 className="relative px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-colors shrink-0 cursor-pointer border flex items-center gap-2"
                 style={{
-                  backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--bg-surface)',
+                  backgroundColor: isActive
+                    ? 'var(--accent-primary)'
+                    : 'var(--bg-surface)',
                   color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
-                  borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                  borderColor: isActive
+                    ? 'var(--accent-primary)'
+                    : 'var(--border-subtle)',
                 }}
               >
                 <span className={isActive ? 'text-white' : 'text-amber-500'}>
@@ -84,7 +93,9 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                 <span
                   className="px-1.5 py-0.5 rounded-lg text-[10px] font-extrabold tabular-nums transition-colors"
                   style={{
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.22)' : 'var(--bg-elevated)',
+                    backgroundColor: isActive
+                      ? 'rgba(255,255,255,0.22)'
+                      : 'var(--bg-elevated)',
                     color: isActive ? '#FFFFFF' : 'var(--text-muted)',
                   }}
                 >
@@ -118,7 +129,7 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                   <>
                     <MapPin className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
                     <span className="truncate">
-                      <strong>Поблизости:</strong> события в радиусе до 3 км ({filteredCount} найдено)
+                      <strong>{t.quickNearby}:</strong> {t.quickNearbyDesc} ({filteredCount})
                     </span>
                   </>
                 )}
@@ -127,7 +138,7 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                   <>
                     <Flame className="w-3.5 h-3.5 shrink-0 text-amber-500" />
                     <span className="truncate">
-                      <strong>Популярные:</strong> компании с высокой активностью и набором участников
+                      <strong>{t.quickPopular}:</strong> {t.quickPopularDesc}
                     </span>
                   </>
                 )}
@@ -136,10 +147,11 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                   <>
                     <Target className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">
-                      <strong>По вашим интересам:</strong>{' '}
+                      <strong>{t.quickInterestsDesc}</strong>{' '}
                       {currentUserInterests.length > 0
-                        ? currentUserInterests.slice(0, 3).join(', ') + (currentUserInterests.length > 3 ? '...' : '')
-                        : 'на основе профиля'}
+                        ? currentUserInterests.slice(0, 3).join(', ') +
+                          (currentUserInterests.length > 3 ? '...' : '')
+                        : '—'}
                     </span>
                   </>
                 )}
@@ -152,7 +164,7 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                 style={{ color: 'var(--accent-primary)' }}
               >
                 <X className="w-3 h-3" />
-                <span>Сбросить</span>
+                <span>{t.resetFilter}</span>
               </button>
             </div>
           </motion.div>

@@ -1607,6 +1607,59 @@
         ],
         "createdAt": "2026-11-11T10:47:48.827Z"
       }
+    ],
+    [
+      "ev-wedding-1",
+      {
+        "id": "ev-wedding-1",
+        "title": "Камерная свадьба-вечеринка на террасе в Серебряном Бору",
+        "category": "Свадьба",
+        "description": "Празднуем нашу камерную свадьбу в формате тёплой летней вечеринки у воды без официоза! Приглашаем друзей и открытых творческих ребят разделить с нами этот вечер: живой джаз-бэнд, фуршет, танцы на пирсе и бенгальские огни.",
+        "date": "2026-11-12",
+        "time": "18:30",
+        "isToday": true,
+        "totalSpots": 24,
+        "occupiedSpots": 5,
+        "budget": "3 000–5 000 ₽",
+        "city": "Москва",
+        "approximateArea": "Серебряный Бор, берег реки, ~4.5 км",
+        "distanceKm": 4.5,
+        "imageUrl": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80",
+        "organizerId": "user-anna",
+        "organizer": {
+          "id": "user-anna",
+          "name": "Анна Воронова",
+          "age": 28,
+          "avatarUrl": "./assets/images/avatar_host_anna_1794332914629.jpg",
+          "reliability": {
+            "score": 4.95,
+            "eventsAttended": 14,
+            "eventsOrganized": 6,
+            "cancellations": 0,
+            "noShows": 0,
+            "attendanceRate": 100,
+            "positiveReviewsCount": 18
+          },
+          "isPhoneVerified": true,
+          "isEmailVerified": true
+        },
+        "status": "open",
+        "vibe": "Праздничный вайб",
+        "musicOrMood": "Живой джаз, гирлянды у воды, шампанское и танцы",
+        "icebreakerQuestion": "Какой самый необычный или трогательный тост вы слышали в жизни?",
+        "requirements": "23-38 лет, праздничное настроение, smart casual / коктейльный дресс-код",
+        "rules": [
+          "Подтвердить участие заранее",
+          "Позитивный настрой и уважение к гостям"
+        ],
+        "approvedParticipantIds": [
+          "user-elena",
+          "user-mikhail",
+          "user-external-1",
+          "user-external-2"
+        ],
+        "createdAt": "2026-11-12T17:02:42.573Z"
+      }
     ]
   ],
   "rawEventsSecret": [
@@ -1847,6 +1900,21 @@
         "exactAddress": "Пресненская набережная, 2",
         "organizerPhone": "+7 (915) 602-88-19",
         "privateInstructions": "Рядом со станцией городского велопроката №142 у спуска к воде.",
+        "allowPhoneSharing": true
+      }
+    ],
+    [
+      "ev-wedding-1",
+      {
+        "exactVenue": "Банкетный шатёр и пирс «Серебряный Бор»",
+        "exactAddress": "Таманская ул., д. 46, стр. 1",
+        "yandexMapsUrl": "https://yandex.ru/maps/?ll=37.4342%2C55.7789&z=16&pt=37.4342%2C55.7789%2Cpm2rdm",
+        "coordinates": {
+          "lat": 55.7789,
+          "lon": 37.4342
+        },
+        "organizerPhone": "+7 (916) 555-01-92",
+        "privateInstructions": "Вход через центральную аллею к пирсу №2, ориентир — белая арка с ретро-гирляндами.",
         "allowPhoneSharing": true
       }
     ]

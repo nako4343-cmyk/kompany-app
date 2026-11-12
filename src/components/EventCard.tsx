@@ -1,8 +1,26 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Unlock, Compass, ArrowUpRight, Bookmark, Star, Radio, Clock, XCircle, CheckCircle2 } from 'lucide-react';
+import {
+  Lock,
+  Unlock,
+  Compass,
+  ArrowUpRight,
+  Bookmark,
+  Star,
+  Radio,
+  Clock,
+  XCircle,
+  CheckCircle2,
+} from 'lucide-react';
 import { EventItem, UserProfile } from '../types/index.ts';
 import { EventSlotsTimeline } from './EventSlotsTimeline.tsx';
+import {
+  AppLanguage,
+  UI_TEXT,
+  translateCategory,
+  translateDistrict,
+  translateVibe,
+} from '../i18n/translations.ts';
 
 interface EventCardProps {
   event: EventItem;
@@ -12,6 +30,7 @@ interface EventCardProps {
   onQuickApply?: (event: EventItem) => void;
   isRecommended?: boolean;
   matchReason?: string;
+  lang?: AppLanguage;
 }
 
 interface ConfettiSpec {
@@ -47,29 +66,36 @@ export const EventCard: React.FC<EventCardProps> = ({
   onToggleSave,
   isRecommended,
   matchReason,
+  lang = 'ru',
 }) => {
+  const t = UI_TEXT[lang];
   const [isHovered, setIsHovered] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
 
   const isOrganizer = currentUser.id === event.organizerId;
   const isApproved = event.approvedParticipantIds.includes(currentUser.id);
-  const appStatus = isApproved ? 'accepted' : (event.myApplicationStatus ?? null);
+  const appStatus = isApproved ? 'accepted' : event.myApplicationStatus ?? null;
   const isSaved = currentUser.savedEventIds?.includes(event.id) ?? false;
   const isFull = event.occupiedSpots >= event.totalSpots;
   const availableSpots = Math.max(0, event.totalSpots - event.occupiedSpots);
-  const fillPercent = Math.min(100, Math.round((event.occupiedSpots / event.totalSpots) * 100));
+  const fillPercent = Math.min(
+    100,
+    Math.round((event.occupiedSpots / event.totalSpots) * 100)
+  );
 
   const formatEventDate = (dateStr: string, isToday: boolean, timeStr: string) => {
-    if (isToday) return `Сегодня, ${timeStr}`;
+    if (isToday) return `${t.todayWord}, ${timeStr}`;
     const d = new Date(dateStr);
     const day = d.getDate();
-    const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    const monthsRu = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const months = lang === 'es' ? monthsEs : monthsRu;
     return `${day} ${months[d.getMonth()]}, ${timeStr}`;
   };
 
   const handleHoverStart = () => {
     setIsHovered(true);
-    setBurstKey(prev => prev + 1);
+    setBurstKey((prev) => prev + 1);
   };
 
   const handleHoverEnd = () => {
@@ -128,7 +154,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             aria-hidden="true"
             className="pointer-events-none absolute bottom-14 right-14 z-30 flex items-center justify-center"
           >
-            {CONFETTI_SPECS.map(particle => (
+            {CONFETTI_SPECS.map((particle) => (
               <motion.span
                 key={particle.id}
                 initial={{ opacity: 1, x: 0, y: 0, scale: 0.2, rotate: 0 }}
@@ -153,7 +179,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                     : 'rounded-[2px]'
                 }`}
                 style={{
-                  width: particle.shape === 'pill' ? `${particle.size * 1.6}px` : `${particle.size}px`,
+                  width:
+                    particle.shape === 'pill'
+                      ? `${particle.size * 1.6}px`
+                      : `${particle.size}px`,
                   height: `${particle.size}px`,
                   backgroundColor: particle.color,
                 }}
@@ -178,11 +207,11 @@ export const EventCard: React.FC<EventCardProps> = ({
         {/* Top Left Unboxed Kicker & Privacy + Bookmark Status */}
         <div className="absolute top-3.5 left-4 right-3.5 flex items-center justify-between text-xs text-white/95">
           <div className="flex items-center gap-1.5 font-semibold drop-shadow-xs">
-            <span>{event.category}</span>
+            <span>{translateCategory(event.category, lang)}</span>
             {event.isToday && (
               <>
                 <span aria-hidden="true">·</span>
-                <span className="font-bold text-amber-300">Сегодня вечером</span>
+                <span className="font-bold text-amber-300">{t.tonightBadge}</span>
               </>
             )}
           </div>
@@ -192,12 +221,12 @@ export const EventCard: React.FC<EventCardProps> = ({
               {isOrganizer || isApproved ? (
                 <>
                   <Unlock className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-300">Адрес открыт</span>
+                  <span className="text-emerald-300">{t.addressUnlockedShort}</span>
                 </>
               ) : (
                 <>
                   <Lock className="w-3 h-3 text-amber-300" />
-                  <span className="text-white/90">Адрес скрыт</span>
+                  <span className="text-white/90">{t.addressHiddenShort}</span>
                 </>
               )}
             </div>
@@ -209,11 +238,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                 whileTap={{ scale: 0.85 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setBurstKey(prev => prev + 1);
+                  setBurstKey((prev) => prev + 1);
                   setIsHovered(true);
                   onToggleSave(event.id);
                 }}
-                title={isSaved ? 'Убрать из сохраненных' : 'Сохранить мероприятие'}
                 className="w-8 h-8 rounded-xl backdrop-blur-md bg-black/45 hover:bg-black/65 border border-white/15 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <Bookmark
@@ -226,14 +254,14 @@ export const EventCard: React.FC<EventCardProps> = ({
           </div>
         </div>
 
-        {/* Bottom Media Metadata (Unboxed Typography with · separators) */}
+        {/* Bottom Media Metadata */}
         <div className="absolute bottom-3.5 left-4 right-4 text-white">
           <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-white/90 tabular-nums">
             <span className="font-semibold text-white">
               {formatEventDate(event.date, event.isToday, event.time)}
             </span>
             <span aria-hidden="true">·</span>
-            <span>{event.approximateArea}</span>
+            <span>{translateDistrict(event.approximateArea, lang)}</span>
           </div>
         </div>
       </div>
@@ -257,7 +285,9 @@ export const EventCard: React.FC<EventCardProps> = ({
           {/* Event Headline */}
           <h3
             className="text-base font-display font-bold leading-snug line-clamp-2 transition-colors"
-            style={{ color: isHovered ? 'var(--accent-primary)' : 'var(--text-primary)' }}
+            style={{
+              color: isHovered ? 'var(--accent-primary)' : 'var(--text-primary)',
+            }}
           >
             {event.title}
           </h3>
@@ -269,11 +299,16 @@ export const EventCard: React.FC<EventCardProps> = ({
               style={{ color: 'var(--accent-text)' }}
             >
               <Radio className="w-3 h-3 shrink-0" />
-              <span>{event.vibe}</span>
+              <span>{translateVibe(event.vibe, lang)}</span>
               {event.musicOrMood && (
                 <>
-                  <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>·</span>
-                  <span className="truncate font-normal" style={{ color: 'var(--text-muted)' }}>
+                  <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>
+                    ·
+                  </span>
+                  <span
+                    className="truncate font-normal"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
                     {event.musicOrMood}
                   </span>
                 </>
@@ -320,7 +355,9 @@ export const EventCard: React.FC<EventCardProps> = ({
                     <span>{event.organizer.reliability.score}</span>
                   </span>
                   <span aria-hidden="true">·</span>
-                  <span>{event.organizer.reliability.attendanceRate}% явка</span>
+                  <span>
+                    {event.organizer.reliability.attendanceRate}% {t.attendanceRateLabel}
+                  </span>
                 </div>
               </div>
             </div>
@@ -333,7 +370,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 {event.budget}
               </span>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                ориентир
+                {t.budgetHint}
               </span>
             </div>
           </div>
@@ -351,10 +388,12 @@ export const EventCard: React.FC<EventCardProps> = ({
             <div className="flex-1 space-y-1.5">
               <div className="flex items-center justify-between text-xs tabular-nums">
                 <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {event.occupiedSpots} из {event.totalSpots} чел.
+                  {event.occupiedSpots} {t.spotsOf} {event.totalSpots} {t.peopleShort}
                 </span>
                 <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                  {isFull ? 'мест нет' : `свободно ${availableSpots}`}
+                  {isFull
+                    ? t.spotsFull
+                    : `${t.spotsAvailablePrefix} ${availableSpots}`}
                 </span>
               </div>
               <div
@@ -382,7 +421,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                     color: 'var(--text-primary)',
                   }}
                 >
-                  Вы хост
+                  {t.youAreHost}
                 </span>
               ) : appStatus === 'accepted' ? (
                 <motion.span
@@ -391,17 +430,17 @@ export const EventCard: React.FC<EventCardProps> = ({
                   className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1.5 whitespace-nowrap"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  <span>Принят</span>
+                  <span>{t.statusApproved}</span>
                 </motion.span>
               ) : appStatus === 'pending' ? (
                 <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
                   <Clock className="w-3.5 h-3.5 shrink-0" />
-                  <span>Ожидает одобрения</span>
+                  <span>{t.statusPending}</span>
                 </span>
               ) : appStatus === 'rejected' ? (
                 <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
                   <XCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>Отклонен</span>
+                  <span>{t.statusRejected}</span>
                 </span>
               ) : isFull ? (
                 <span
@@ -411,17 +450,11 @@ export const EventCard: React.FC<EventCardProps> = ({
                     color: 'var(--text-muted)',
                   }}
                 >
-                  Заполнено
+                  {t.fullBadge}
                 </span>
               ) : (
                 <motion.button
-                  animate={
-                    isHovered
-                      ? {
-                          scale: [1, 1.05, 1],
-                        }
-                      : { scale: 1 }
-                  }
+                  animate={isHovered ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                   transition={{
                     duration: 1.1,
                     repeat: isHovered ? Infinity : 0,
@@ -431,13 +464,13 @@ export const EventCard: React.FC<EventCardProps> = ({
                   whileTap={{ scale: 0.95 }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setBurstKey(prev => prev + 1);
+                    setBurstKey((prev) => prev + 1);
                     onOpenDetails(event);
                   }}
                   className="px-4 py-2 rounded-2xl text-xs font-bold text-white transition-colors flex items-center gap-1 shadow-sm whitespace-nowrap cursor-pointer"
                   style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
-                  <span>В компанию</span>
+                  <span>{t.joinCompanyBtn}</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </motion.button>
               )}

@@ -4,7 +4,7 @@ import {
   Search, Flame, Plus, Compass, ShieldCheck, Briefcase,
   MapPin, MessageSquare, CheckCircle2, RefreshCw, Star, Palette, Lock,
   Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2,
-  Clock, XCircle
+  Clock, XCircle, Navigation
 } from 'lucide-react';
 import { Header, ColorPaletteId } from './components/Header.tsx';
 import { BottomNav, NavTab } from './components/BottomNav.tsx';
@@ -26,6 +26,7 @@ import { OnlineStatusBadge } from './components/OnlineStatusBadge.tsx';
 import { EventItem, UserProfile, AppNotification, UserReview } from './types/index.ts';
 import { api } from './services/api.ts';
 import { clientLocalStore } from './services/clientLocalStore.ts';
+import { AppLanguage, UI_TEXT, translateCategory } from './i18n/translations.ts';
 
 const CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'Все', label: 'Все события' },
@@ -90,6 +91,27 @@ export default function App() {
       return 'sunset';
     }
   });
+
+  // Application Language State ('ru' | 'es')
+  const [lang, setLang] = useState<AppLanguage>(() => {
+    try {
+      const saved = localStorage.getItem('kompany_lang') as AppLanguage;
+      return saved === 'es' ? 'es' : 'ru';
+    } catch {
+      return 'ru';
+    }
+  });
+
+  const handleChangeLang = (nextLang: AppLanguage) => {
+    setLang(nextLang);
+    try {
+      localStorage.setItem('kompany_lang', nextLang);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const t = UI_TEXT[lang];
 
   // Navigation & Filters
   const [activeTab, setActiveTab] = useState<NavTab>('feed');
@@ -404,18 +426,21 @@ export default function App() {
         </div>
       </aside>
 
-      {/* 2. HEADER WITH LIVE PALETTE SWITCHER */}
+      {/* 2. HEADER WITH SINGLE RIGHT-ALIGNED THEME & LANGUAGE SWITCHERS */}
       <Header
         currentUser={currentUser}
         availableUsers={availableUsers}
         onSwitchUser={handleSwitchUser}
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
+        onMarkAllRead={handleMarkAllNotificationsRead}
         onOpenSafetyGuide={() => setShowSafetyGuide(true)}
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenDemoShare={() => setShowDemoShareModal(true)}
         activePalette={activePalette}
         onChangePalette={setActivePalette}
+        lang={lang}
+        onChangeLang={handleChangeLang}
       />
 
       <main className="max-w-6xl mx-auto px-4 pt-5 sm:pt-7">
@@ -449,18 +474,16 @@ export default function App() {
                 <div className="relative z-10 flex items-center justify-between gap-2">
                   <div className="text-xs font-semibold text-white/90 flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Приватный поиск компании</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="text-white/70">Без дейтинга</span>
+                    <span>{t.heroKicker}</span>
                   </div>
                 </div>
 
                 <div className="relative z-10 max-w-xl space-y-4 my-auto pt-6">
                   <h1 className="text-2xl sm:text-4xl font-display font-bold tracking-tight text-white leading-[1.15] text-balance">
-                    Своя компания на любой праздник и вечер
+                    {t.heroTitleLine1} {t.heroTitleHighlight}
                   </h1>
                   <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-lg">
-                    Собирайте людей в ресторан, на день рождения, концерт или настольные игры. Точный адрес и контакты открываются только тем, кого вы лично одобрите.
+                    {t.heroDescription}
                   </p>
 
                   {/* Primary Action Bar */}
@@ -474,7 +497,7 @@ export default function App() {
                       }}
                     >
                       <Search className="w-4 h-4" />
-                      <span>Найти компанию</span>
+                      <span>{t.heroFindMatchBtn}</span>
                     </button>
 
                     <button
@@ -482,13 +505,13 @@ export default function App() {
                       className="px-5 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/20 text-xs sm:text-sm font-bold active:scale-95 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
                     >
                       <Plus className="w-4 h-4" />
-                      <span>Создать событие</span>
+                      <span>{t.heroCreateBtn}</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Right 4-col Bento Side Card: Tonight Spotlight & Color Vibe Selector */}
+              {/* Right 4-col Bento Side Card: Tonight Spotlight & Yandex Maps Radar Quick Card */}
               <div className="lg:col-span-4 flex flex-col gap-4 justify-between">
                 {/* Tonight Card */}
                 <div
@@ -505,13 +528,13 @@ export default function App() {
                       style={{ color: 'var(--accent-primary)' }}
                     >
                       <Flame className="w-4 h-4" />
-                      <span>Компания на сегодня</span>
+                      <span>{t.heroStatTonight}</span>
                     </span>
                     <span
                       className="text-xs font-bold tabular-nums"
                       style={{ color: 'var(--text-muted)' }}
                     >
-                      {todayEvents.length} активных
+                      {todayEvents.length}
                     </span>
                   </div>
 
@@ -520,77 +543,58 @@ export default function App() {
                       className="text-lg font-display font-bold leading-snug"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      Свободны сегодня вечером?
+                      {lang === 'es' ? '¿Libre esta noche?' : 'Свободны сегодня вечером?'}
                     </h2>
                     <p
                       className="text-xs mt-1 leading-relaxed"
                       style={{ color: 'var(--text-secondary)' }}
                     >
-                      Посмотрите спонтанные сборы в бары, на настолки и ужины, которые начнутся в ближайшие часы.
+                      {lang === 'es'
+                        ? 'Explora encuentros espontáneos en bares, cenas y juegos de mesa que empiezan en las próximas horas.'
+                        : 'Посмотрите спонтанные сборы в бары, на настолки и ужины, которые начнутся в ближайшие часы.'}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t text-xs font-bold" style={{ borderColor: 'var(--border-subtle)' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>Смотреть планы на вечер</span>
+                    <span style={{ color: 'var(--text-primary)' }}>
+                      {lang === 'es' ? 'Ver planes para hoy' : 'Смотреть планы на вечер'}
+                    </span>
                     <span style={{ color: 'var(--accent-primary)' }}>→</span>
                   </div>
                 </div>
 
-                {/* Interactive Color Theme Playground Card */}
+                {/* Interactive Yandex Maps Radar Quick-Launch Card */}
                 <div
-                  className="p-5 rounded-3xl border space-y-3"
+                  onClick={() => setFeedViewMode('map')}
+                  className="p-5 rounded-3xl border space-y-2.5 cursor-pointer transition-all hover:shadow-lg group"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
                   }}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Palette className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                      <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                        Цветовая атмосфера интерфейса
-                      </span>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-wider">
+                      <Navigation className="w-3 h-3" />
+                      <span>{t.radarCardBadge}</span>
                     </div>
+                    <span className="text-[11px] font-bold text-red-500 group-hover:translate-x-0.5 transition-transform">
+                      →
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'sunset' as ColorPaletteId, label: 'Терракота', color: '#E04F33', sub: 'Уютная' },
-                      { id: 'cobalt' as ColorPaletteId, label: 'Кобальт', color: '#3B44F6', sub: 'Свежая' },
-                      { id: 'midnight' as ColorPaletteId, label: 'Лаунж', color: '#161922', sub: 'Темная' },
-                    ].map((theme) => {
-                      const isActive = activePalette === theme.id;
-                      return (
-                        <button
-                          key={theme.id}
-                          onClick={() => setActivePalette(theme.id)}
-                          className="p-2.5 rounded-2xl border text-left transition-all cursor-pointer"
-                          style={{
-                            backgroundColor: isActive ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                            borderColor: isActive ? 'var(--accent-primary)' : 'transparent',
-                          }}
-                        >
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span
-                              className="w-3 h-3 rounded-full shrink-0 border border-white/20"
-                              style={{ backgroundColor: theme.color }}
-                            />
-                            <span
-                              className="text-xs font-bold truncate"
-                              style={{ color: 'var(--text-primary)' }}
-                            >
-                              {theme.label}
-                            </span>
-                          </div>
-                          <span
-                            className="text-[10px] block"
-                            style={{ color: 'var(--text-muted)' }}
-                          >
-                            {theme.sub}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  <div>
+                    <h3
+                      className="text-sm font-display font-bold"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {t.radarCardTitle}
+                    </h3>
+                    <p
+                      className="text-xs mt-1 leading-relaxed"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {t.radarCardDesc}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -687,7 +691,7 @@ export default function App() {
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Поиск по событиям, району (Хамовники, Арбат) или формату..."
+                  placeholder={t.heroSearchPlaceholder}
                   className="w-full pl-11 pr-4 py-3.5 rounded-2xl border text-xs font-medium focus:outline-none transition-colors shadow-xs"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
@@ -716,7 +720,7 @@ export default function App() {
                         borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
                       }}
                     >
-                      {cat.label}
+                      {translateCategory(cat.label, lang)}
                     </button>
                   );
                 })}
@@ -731,7 +735,7 @@ export default function App() {
                     className="text-lg font-display font-bold"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {activeTab === 'today' ? 'Планы на сегодня вечером' : 'Ближайшие компании'}
+                    {activeTab === 'today' ? t.feedTodayTitle : t.feedAllTitle}
                   </h2>
                   <span
                     className="text-xs font-semibold tabular-nums"
@@ -757,7 +761,7 @@ export default function App() {
                       color: 'var(--text-primary)',
                     }}
                   >
-                    Карточки
+                    {t.viewCards}
                   </button>
                   <button
                     onClick={() => setFeedViewMode('map')}
@@ -767,8 +771,8 @@ export default function App() {
                       color: 'var(--text-primary)',
                     }}
                   >
-                    <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                    <span>Радар карты</span>
+                    <MapPin className="w-3.5 h-3.5 text-red-500" />
+                    <span>{t.viewRadar}</span>
                   </button>
                 </div>
               </div>
@@ -781,12 +785,14 @@ export default function App() {
                 currentUserInterests={currentUser.interests}
                 totalEventsCount={baseFeedEvents.length}
                 filteredCount={displayEvents.length}
+                lang={lang}
               />
 
               {feedViewMode === 'map' ? (
                 <MapView
                   events={displayEvents}
                   onSelectEvent={setSelectedEventForDetail}
+                  lang={lang}
                 />
               ) : displayEvents.length === 0 ? (
                 <div
@@ -797,12 +803,10 @@ export default function App() {
                   }}
                 >
                   <p className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Мероприятия не найдены
+                    {t.emptyEventsTitle}
                   </p>
                   <p className="text-xs max-w-sm mx-auto mb-5" style={{ color: 'var(--text-secondary)' }}>
-                    {quickFilter !== 'all'
-                      ? 'В выбранном фильтре нет событий. Попробуйте сбросить быстрый фильтр или создать собственную встречу!'
-                      : 'Попробуйте выбрать другую категорию или создайте собственную встречу за 1 минуту!'}
+                    {t.emptyEventsDesc}
                   </p>
                   <div className="flex items-center justify-center gap-2">
                     {quickFilter !== 'all' && (
@@ -815,7 +819,7 @@ export default function App() {
                           color: 'var(--text-primary)',
                         }}
                       >
-                        Сбросить фильтр
+                        {t.resetFilter}
                       </button>
                     )}
                     <button
@@ -823,7 +827,7 @@ export default function App() {
                       className="px-5 py-2.5 text-white text-xs font-bold rounded-2xl cursor-pointer"
                       style={{ backgroundColor: 'var(--accent-primary)' }}
                     >
-                      Создать мероприятие
+                      {t.createEventAction}
                     </button>
                   </div>
                 </div>
@@ -836,10 +840,11 @@ export default function App() {
                       currentUser={currentUser}
                       onOpenDetails={setSelectedEventForDetail}
                       onToggleSave={handleToggleSaveEvent}
+                      lang={lang}
                       isRecommended={quickFilter === 'interests' && isEventInterestMatch(event, currentUser)}
                       matchReason={
                         quickFilter === 'interests' && isEventInterestMatch(event, currentUser)
-                          ? `Совпадает с вашими интересами (${event.category})`
+                          ? `${t.quickInterestsDesc} ${translateCategory(event.category, lang)}`
                           : undefined
                       }
                     />
@@ -865,17 +870,17 @@ export default function App() {
                 className="text-xl font-display font-bold mb-1"
                 style={{ color: 'var(--text-primary)' }}
               >
-                Мои события и закрытые чаты
+                {t.myEventsTitle}
               </h1>
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                Доступ к чату и точному адресу открыт только организатору и подтвержденным участникам.
+                {t.myEventsSubtitle}
               </p>
             </div>
 
             {/* Organized by me */}
             <div className="space-y-3">
               <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                Я организую ({myOrganizedEvents.length})
+                {t.organizedByMeHeader} ({myOrganizedEvents.length})
               </h2>
 
               {myOrganizedEvents.length === 0 ? (
@@ -887,7 +892,7 @@ export default function App() {
                     color: 'var(--text-muted)',
                   }}
                 >
-                  Вы пока не создали ни одного мероприятия.
+                  {lang === 'es' ? 'Aún no has creado ningún evento.' : 'Вы пока не создали ни одного мероприятия.'}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -918,13 +923,13 @@ export default function App() {
                             {ev.title}
                           </span>
                           <span className="text-xs block mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                            {ev.isToday ? 'Сегодня' : ev.date} в {ev.time} · {ev.approximateArea}
+                            {ev.isToday ? t.todayWord : ev.date} · {ev.time} · {ev.approximateArea}
                           </span>
                           <span
                             className="text-xs font-bold block mt-1 tabular-nums"
                             style={{ color: 'var(--accent-primary)' }}
                           >
-                            Участников: {ev.occupiedSpots} из {ev.totalSpots}
+                            {ev.occupiedSpots} {t.spotsOf} {ev.totalSpots}
                           </span>
                         </div>
                       </div>
@@ -938,7 +943,7 @@ export default function App() {
                             color: 'var(--text-primary)',
                           }}
                         >
-                          Заявки и детали
+                          {t.applicationsAndDetailsBtn}
                         </button>
                         <button
                           onClick={() => setActiveChatEventId(ev.id)}
@@ -946,7 +951,7 @@ export default function App() {
                           style={{ backgroundColor: 'var(--accent-primary)' }}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Открыть чат</span>
+                          <span>{t.openChatBtn}</span>
                         </button>
                       </div>
                     </div>
@@ -960,7 +965,7 @@ export default function App() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                    Я участвую ({myParticipationEvents.length})
+                    {t.joinedByMeHeader} ({myParticipationEvents.length})
                   </h2>
                 </div>
 
@@ -980,7 +985,7 @@ export default function App() {
                         : { backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }
                     }
                   >
-                    <span>Все</span>
+                    <span>{t.statusAll}</span>
                     <span className="opacity-80 tabular-nums">{participationCounts.all}</span>
                   </button>
 
@@ -994,7 +999,7 @@ export default function App() {
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>Принят</span>
+                    <span>{t.statusApproved}</span>
                     <span className="opacity-85 tabular-nums">{participationCounts.accepted}</span>
                   </button>
 
@@ -1008,7 +1013,7 @@ export default function App() {
                     }`}
                   >
                     <Clock className="w-3.5 h-3.5 shrink-0" />
-                    <span>Ожидает одобрения</span>
+                    <span>{t.statusPending}</span>
                     <span className="opacity-85 tabular-nums">{participationCounts.pending}</span>
                   </button>
 
@@ -1022,7 +1027,7 @@ export default function App() {
                     }`}
                   >
                     <XCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>Отклонен</span>
+                    <span>{t.statusRejected}</span>
                     <span className="opacity-85 tabular-nums">{participationCounts.rejected}</span>
                   </button>
                 </div>
@@ -1047,8 +1052,8 @@ export default function App() {
                     const status = getEventAppStatus(ev);
                     const statusConfig = {
                       accepted: {
-                        label: 'Принят',
-                        subtext: 'Точный адрес и закрытый чат участников открыты',
+                        label: t.statusApproved,
+                        subtext: t.statusApprovedSub,
                         badgeClass:
                           'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
                         accentBarClass: 'bg-emerald-500',
@@ -1056,8 +1061,8 @@ export default function App() {
                         Icon: CheckCircle2,
                       },
                       pending: {
-                        label: 'Ожидает одобрения',
-                        subtext: 'Организатор рассматривает вашу заявку · точный адрес пока скрыт',
+                        label: t.statusPending,
+                        subtext: t.statusPendingSub,
                         badgeClass:
                           'bg-amber-500/12 text-amber-600 dark:text-amber-400 border-amber-500/30',
                         accentBarClass: 'bg-amber-500',
@@ -1065,8 +1070,8 @@ export default function App() {
                         Icon: Clock,
                       },
                       rejected: {
-                        label: 'Отклонен',
-                        subtext: 'К сожалению, группа уже укомплектована или заявка отклонена',
+                        label: t.statusRejected,
+                        subtext: t.statusRejectedSub,
                         badgeClass:
                           'bg-rose-500/12 text-rose-600 dark:text-rose-400 border-rose-500/30',
                         accentBarClass: 'bg-rose-500',
@@ -1728,6 +1733,7 @@ export default function App() {
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
         onMarkAllRead={handleMarkAllNotificationsRead}
+        lang={lang}
       />
 
       {/* 4. MODALS & DRAWERS */}

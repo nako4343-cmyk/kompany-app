@@ -1,6 +1,16 @@
-import React, { useState } from 'react';
-import { Compass, Flame, PlusCircle, MessageSquare, User, Bell, CheckCheck, Sparkles, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Compass,
+  Flame,
+  PlusCircle,
+  MessageSquare,
+  User,
+  Bell,
+  CheckCheck,
+} from 'lucide-react';
 import { AppNotification } from '../types/index.ts';
+import { AppLanguage, UI_TEXT } from '../i18n/translations.ts';
 
 export type NavTab = 'feed' | 'today' | 'create' | 'chats' | 'profile';
 
@@ -12,318 +22,313 @@ interface BottomNavProps {
   notifications?: AppNotification[];
   onNotificationClick?: (notif: AppNotification) => void;
   onMarkAllRead?: () => void;
+  lang?: AppLanguage;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
   onTabChange,
   unreadChatCount = 0,
-  unreadNotificationCount,
+  unreadNotificationCount = 0,
   notifications = [],
   onNotificationClick,
   onMarkAllRead,
+  lang = 'ru',
 }) => {
-  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const t = UI_TEXT[lang];
+  const [showNotifications, setShowNotifications] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
-  const computedUnreadNotifCount =
-    unreadNotificationCount !== undefined
+  const computedUnreadNotifs =
+    unreadNotificationCount > 0
       ? unreadNotificationCount
-      : notifications.filter(n => !n.isRead).length;
+      : notifications.filter((n) => !n.isRead).length;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const tabs = [
-    { id: 'feed' as NavTab, label: 'Главная', icon: Compass },
-    { id: 'today' as NavTab, label: 'Сегодня', icon: Flame, isSpecial: true },
-    { id: 'create' as NavTab, label: 'Создать', icon: PlusCircle, isCreate: true },
-    { id: 'chats' as NavTab, label: 'Чаты', icon: MessageSquare, badge: unreadChatCount },
-    { id: 'profile' as NavTab, label: 'Профиль', icon: User },
+    { id: 'feed' as NavTab, label: t.navFeed, icon: Compass },
+    { id: 'today' as NavTab, label: t.navToday, icon: Flame },
+    {
+      id: 'create' as NavTab,
+      label: t.createShortBtn,
+      icon: PlusCircle,
+      isPrimary: true,
+    },
+    {
+      id: 'chats' as NavTab,
+      label: t.navChats,
+      icon: MessageSquare,
+      badge: unreadChatCount,
+    },
+    { id: 'profile' as NavTab, label: t.navProfile, icon: User },
   ];
 
-  const handleTabClick = (tabId: NavTab) => {
-    setShowNotifPanel(false);
-    onTabChange(tabId);
-  };
-
   return (
-    <>
-      {/* Backdrop when notification drawer is open */}
-      {showNotifPanel && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-[1px] transition-opacity"
-          onClick={() => setShowNotifPanel(false)}
-        />
-      )}
-
-      <nav className="fixed bottom-3 left-0 right-0 z-40 px-3 sm:px-4 pointer-events-none">
-        <div className="max-w-lg mx-auto relative">
-          {/* Floating Notifications Sheet above BottomNav */}
-          {showNotifPanel && (
-            <div
-              className="mb-3 w-full rounded-3xl border shadow-2xl overflow-hidden pointer-events-auto animate-in fade-in slide-in-from-bottom-3 duration-200"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <div
-                className="px-4 py-3 border-b flex items-center justify-between gap-2"
-                style={{
-                  borderColor: 'var(--border-subtle)',
-                  backgroundColor: 'var(--bg-elevated)',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Уведомления и заявки
-                  </span>
-                  {computedUnreadNotifCount > 0 && (
-                    <span
-                      className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white tabular-nums"
-                      style={{ backgroundColor: 'var(--accent-primary)' }}
-                    >
-                      +{computedUnreadNotifCount} новых
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {computedUnreadNotifCount > 0 && onMarkAllRead && (
-                    <button
-                      type="button"
-                      onClick={onMarkAllRead}
-                      className="px-2.5 py-1 rounded-xl text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer hover:opacity-80"
-                      style={{
-                        backgroundColor: 'var(--accent-soft)',
-                        color: 'var(--accent-text)',
-                      }}
-                    >
-                      <CheckCheck className="w-3.5 h-3.5" />
-                      <span>Прочитать все</span>
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowNotifPanel(false)}
-                    className="p-1.5 rounded-xl transition-colors cursor-pointer hover:opacity-75"
-                    style={{ color: 'var(--text-muted)' }}
-                    aria-label="Закрыть уведомления"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div
-                className="max-h-72 overflow-y-auto divide-y p-2 space-y-1"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                {notifications.length === 0 ? (
-                  <div className="py-8 px-4 text-center space-y-1.5">
-                    <Sparkles className="w-6 h-6 mx-auto opacity-40" style={{ color: 'var(--accent-primary)' }} />
-                    <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      Все уведомления прочитаны
-                    </p>
-                    <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                      Здесь будут появляться новые заявки на ваши встречи и ответы организаторов
-                    </p>
-                  </div>
-                ) : (
-                  notifications.map(n => (
-                    <button
-                      key={n.id}
-                      type="button"
-                      onClick={() => {
-                        if (onNotificationClick) {
-                          onNotificationClick(n);
-                        }
-                        setShowNotifPanel(false);
-                      }}
-                      className="w-full p-3 text-left rounded-2xl transition-all cursor-pointer flex items-start justify-between gap-3 hover:opacity-95"
-                      style={{
-                        backgroundColor: n.isRead ? 'transparent' : 'var(--accent-soft)',
-                      }}
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
-                            {n.title}
-                          </span>
-                          {n.type === 'application_received' && !n.isRead && (
-                            <span
-                              className="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider text-white shrink-0"
-                              style={{ backgroundColor: 'var(--accent-primary)' }}
-                            >
-                              Заявка
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                          {n.message}
-                        </p>
-                      </div>
-
-                      {!n.isRead && (
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0 mt-1 animate-pulse"
-                          style={{ backgroundColor: 'var(--accent-primary)' }}
-                        />
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Main Bottom Navigation Bar */}
-          <div
-            className="grid grid-cols-6 items-center h-16 px-1.5 sm:px-2 rounded-3xl border shadow-2xl backdrop-blur-xl pointer-events-auto transition-colors duration-200"
+    <div
+      ref={popoverRef}
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-lg"
+    >
+      {/* Floating Notifications Popover above BottomNav */}
+      <AnimatePresence>
+        {showNotifications && (
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-3 rounded-3xl shadow-2xl border overflow-hidden backdrop-blur-xl"
             style={{
               backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-subtle)',
             }}
           >
-            {/* First 4 tabs: Главная, Сегодня, Создать, Чаты */}
-            {tabs.slice(0, 4).map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id && !showNotifPanel;
-
-              if (tab.isCreate) {
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => handleTabClick(tab.id)}
-                    className="flex flex-col items-center justify-center -mt-4 group min-h-[44px] cursor-pointer"
-                  >
-                    <div
-                      className="w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg group-active:scale-95 transition-transform"
-                      style={{
-                        backgroundColor: 'var(--accent-primary)',
-                        boxShadow: '0 8px 20px var(--badge-glow)',
-                      }}
-                    >
-                      <Icon className="w-6 h-6 stroke-[2.5]" />
-                    </div>
-                    <span
-                      className="text-[10px] font-bold mt-1 whitespace-nowrap"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      Создать
-                    </span>
-                  </button>
-                );
-              }
-
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabClick(tab.id)}
-                  className="flex flex-col items-center justify-center py-1 relative min-h-[44px] cursor-pointer"
-                >
-                  <div className="relative">
-                    <Icon
-                      className="w-5 h-5 transition-colors"
-                      style={{
-                        color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
-                        strokeWidth: isActive ? 2.5 : 2,
-                      }}
-                    />
-                    {tab.badge && tab.badge > 0 ? (
-                      <span
-                        className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-white rounded-full text-[9px] font-bold flex items-center justify-center tabular-nums shadow-xs"
-                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                      >
-                        {tab.badge}
-                      </span>
-                    ) : null}
-                  </div>
-                  <span
-                    className="text-[10px] tracking-tight mt-1 transition-colors whitespace-nowrap"
-                    style={{
-                      color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                      fontWeight: isActive ? 700 : 500,
-                    }}
-                  >
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
-
-            {/* 5th button: Dedicated Notifications button with unread Badge */}
-            <button
-              type="button"
-              onClick={() => setShowNotifPanel(prev => !prev)}
-              aria-label="Уведомления"
-              className="flex flex-col items-center justify-center py-1 relative min-h-[44px] cursor-pointer"
+            <div
+              className="px-4 py-3 border-b flex items-center justify-between"
+              style={{ borderColor: 'var(--border-subtle)' }}
             >
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <Bell
-                  className="w-5 h-5 transition-colors"
-                  style={{
-                    color: showNotifPanel ? 'var(--accent-primary)' : 'var(--text-muted)',
-                    strokeWidth: showNotifPanel ? 2.5 : 2,
-                  }}
+                  className="w-4 h-4"
+                  style={{ color: 'var(--accent-primary)' }}
                 />
-                {computedUnreadNotifCount > 0 && (
+                <span
+                  className="font-display font-bold text-xs sm:text-sm"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {t.notificationsTitle}
+                </span>
+                {computedUnreadNotifs > 0 && (
                   <span
-                    className="absolute -top-1.5 -right-2.5 min-w-[17px] h-[17px] px-1 text-white rounded-full text-[9px] font-bold flex items-center justify-center tabular-nums shadow-xs ring-2 ring-[var(--bg-surface)]"
+                    className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white tabular-nums"
                     style={{ backgroundColor: 'var(--accent-primary)' }}
                   >
-                    {computedUnreadNotifCount > 9 ? '9+' : computedUnreadNotifCount}
+                    {computedUnreadNotifs} {t.notificationsUnread}
                   </span>
                 )}
               </div>
-              <span
-                className="text-[10px] tracking-tight mt-1 transition-colors whitespace-nowrap"
-                style={{
-                  color: showNotifPanel ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontWeight: showNotifPanel ? 700 : 500,
-                }}
-              >
-                Заявки
-              </span>
-            </button>
 
-            {/* 6th button: Профиль */}
-            {(() => {
-              const profileTab = tabs[4];
-              const Icon = profileTab.icon;
-              const isActive = activeTab === profileTab.id && !showNotifPanel;
-              return (
+              {computedUnreadNotifs > 0 && onMarkAllRead && (
                 <button
-                  key={profileTab.id}
                   type="button"
-                  onClick={() => handleTabClick(profileTab.id)}
-                  className="flex flex-col items-center justify-center py-1 relative min-h-[44px] cursor-pointer"
+                  onClick={onMarkAllRead}
+                  className="text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80"
+                  style={{ color: 'var(--accent-primary)' }}
                 >
-                  <div className="relative">
-                    <Icon
-                      className="w-5 h-5 transition-colors"
-                      style={{
-                        color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
-                        strokeWidth: isActive ? 2.5 : 2,
-                      }}
-                    />
-                  </div>
-                  <span
-                    className="text-[10px] tracking-tight mt-1 transition-colors whitespace-nowrap"
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span>{t.notificationsMarkAllRead}</span>
+                </button>
+              )}
+            </div>
+
+            <div
+              className="max-h-72 overflow-y-auto divide-y"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              {notifications.length === 0 ? (
+                <div
+                  className="p-6 text-center text-xs"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {t.notificationsEmptyTitle}
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <button
+                    key={notif.id}
+                    type="button"
+                    onClick={() => {
+                      onNotificationClick?.(notif);
+                      setShowNotifications(false);
+                    }}
+                    className="w-full text-left p-3.5 transition-colors flex items-start gap-3 cursor-pointer hover:opacity-90"
                     style={{
-                      color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                      fontWeight: isActive ? 700 : 500,
+                      backgroundColor: !notif.isRead
+                        ? 'var(--accent-soft)'
+                        : 'transparent',
                     }}
                   >
-                    {profileTab.label}
-                  </span>
-                </button>
+                    <div
+                      className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                      style={{
+                        backgroundColor: !notif.isRead
+                          ? 'var(--accent-primary)'
+                          : 'transparent',
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="text-xs font-bold truncate"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {notif.title}
+                        </span>
+                      </div>
+                      <p
+                        className="text-xs mt-0.5 leading-relaxed line-clamp-2"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {notif.message}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Dock Pill */}
+      <nav
+        aria-label="Нижняя навигация"
+        className="w-full rounded-3xl border shadow-2xl px-2 py-1.5 transition-colors duration-300"
+        style={{
+          backgroundColor: 'var(--glass-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderColor: 'var(--border-subtle)',
+        }}
+      >
+        <div className="flex items-center justify-around">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id && !showNotifications;
+
+            if (tab.isPrimary) {
+              return (
+                <motion.button
+                  key={tab.id}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => {
+                    setShowNotifications(false);
+                    onTabChange(tab.id);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-white font-semibold text-xs shadow-md cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--accent-primary)',
+                    boxShadow: '0 6px 18px -4px var(--badge-glow)',
+                  }}
+                >
+                  <Icon className="w-4 h-4 stroke-[2.2]" />
+                  <span className="hidden xs:inline">{tab.label}</span>
+                </motion.button>
               );
-            })()}
-          </div>
+            }
+
+            return (
+              <motion.button
+                key={tab.id}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => {
+                  setShowNotifications(false);
+                  onTabChange(tab.id);
+                }}
+                className="relative flex flex-col items-center justify-center py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer"
+                style={{
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                }}
+              >
+                <div className="relative">
+                  <Icon
+                    className={`w-5 h-5 transition-transform duration-200 ${
+                      isActive
+                        ? 'stroke-[2.4] scale-105'
+                        : 'stroke-[1.75] hover:scale-105'
+                    }`}
+                  />
+                  {tab.badge && tab.badge > 0 ? (
+                    <span
+                      className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-white text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums shadow-xs"
+                      style={{ backgroundColor: 'var(--accent-primary)' }}
+                    >
+                      {tab.badge}
+                    </span>
+                  ) : null}
+                </div>
+                <span
+                  className={`text-[10px] mt-0.5 tracking-tight transition-all ${
+                    isActive ? 'font-bold' : 'font-medium'
+                  }`}
+                >
+                  {tab.label}
+                </span>
+                {isActive && (
+                  <motion.span
+                    layoutId="bottom-nav-indicator"
+                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                    className="w-1.5 h-1.5 rounded-full mt-0.5"
+                    style={{ backgroundColor: 'var(--accent-primary)' }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+
+          {/* Notifications Button with Unread Badge */}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setShowNotifications((prev) => !prev)}
+            aria-label={t.navNotifications}
+            title={t.navNotifications}
+            className="relative flex flex-col items-center justify-center py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer"
+            style={{
+              color: showNotifications
+                ? 'var(--accent-primary)'
+                : 'var(--text-muted)',
+            }}
+          >
+            <div className="relative">
+              <Bell
+                className={`w-5 h-5 transition-transform duration-200 ${
+                  showNotifications
+                    ? 'stroke-[2.4] scale-105'
+                    : 'stroke-[1.75] hover:scale-105'
+                }`}
+              />
+              {computedUnreadNotifs > 0 && (
+                <motion.span
+                  initial={{ scale: 0.6 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-white text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums shadow-xs"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
+                >
+                  {computedUnreadNotifs > 99 ? '99+' : computedUnreadNotifs}
+                </motion.span>
+              )}
+            </div>
+            <span
+              className={`text-[10px] mt-0.5 tracking-tight transition-all ${
+                showNotifications ? 'font-bold' : 'font-medium'
+              }`}
+            >
+              {t.navNotifications}
+            </span>
+            {showNotifications && (
+              <motion.span
+                layoutId="bottom-nav-indicator"
+                transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+                className="w-1.5 h-1.5 rounded-full mt-0.5"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              />
+            )}
+          </motion.button>
         </div>
       </nav>
-    </>
+    </div>
   );
 };
