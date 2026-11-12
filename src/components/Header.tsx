@@ -548,7 +548,7 @@ export const Header: React.FC<HeaderProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowUserSwitcher((prev) => !prev)}
-              className="flex items-center gap-2 p-1 pr-2.5 rounded-full border transition-colors cursor-pointer"
+              className="flex items-center gap-2.5 py-1 pl-1.5 pr-3 rounded-full border transition-colors cursor-pointer"
               style={{
                 backgroundColor: 'var(--bg-elevated)',
                 borderColor: 'var(--border-subtle)',
@@ -559,26 +559,34 @@ export const Header: React.FC<HeaderProps> = ({
                   src={currentUser.avatarUrl}
                   alt={currentUser.name}
                   referrerPolicy="no-referrer"
-                  className="w-7 h-7 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover block"
                 />
-                <OnlineStatusBadge
-                  status={currentUser.onlineStatus}
-                  size="sm"
+                <span
+                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--bg-elevated)] ${
+                    currentUser.onlineStatus === 'offline'
+                      ? 'bg-slate-400'
+                      : currentUser.onlineStatus === 'recent'
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-500'
+                  }`}
                 />
               </div>
-              <div className="text-left hidden sm:block">
+              <div className="text-left hidden sm:flex flex-col justify-center leading-tight">
                 <div
-                  className="text-xs font-semibold leading-none flex items-center gap-1"
+                  className="text-xs font-bold flex items-center gap-1.5 whitespace-nowrap"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   <span>{currentUser.name.split(' ')[0]}</span>
-                  <span className="text-[10px] font-bold text-amber-500">
+                  <span className="text-[11px] font-bold text-amber-500 inline-flex items-center gap-0.5 tabular-nums">
                     ★ {currentUser.reliability.score}
                   </span>
                 </div>
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 leading-none mt-0.5 whitespace-nowrap">
+                  {lang === 'en' ? 'Online' : 'В сети'}
+                </span>
               </div>
               <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
                   showUserSwitcher ? 'rotate-180' : ''
                 }`}
                 style={{ color: 'var(--text-muted)' }}
@@ -592,7 +600,7 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="absolute right-0 mt-2 w-72 rounded-3xl shadow-2xl border overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-76 rounded-3xl shadow-2xl border overflow-hidden z-50"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
@@ -632,35 +640,47 @@ export const Header: React.FC<HeaderProps> = ({
                               src={u.avatarUrl}
                               alt={u.name}
                               referrerPolicy="no-referrer"
-                              className="w-9 h-9 rounded-full object-cover"
+                              className="w-9 h-9 rounded-full object-cover block"
                             />
-                            <OnlineStatusBadge
-                              status={u.onlineStatus}
-                              size="sm"
+                            <span
+                              className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--bg-surface)] ${
+                                u.onlineStatus === 'offline'
+                                  ? 'bg-slate-400'
+                                  : u.onlineStatus === 'recent'
+                                  ? 'bg-amber-400'
+                                  : 'bg-emerald-500'
+                              }`}
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <span
                                 className="text-xs font-bold truncate"
                                 style={{ color: 'var(--text-primary)' }}
                               >
                                 {u.name}
                               </span>
-                              <span className="text-[11px] font-bold text-amber-500">
+                              <span className="text-[11px] font-bold text-amber-500 shrink-0 tabular-nums">
                                 ★ {u.reliability.score}
                               </span>
                             </div>
                             <div
-                              className="text-[11px] truncate"
+                              className="text-[11px] truncate flex items-center gap-1.5 mt-0.5"
                               style={{ color: 'var(--text-muted)' }}
                             >
-                              {u.occupation
-                                ? `${u.occupation} · `
-                                : u.role === 'admin'
-                                ? 'Модератор · '
-                                : ''}
-                              {u.reliability.attendanceRate}%
+                              <span className="truncate">
+                                {u.occupation
+                                  ? `${u.occupation} · `
+                                  : u.role === 'admin'
+                                  ? 'Модератор · '
+                                  : ''}
+                                {u.reliability.attendanceRate}%
+                              </span>
+                              <OnlineStatusBadge
+                                status={u.onlineStatus}
+                                size="sm"
+                                showText={false}
+                              />
                             </div>
                           </div>
                         </button>

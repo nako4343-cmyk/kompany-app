@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v9';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v10';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -190,7 +190,241 @@ export class ClientLocalStore {
       'Обожаю музыкальные квизы и саундтреки из кино, возьмете в команду?'
     );
 
-    // Ensure demo Wedding event exists so 'Свадьба' category has a rich example
+    // 1. Enrich existing users with gender & openToInvites and seed candidate seekers (e.g. women 25-35 into board games)
+    const femaleNames = ['анна', 'елена', 'мария', 'дарья', 'алина', 'ксения', 'полина', 'софия', 'ольга', 'виктория', 'екатерина'];
+    for (const u of this.users.values()) {
+      const firstLower = u.name.split(' ')[0].toLowerCase();
+      if (!u.gender) {
+        u.gender = femaleNames.some(fn => firstLower.includes(fn)) ? 'female' : 'male';
+      }
+      if (u.openToInvites === undefined) {
+        u.openToInvites = true;
+      }
+      if (!u.openToInvitesNote) {
+        u.openToInvitesNote =
+          u.gender === 'female'
+            ? 'Открыта к приглашениям на настольные игры, гастро-ужины и камерные вечера в центре.'
+            : 'С удовольствием присоединюсь к хорошей компании на вечер или выходные.';
+      }
+    }
+
+    const extraSeekers: UserProfile[] = [
+      {
+        id: 'user-seeker-maria',
+        name: 'Мария Соколова',
+        age: 27,
+        gender: 'female',
+        city: 'Москва',
+        occupation: 'UX/UI Дизайнер',
+        companyOrIndustry: 'Яндекс · Продуктовый дизайн',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        bio: 'Обожаю стратегические настолки («Колонизаторы», «Покорение Марса», «Имаджинариум»), уютные бары и новые знакомства.',
+        interests: ['Настольные игры', 'Рестораны / Бары', 'Квиз / Интеллект', 'Искусство'],
+        openToInvites: true,
+        openToInvitesNote: 'Ищу компанию на настолки сегодня или в выходные! Легко включаюсь в новые игры.',
+        onlineStatus: 'online',
+        lastSeen: 'Онлайн сейчас',
+        reliability: {
+          score: 4.96,
+          eventsAttended: 19,
+          eventsOrganized: 4,
+          cancellations: 0,
+          noShows: 0,
+          attendanceRate: 100,
+          positiveReviewsCount: 17,
+        },
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isIdentityVerified: true,
+        email: 'maria.s@example.com',
+        role: 'user',
+        status: 'active',
+      },
+      {
+        id: 'user-seeker-daria',
+        name: 'Дарья Лебедева',
+        age: 29,
+        gender: 'female',
+        city: 'Москва',
+        occupation: 'Маркетинг-директор',
+        companyOrIndustry: 'Digital & Lifestyle',
+        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+        bio: 'Люблю вечерние партии в настольные игры, мафию, квизы и камерные ужины в районе Патриарших и Хамовников.',
+        interests: ['Настольные игры', 'День рождения', 'Рестораны / Бары', 'Кино / Концерт'],
+        openToInvites: true,
+        openToInvitesNote: 'Жду приглашений на настольные игры, квизы или душевный ужин в компании 4–8 человек.',
+        onlineStatus: 'online',
+        lastSeen: 'Онлайн сейчас',
+        reliability: {
+          score: 4.92,
+          eventsAttended: 14,
+          eventsOrganized: 3,
+          cancellations: 0,
+          noShows: 0,
+          attendanceRate: 98,
+          positiveReviewsCount: 12,
+        },
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isIdentityVerified: true,
+        email: 'daria.l@example.com',
+        role: 'user',
+        status: 'active',
+      },
+      {
+        id: 'user-seeker-alina',
+        name: 'Алина Морозова',
+        age: 31,
+        gender: 'female',
+        city: 'Москва',
+        occupation: 'Архитектор',
+        companyOrIndustry: 'Бюро современной архитектуры',
+        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+        bio: 'Коллекционирую редкие настолки, люблю камерные вечеринки, джаз и гастрономические открытия.',
+        interests: ['Настольные игры', 'Свадьба', 'Рестораны / Бары', 'Прогулка', 'Искусство'],
+        openToInvites: true,
+        openToInvitesNote: 'С радостью приму приглашение на настольные игры, арт-вечер или камерное торжество.',
+        onlineStatus: 'online',
+        lastSeen: 'Онлайн сейчас',
+        reliability: {
+          score: 4.98,
+          eventsAttended: 24,
+          eventsOrganized: 6,
+          cancellations: 0,
+          noShows: 0,
+          attendanceRate: 100,
+          positiveReviewsCount: 21,
+        },
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isIdentityVerified: true,
+        email: 'alina.m@example.com',
+        role: 'user',
+        status: 'active',
+      },
+      {
+        id: 'user-seeker-ksenia',
+        name: 'Ксения Волкова',
+        age: 26,
+        gender: 'female',
+        city: 'Москва',
+        occupation: 'Product Analyst',
+        companyOrIndustry: 'FinTech',
+        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+        bio: 'Фанат кооперативных настолок, Catan, Ticket to Ride и интеллектуальных квизов по вечерам.',
+        interests: ['Настольные игры', 'Квиз / Интеллект', 'Спорт', 'Путешествие'],
+        openToInvites: true,
+        openToInvitesNote: 'Свободна после 19:00, ищу компанию на настолки или квиз!',
+        onlineStatus: 'recent',
+        lastSeen: 'Была 10 мин назад',
+        reliability: {
+          score: 4.89,
+          eventsAttended: 11,
+          eventsOrganized: 1,
+          cancellations: 0,
+          noShows: 0,
+          attendanceRate: 96,
+          positiveReviewsCount: 9,
+        },
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isIdentityVerified: true,
+        email: 'ksenia.v@example.com',
+        role: 'user',
+        status: 'active',
+      },
+      {
+        id: 'user-seeker-polina',
+        name: 'Полина Романова',
+        age: 34,
+        gender: 'female',
+        city: 'Москва',
+        occupation: 'Продюсер спецпроектов',
+        companyOrIndustry: 'Медиа & Ивенты',
+        avatarUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&q=80',
+        bio: 'Люблю красивые ужины, живую музыку, настольные игры с друзьями и загородные выезды.',
+        interests: ['Настольные игры', 'Рестораны / Бары', 'Свадьба', 'Пикник / Шашлыки', 'Музыка'],
+        openToInvites: true,
+        openToInvitesNote: 'Открыта к приглашениям на настолки, ужины и праздничные выезды.',
+        onlineStatus: 'online',
+        lastSeen: 'Онлайн сейчас',
+        reliability: {
+          score: 4.94,
+          eventsAttended: 18,
+          eventsOrganized: 5,
+          cancellations: 0,
+          noShows: 0,
+          attendanceRate: 99,
+          positiveReviewsCount: 15,
+        },
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isIdentityVerified: true,
+        email: 'polina.r@example.com',
+        role: 'user',
+        status: 'active',
+      },
+      {
+        id: 'user-seeker-artem',
+        name: 'Артём Громов',
+        age: 30,
+        gender: 'male',
+        city: 'Москва',
+        occupation: 'Tech Lead',
+        companyOrIndustry: 'AI & Cloud',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+        bio: 'Играю в падел, собираю компании на сложные настолки и гастрономические дегустации.',
+        interests: ['Настольные игры', 'Спорт', 'Рестораны / Бары', 'Технологии'],
+        openToInvites: true,
+        openToInvitesNote: 'Готов ворваться на настолки, падел-теннис или барный тур.',
+        onlineStatus: 'online',
+        lastSeen: 'Онлайн сейчас',
+        reliability: {
+          score: 4.91,
+          eventsAttended: 16,
+          eventsOrganized: 4,
+          cancellations: 0,
+          noShows: 0,
+          attendanceRate: 97,
+          positiveReviewsCount: 13,
+        },
+        isPhoneVerified: true,
+        isEmailVerified: true,
+        isIdentityVerified: true,
+        email: 'artem.g@example.com',
+        role: 'user',
+        status: 'active',
+      },
+    ];
+
+    for (const seeker of extraSeekers) {
+      if (!this.users.has(seeker.id)) {
+        this.users.set(seeker.id, seeker);
+      }
+    }
+
+    // 2. Keep active seed events on today/future dates, and seed dedicated past events that went to Archive
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const addDays = (days: number) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split('T')[0];
+    };
+
+    let idx = 0;
+    for (const [evId, ev] of this.events.entries()) {
+      if (evId.startsWith('ev-archive-')) continue;
+      // If it's one of the standard seed events, keep its date fresh on today or upcoming days
+      if (ev.isToday) {
+        ev.date = todayStr;
+      } else if (ev.date < todayStr && !ev.isArchived) {
+        ev.date = addDays(1 + (idx % 4));
+      }
+      idx++;
+    }
+
+    // Ensure demo Wedding event exists
     if (!this.events.has('ev-wedding-1')) {
       const anna = this.users.get('user-anna');
       if (anna) {
@@ -200,7 +434,7 @@ export class ClientLocalStore {
           category: 'Свадьба',
           description:
             'Празднуем нашу камерную свадьбу в формате тёплой летней вечеринки у воды без официоза! Приглашаем друзей и открытых творческих ребят разделить с нами этот вечер: живой джаз-бэнд, фуршет, танцы на пирсе и бенгальские огни.',
-          date: new Date().toISOString().split('T')[0],
+          date: todayStr,
           time: '18:30',
           isToday: true,
           totalSpots: 24,
@@ -226,7 +460,7 @@ export class ClientLocalStore {
           icebreakerQuestion: 'Какой самый необычный или трогательный тост вы слышали в жизни?',
           requirements: '23-38 лет, праздничное настроение, smart casual / коктейльный дресс-код',
           rules: ['Подтвердить участие заранее', 'Позитивный настрой и уважение к гостям'],
-          approvedParticipantIds: ['user-elena', 'user-mikhail', 'user-external-1', 'user-external-2'],
+          approvedParticipantIds: ['user-elena', 'user-mikhail', 'user-seeker-maria', 'user-seeker-alina'],
           createdAt: new Date().toISOString(),
         };
         this.events.set(weddingEvent.id, weddingEvent);
@@ -239,6 +473,85 @@ export class ClientLocalStore {
           privateInstructions: 'Вход через центральную аллею к пирсу №2, ориентир — белая арка с ретро-гирляндами.',
           allowPhoneSharing: true,
         });
+      }
+    }
+
+    // 3. Seed 2 realistic past events whose day has passed -> automatically in Archive
+    if (!this.events.has('ev-archive-1')) {
+      const anna = this.users.get('user-anna');
+      const mikhail = this.users.get('user-mikhail');
+      if (anna && mikhail) {
+        const pastEvent1: EventItem = {
+          id: 'ev-archive-1',
+          title: 'Вечер настольных игр: Колонизаторы и Каркассон на Покровке',
+          category: 'Настольные игры',
+          description: 'Провели отличный вечер за классическими стратегиями, чаем и пиццей. Встреча завершена и перенесена в архив после окончания дня.',
+          date: addDays(-1),
+          time: '19:30',
+          isToday: false,
+          isArchived: true,
+          totalSpots: 6,
+          occupiedSpots: 6,
+          budget: 'до 1 000 ₽',
+          city: 'Москва',
+          approximateArea: 'Чистые пруды, ~1.8 км от вас',
+          distanceKm: 1.8,
+          imageUrl: './assets/images/event_board_games_1794332913325.jpg',
+          organizerId: anna.id,
+          organizer: {
+            id: anna.id,
+            name: anna.name,
+            age: anna.age,
+            avatarUrl: anna.avatarUrl,
+            reliability: anna.reliability,
+            isPhoneVerified: anna.isPhoneVerified,
+            isEmailVerified: anna.isEmailVerified,
+          },
+          status: 'completed',
+          vibe: 'Интеллектуальная игра',
+          musicOrMood: 'Азартная дружеская атмосфера',
+          requirements: '25–35 лет, любовь к настолкам',
+          rules: ['Без опозданий'],
+          approvedParticipantIds: ['user-mikhail', 'user-elena', 'user-seeker-maria', 'user-seeker-daria'],
+          createdAt: addDays(-2),
+        };
+        this.events.set(pastEvent1.id, pastEvent1);
+
+        const pastEvent2: EventItem = {
+          id: 'ev-archive-2',
+          title: 'Винная дегустация и ужин при свечах на Патриарших',
+          category: 'Ресторан / Бар',
+          description: 'Камерный гастро-ужин в компании 6 человек. День мероприятия прошёл, встреча находится в архиве.',
+          date: addDays(-3),
+          time: '20:00',
+          isToday: false,
+          isArchived: true,
+          totalSpots: 6,
+          occupiedSpots: 6,
+          budget: '3 000–5 000 ₽',
+          city: 'Москва',
+          approximateArea: 'Патриаршие пруды, ~1.4 км от вас',
+          distanceKm: 1.4,
+          imageUrl: './assets/images/hero_community_event_1794332913246.jpg',
+          organizerId: mikhail.id,
+          organizer: {
+            id: mikhail.id,
+            name: mikhail.name,
+            age: mikhail.age,
+            avatarUrl: mikhail.avatarUrl,
+            reliability: mikhail.reliability,
+            isPhoneVerified: mikhail.isPhoneVerified,
+            isEmailVerified: mikhail.isEmailVerified,
+          },
+          status: 'completed',
+          vibe: 'Гастро-вечер',
+          musicOrMood: 'Лаунж и живое общение',
+          requirements: 'Открытость к общению',
+          rules: ['Уважение к участникам'],
+          approvedParticipantIds: ['user-anna', 'user-elena', 'user-seeker-alina'],
+          createdAt: addDays(-4),
+        };
+        this.events.set(pastEvent2.id, pastEvent2);
       }
     }
   }
@@ -291,16 +604,26 @@ export class ClientLocalStore {
       : undefined;
 
     let myApplicationStatus: 'pending' | 'accepted' | 'rejected' | null = null;
-    if (isApprovedParticipant) {
+    if (existingApp && existingApp.status === 'rejected') {
+      myApplicationStatus = 'rejected';
+    } else if (isApprovedParticipant) {
       myApplicationStatus = 'accepted';
     } else if (existingApp) {
       if (existingApp.status === 'accepted') myApplicationStatus = 'accepted';
-      else if (existingApp.status === 'rejected') myApplicationStatus = 'rejected';
       else if (existingApp.status === 'pending') myApplicationStatus = 'pending';
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isArchived = Boolean(
+      event.isArchived ||
+      event.status === 'completed' ||
+      (event.date && /^\d{4}-\d{2}-\d{2}$/.test(event.date) && event.date < todayStr)
+    );
+
     return {
       ...event,
+      isArchived,
+      isToday: !isArchived && (event.isToday || event.date === todayStr),
       approvedParticipants: participants,
       exactVenue: hasFullAccess ? secret?.exactVenue : undefined,
       exactAddress: hasFullAccess ? secret?.exactAddress : undefined,
@@ -308,8 +631,10 @@ export class ClientLocalStore {
       coordinates: hasFullAccess ? secret?.coordinates : undefined,
       organizerPhone: hasFullAccess && secret?.allowPhoneSharing ? secret?.organizerPhone : undefined,
       privateInstructions: hasFullAccess ? secret?.privateInstructions : undefined,
+      myApplicationId: existingApp?.id,
       myApplicationStatus,
       myApplicationNote: existingApp?.note,
+      myApplicationIsInvitation: existingApp?.isInvitation,
     };
   }
 
@@ -333,6 +658,12 @@ export class ClientLocalStore {
   getAvailableUsers(): UserProfile[] {
     const demoIds = ['user-anna', 'user-mikhail', 'user-elena', 'user-admin'];
     return Array.from(this.users.values()).filter(u => demoIds.includes(u.id));
+  }
+
+  getSeekers(): UserProfile[] {
+    return Array.from(this.users.values()).filter(
+      u => u.id !== this.activeUserId && u.role !== 'admin' && u.status === 'active'
+    );
   }
 
   switchUser(userId: string): { success: boolean; user: UserProfile } {
@@ -479,24 +810,131 @@ export class ClientLocalStore {
     const app = this.applications.get(appId);
     if (!app) throw new Error('Заявка не найдена');
     app.status = action === 'accept' ? 'accepted' : 'rejected';
-    if (action === 'accept') {
-      const ev = this.events.get(app.eventId);
-      if (ev) {
+    const ev = this.events.get(app.eventId);
+    if (action === 'accept' && ev) {
+      if (!ev.approvedParticipantIds) ev.approvedParticipantIds = [];
+      if (!ev.approvedParticipantIds.includes(app.userId)) {
+        ev.approvedParticipantIds.push(app.userId);
         ev.occupiedSpots = Math.min(ev.totalSpots, ev.occupiedSpots + 1);
-        if (!ev.approvedParticipants) ev.approvedParticipants = [];
-        ev.approvedParticipants.push({
-          id: app.user.id,
-          name: app.user.name,
-          age: app.user.age,
-          avatarUrl: app.user.avatarUrl,
-          reliability: app.user.reliability,
-        });
-        if (!ev.approvedParticipantIds) ev.approvedParticipantIds = [];
-        ev.approvedParticipantIds.push(app.user.id);
+      }
+    } else if (action === 'reject' && ev) {
+      if (ev.approvedParticipantIds && ev.approvedParticipantIds.includes(app.userId)) {
+        ev.approvedParticipantIds = ev.approvedParticipantIds.filter(id => id !== app.userId);
+        ev.occupiedSpots = Math.max(1, ev.occupiedSpots - 1);
       }
     }
     this.save();
     return app;
+  }
+
+  inviteUserToEvent(eventId: string, targetUserId: string, note?: string): EventApplication {
+    const ev = this.events.get(eventId);
+    if (!ev) throw new Error('Мероприятие не найдено');
+    const targetUser = this.users.get(targetUserId);
+    if (!targetUser) throw new Error('Пользователь не найден');
+    const me = this.getMe();
+
+    const existing = Array.from(this.applications.values()).find(
+      a => a.eventId === eventId && a.userId === targetUserId
+    );
+    if (existing) {
+      existing.status = 'pending';
+      existing.isInvitation = true;
+      existing.note = note || `Приглашение от организатора (${me.name}) присоединиться к компании!`;
+      this.save();
+      return existing;
+    }
+
+    const appId = `app-inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const app: EventApplication = {
+      id: appId,
+      eventId: ev.id,
+      eventTitle: ev.title,
+      userId: targetUser.id,
+      isInvitation: true,
+      status: 'pending',
+      note: note || `Приглашение от организатора (${me.name}): будем рады видеть вас в нашей компании!`,
+      createdAt: new Date().toISOString(),
+      user: {
+        id: targetUser.id,
+        name: targetUser.name,
+        age: targetUser.age,
+        gender: targetUser.gender,
+        avatarUrl: targetUser.avatarUrl,
+        city: targetUser.city,
+        bio: targetUser.bio,
+        interests: targetUser.interests,
+        reliability: targetUser.reliability,
+        isPhoneVerified: targetUser.isPhoneVerified,
+        isEmailVerified: targetUser.isEmailVerified,
+      },
+    };
+    this.applications.set(app.id, app);
+
+    // Notify invited user
+    const targetNotifs = this.notifications.get(targetUser.id) || [];
+    targetNotifs.unshift({
+      id: `notif-${Date.now()}`,
+      userId: targetUser.id,
+      title: 'Вас пригласили на встречу!',
+      message: `${me.name} приглашает вас на мероприятие «${ev.title}» (${ev.date} в ${ev.time}).`,
+      type: 'application_received',
+      relatedEventId: ev.id,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+    this.notifications.set(targetUser.id, targetNotifs);
+
+    this.save();
+    return app;
+  }
+
+  rejectMyParticipation(eventId: string): EventItem {
+    const ev = this.events.get(eventId);
+    if (!ev) throw new Error('Мероприятие не найдено');
+    const uid = this.activeUserId;
+    const me = this.getMe();
+
+    // Remove from approvedParticipantIds if present
+    if (ev.approvedParticipantIds && ev.approvedParticipantIds.includes(uid)) {
+      ev.approvedParticipantIds = ev.approvedParticipantIds.filter(id => id !== uid);
+      ev.occupiedSpots = Math.max(1, ev.occupiedSpots - 1);
+    }
+
+    // Update or create application entry marked as 'rejected'
+    const existing = Array.from(this.applications.values()).find(
+      a => a.eventId === eventId && a.userId === uid
+    );
+    if (existing) {
+      existing.status = 'rejected';
+    } else {
+      const appId = `app-rej-${Date.now()}`;
+      this.applications.set(appId, {
+        id: appId,
+        eventId: ev.id,
+        eventTitle: ev.title,
+        userId: uid,
+        status: 'rejected',
+        note: 'Заявка отклонена пользователем',
+        createdAt: new Date().toISOString(),
+        user: {
+          id: me.id,
+          name: me.name,
+          age: me.age,
+          gender: me.gender,
+          avatarUrl: me.avatarUrl,
+          city: me.city,
+          bio: me.bio,
+          interests: me.interests,
+          reliability: me.reliability,
+          isPhoneVerified: me.isPhoneVerified,
+          isEmailVerified: me.isEmailVerified,
+        },
+      });
+    }
+
+    this.save();
+    return this.sanitizeEvent(ev, uid);
   }
 
   getChatMessages(eventId: string): ChatMessage[] {

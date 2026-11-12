@@ -14,6 +14,7 @@ export interface UserProfile {
   id: string;
   name: string;
   age: number;
+  gender?: 'female' | 'male';
   city: string;
   occupation?: string; // e.g. "Арт-директор", "IT-разработчик", "Архитектор"
   companyOrIndustry?: string; // e.g. "Fintech / Дизайн", "Студент ВШЭ"
@@ -24,6 +25,8 @@ export interface UserProfile {
   reliability: UserReliability;
   onlineStatus?: UserOnlineStatus; // 'online' | 'recent' | 'offline'
   lastSeen?: string; // e.g. 'Онлайн сейчас', 'Был(а) 15 мин назад'
+  openToInvites?: boolean; // Метка «Жду приглашений на мероприятие»
+  openToInvitesNote?: string; // Пожелание по формату встречи
   isPhoneVerified: boolean;
   isEmailVerified: boolean;
   isIdentityVerified: boolean;
@@ -75,6 +78,7 @@ export interface EventItem {
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
   isToday: boolean;
+  isArchived?: boolean; // true if event date < today
   totalSpots: number;
   occupiedSpots: number;
   budget: EventBudgetTier;
@@ -122,8 +126,10 @@ export interface EventItem {
   allowPhoneSharing?: boolean;
 
   // Viewer's own participation / application status for instant display in lists
+  myApplicationId?: string;
   myApplicationStatus?: 'pending' | 'accepted' | 'rejected' | null;
   myApplicationNote?: string;
+  myApplicationIsInvitation?: boolean;
 }
 
 export interface EventApplication {
@@ -131,10 +137,12 @@ export interface EventApplication {
   eventId: string;
   eventTitle: string;
   userId: string;
+  isInvitation?: boolean; // true when organizer invited user from list
   user: {
     id: string;
     name: string;
     age: number;
+    gender?: 'female' | 'male';
     avatarUrl: string;
     city: string;
     bio: string;

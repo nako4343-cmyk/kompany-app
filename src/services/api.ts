@@ -10,15 +10,6 @@ import {
 } from '../types/index.ts';
 import { clientLocalStore } from './clientLocalStore.ts';
 
-// Check if app is hosted statically without a live Express server (e.g. GitHub Pages)
-const isStaticHost = typeof window !== 'undefined' && (
-  window.location.hostname.includes('github.io') ||
-  window.location.hostname.includes('netlify.app') ||
-  window.location.hostname.includes('surge.sh') ||
-  window.location.hostname.includes('vercel.app') ||
-  window.location.protocol === 'file:'
-);
-
 class ApiService {
   private currentUserId: string = 'user-anna';
 
@@ -37,37 +28,7 @@ class ApiService {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    if (isStaticHost) {
-      return this.dispatchStatic(endpoint, options) as Promise<T>;
-    }
-
-    try {
-      const headers = new Headers(options.headers || {});
-      headers.set('x-user-id', this.getUserId());
-      if (!headers.has('Content-Type') && options.body && typeof options.body === 'string') {
-        headers.set('Content-Type', 'application/json');
-      }
-
-      const res = await fetch(endpoint, {
-        ...options,
-        headers,
-      });
-
-      if (!res.ok) {
-        // If server returned 404 on API endpoint, fall back to local store
-        if (res.status === 404 || res.status === 502) {
-          return this.dispatchStatic(endpoint, options) as Promise<T>;
-        }
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Ошибка сервера: ${res.status}`);
-      }
-
-      return res.json();
-    } catch (err) {
-      // In case of any network failure (CORS/offline), use local store fallback
-      console.warn(`API call ${endpoint} failed, using local store fallback:`, err);
-      return this.dispatchStatic(endpoint, options) as Promise<T>;
-    }
+    return this.dispatchStatic(endpoint, options) as Promise<T>;
   }
 
   private async dispatchStatic(endpoint: string, options: RequestInit = {}): Promise<any> {
@@ -90,6 +51,7 @@ class ApiService {
     // 1. Auth & Users
     if (path === '/api/auth/me') return clientLocalStore.getMe();
     if (path === '/api/auth/available-users') return clientLocalStore.getAvailableUsers();
+    if (path === '/api/users/seekers') return clientLocalStore.getSeekers();
     if (path === '/api/auth/switch-user') return clientLocalStore.switchUser(body.userId);
     if (path === '/api/auth/update-profile') return clientLocalStore.updateProfile(body);
     if (path.startsWith('/api/users/')) {
@@ -128,6 +90,14 @@ class ApiService {
     if (path.endsWith('/apply')) {
       const eventId = path.split('/')[3];
       return clientLocalStore.applyToEvent(eventId, body.note);
+    }
+    if (path.endsWith('/invite')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.inviteUserToEvent(eventId, body.targetUserId, body.note);
+    }
+    if (path.endsWith('/reject-my-participation')) {
+      const eventId = path.split('/')[3];
+      return clientLocalStore.rejectMyParticipation(eventId);
     }
     if (path.endsWith('/applications')) {
       const eventId = path.split('/')[3];
@@ -185,8 +155,13 @@ class ApiService {
     return this.request<UserProfile[]>('/api/auth/available-users');
   }
 
+  async getSeekers(): Promise<UserProfile[]> {
+    return clientLocalStore.getSeekers();
+  }
+
   async switchUser(userId: string): Promise<{ success: boolean; user: UserProfile }> {
     this.setUserId(userId);
+    clientLocalStore.switchUser(userId);
     return this.request('/api/auth/switch-user', {
       method: 'POST',
       body: JSON.stringify({ userId }),
@@ -194,6 +169,7 @@ class ApiService {
   }
 
   async updateProfile(data: Partial<UserProfile>): Promise<UserProfile> {
+    clientLocalStore.updateProfile(data);
     return this.request('/api/auth/update-profile', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -275,10 +251,23 @@ class ApiService {
   }
 
   async decideApplication(appId: string, action: 'accept' | 'reject'): Promise<EventApplication> {
+    try {
+      clientLocalStore.decideApplication(appId, action);
+    } catch {
+      // ignore if appId only on server
+    }
     return this.request(`/api/applications/${appId}/decision`, {
       method: 'POST',
       body: JSON.stringify({ action }),
     });
+  }
+
+  async inviteUserToEvent(eventId: string, targetUserId: string, note?: string): Promise<EventApplication> {
+    return clientLocalStore.inviteUserToEvent(eventId, targetUserId, note);
+  }
+
+  async rejectMyParticipation(eventId: string): Promise<EventItem> {
+    return clientLocalStore.rejectMyParticipation(eventId);
   }
 
   // Chat

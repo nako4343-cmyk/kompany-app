@@ -4,7 +4,7 @@ import {
   Search, Flame, Plus, Compass, ShieldCheck, Briefcase,
   MapPin, MessageSquare, CheckCircle2, RefreshCw, Star, Palette, Lock,
   Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2,
-  Clock, XCircle, Navigation
+  Clock, XCircle, Navigation, UserPlus, Archive, CalendarCheck, Sparkles
 } from 'lucide-react';
 import { Header, ColorPaletteId } from './components/Header.tsx';
 import { BottomNav, NavTab } from './components/BottomNav.tsx';
@@ -23,6 +23,7 @@ import { SafetyGuideModal } from './components/SafetyGuideModal.tsx';
 import { AdminPanelModal } from './components/AdminPanelModal.tsx';
 import { MapView } from './components/MapView.tsx';
 import { OnlineStatusBadge } from './components/OnlineStatusBadge.tsx';
+import { InviteUsersModal } from './components/InviteUsersModal.tsx';
 import { EventItem, UserProfile, AppNotification, UserReview } from './types/index.ts';
 import { api } from './services/api.ts';
 import { clientLocalStore } from './services/clientLocalStore.ts';
@@ -92,11 +93,11 @@ export default function App() {
     }
   });
 
-  // Application Language State ('ru' | 'es')
+  // Application Language State ('ru' | 'en')
   const [lang, setLang] = useState<AppLanguage>(() => {
     try {
       const saved = localStorage.getItem('kompany_lang') as AppLanguage;
-      return saved === 'es' ? 'es' : 'ru';
+      return saved === 'en' ? 'en' : 'ru';
     } catch {
       return 'ru';
     }
@@ -121,6 +122,14 @@ export default function App() {
   const [feedViewMode, setFeedViewMode] = useState<'cards' | 'map'>('cards');
   const [participationStatusFilter, setParticipationStatusFilter] = useState<'all' | 'accepted' | 'pending' | 'rejected'>('all');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Seekers & Invite Modal State
+  const [seekers, setSeekers] = useState<UserProfile[]>(() => clientLocalStore.getSeekers());
+  const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
+  const [inviteModalEventId, setInviteModalEventId] = useState<string | undefined>(undefined);
+  const [inviteNoteDraft, setInviteNoteDraft] = useState<string>(
+    () => clientLocalStore.getMe().openToInvitesNote || 'Открыта к приглашениям на настольные игры, гастро-ужины и интересные события!'
+  );
 
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
@@ -181,6 +190,7 @@ export default function App() {
         query: searchQuery || undefined,
       });
       if (Array.isArray(evList)) setEvents(evList);
+      setSeekers(clientLocalStore.getSeekers());
 
       api.aiGetRecommendations().then(recs => {
         if (Array.isArray(recs)) setAiRecommendations(recs);
@@ -203,6 +213,48 @@ export default function App() {
     } catch (err) {
       console.error('Failed to toggle save event:', err);
     }
+  };
+
+  const handleToggleOpenToInvites = async (openToInvites: boolean) => {
+    try {
+      const updated = await api.updateProfile({
+        openToInvites,
+        openToInvitesNote: inviteNoteDraft,
+      });
+      setCurrentUser({ ...updated });
+      setSeekers(clientLocalStore.getSeekers());
+    } catch (err) {
+      console.error('Failed to toggle openToInvites:', err);
+    }
+  };
+
+  const handleSaveInvitePreferences = async (gender?: 'female' | 'male', note?: string) => {
+    try {
+      const updated = await api.updateProfile({
+        gender: gender ?? currentUser.gender,
+        openToInvitesNote: note ?? inviteNoteDraft,
+        openToInvites: true,
+      });
+      setCurrentUser({ ...updated });
+      setSeekers(clientLocalStore.getSeekers());
+    } catch (err) {
+      console.error('Failed to save invite preferences:', err);
+    }
+  };
+
+  const handleInviteUserFromList = async (eventId: string, targetUserId: string, note?: string) => {
+    await api.inviteUserToEvent(eventId, targetUserId, note);
+    await loadData();
+  };
+
+  const handleRejectParticipation = async (eventId: string) => {
+    await api.rejectMyParticipation(eventId);
+    await loadData();
+  };
+
+  const handleRespondToApplication = async (appId: string, action: 'accept' | 'reject') => {
+    await api.decideApplication(appId, action);
+    await loadData();
   };
 
   const handleStartEditProfile = () => {
@@ -241,6 +293,7 @@ export default function App() {
     try {
       const res = await api.switchUser(userId);
       setCurrentUser(res.user);
+      setInviteNoteDraft(res.user.openToInvitesNote || '');
       await loadData();
     } catch (err) {
       console.error('Switch error:', err);
@@ -266,18 +319,21 @@ export default function App() {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
-  // All useMemo hooks MUST run unconditionally before any early return
-  const todayEvents = useMemo(() => events.filter(e => e.isToday), [events]);
+  // Separate active upcoming/today events from past events that moved to Archive after their day passed
+  const activeEvents = useMemo(() => events.filter(e => !e.isArchived), [events]);
+  const archivedEvents = useMemo(() => events.filter(e => e.isArchived), [events]);
+
+  const todayEvents = useMemo(() => activeEvents.filter(e => e.isToday), [activeEvents]);
   const savedEvents = useMemo(
-    () => events.filter(e => currentUser?.savedEventIds?.includes(e.id)),
-    [events, currentUser?.savedEventIds]
+    () => activeEvents.filter(e => currentUser?.savedEventIds?.includes(e.id)),
+    [activeEvents, currentUser?.savedEventIds]
   );
   
   const baseFeedEvents = useMemo(() => {
     if (activeTab === 'today') return todayEvents;
     if (selectedCategory === 'Сохраненные') return savedEvents;
-    return events;
-  }, [activeTab, selectedCategory, todayEvents, savedEvents, events]);
+    return activeEvents;
+  }, [activeTab, selectedCategory, todayEvents, savedEvents, activeEvents]);
 
   // Pre-calculate counts for quick filters
   const quickFilterCounts = useMemo(() => {
@@ -345,8 +401,8 @@ export default function App() {
   }, [baseFeedEvents, quickFilter, currentUser, aiRecommendations]);
 
   const activeUser = currentUser || clientLocalStore.getMe();
-  const myOrganizedEvents = events.filter(e => e.organizerId === activeUser.id);
-  const myParticipationEvents = events.filter(
+  const myOrganizedEvents = activeEvents.filter(e => e.organizerId === activeUser.id);
+  const myParticipationEvents = activeEvents.filter(
     e =>
       e.organizerId !== activeUser.id &&
       ((e.approvedParticipantIds || []).includes(activeUser.id) ||
@@ -355,11 +411,11 @@ export default function App() {
         e.myApplicationStatus === 'rejected')
   );
   const getEventAppStatus = (ev: EventItem): 'accepted' | 'pending' | 'rejected' => {
-    if ((ev.approvedParticipantIds || []).includes(activeUser.id) || ev.myApplicationStatus === 'accepted') {
-      return 'accepted';
-    }
     if (ev.myApplicationStatus === 'rejected') {
       return 'rejected';
+    }
+    if ((ev.approvedParticipantIds || []).includes(activeUser.id) || ev.myApplicationStatus === 'accepted') {
+      return 'accepted';
     }
     return 'pending';
   };
@@ -543,21 +599,21 @@ export default function App() {
                       className="text-lg font-display font-bold leading-snug"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      {lang === 'es' ? '¿Libre esta noche?' : 'Свободны сегодня вечером?'}
+                      {lang === 'en' ? 'Free tonight?' : 'Свободны сегодня вечером?'}
                     </h2>
                     <p
                       className="text-xs mt-1 leading-relaxed"
                       style={{ color: 'var(--text-secondary)' }}
                     >
-                      {lang === 'es'
-                        ? 'Explora encuentros espontáneos en bares, cenas y juegos de mesa que empiezan en las próximas horas.'
+                      {lang === 'en'
+                        ? 'Check out spontaneous bar hangouts, board game nights, and dinners starting in the next few hours.'
                         : 'Посмотрите спонтанные сборы в бары, на настолки и ужины, которые начнутся в ближайшие часы.'}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t text-xs font-bold" style={{ borderColor: 'var(--border-subtle)' }}>
                     <span style={{ color: 'var(--text-primary)' }}>
-                      {lang === 'es' ? 'Ver planes para hoy' : 'Смотреть планы на вечер'}
+                      {lang === 'en' ? 'Explore tonight’s plans' : 'Смотреть планы на вечер'}
                     </span>
                     <span style={{ color: 'var(--accent-primary)' }}>→</span>
                   </div>
@@ -879,9 +935,31 @@ export default function App() {
 
             {/* Organized by me */}
             <div className="space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                {t.organizedByMeHeader} ({myOrganizedEvents.length})
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                    {t.organizedByMeHeader} ({myOrganizedEvents.length})
+                  </h2>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                    {t.inviteUsersSub}
+                  </p>
+                </div>
+
+                {myOrganizedEvents.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteModalEventId(myOrganizedEvents[0]?.id);
+                      setShowInviteModal(true);
+                    }}
+                    className="px-4 py-2 rounded-2xl text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer shadow-sm transition-transform active:scale-95"
+                    style={{ backgroundColor: 'var(--accent-primary)' }}
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>{t.inviteFromListBtn}</span>
+                  </button>
+                )}
+              </div>
 
               {myOrganizedEvents.length === 0 ? (
                 <div
@@ -892,75 +970,155 @@ export default function App() {
                     color: 'var(--text-muted)',
                   }}
                 >
-                  {lang === 'es' ? 'Aún no has creado ningún evento.' : 'Вы пока не создали ни одного мероприятия.'}
+                  {lang === 'en' ? 'You have not created any events yet.' : 'Вы пока не создали ни одного мероприятия.'}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {myOrganizedEvents.map(ev => (
-                    <div
-                      key={ev.id}
-                      className="p-4 rounded-3xl border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-subtle)',
-                      }}
-                    >
-                      <div
-                        onClick={() => setSelectedEventForDetail(ev)}
-                        className="flex items-center gap-3.5 cursor-pointer"
-                      >
-                        <img
-                          src={ev.imageUrl}
-                          alt={ev.title}
-                          referrerPolicy="no-referrer"
-                          className="w-16 h-16 rounded-2xl object-cover shrink-0"
-                        />
-                        <div>
-                          <span
-                            className="text-sm font-bold block line-clamp-1"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
-                            {ev.title}
-                          </span>
-                          <span className="text-xs block mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                            {ev.isToday ? t.todayWord : ev.date} · {ev.time} · {ev.approximateArea}
-                          </span>
-                          <span
-                            className="text-xs font-bold block mt-1 tabular-nums"
-                            style={{ color: 'var(--accent-primary)' }}
-                          >
-                            {ev.occupiedSpots} {t.spotsOf} {ev.totalSpots}
-                          </span>
-                        </div>
-                      </div>
+                  {myOrganizedEvents.map(ev => {
+                    const pendingGuestApps = clientLocalStore
+                      .getEventApplications(ev.id)
+                      .filter(a => a.status === 'pending' && !a.isInvitation);
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedEventForDetail(ev)}
-                          className="px-4 py-2.5 rounded-2xl text-xs font-bold cursor-pointer"
-                          style={{
-                            backgroundColor: 'var(--bg-elevated)',
-                            color: 'var(--text-primary)',
-                          }}
-                        >
-                          {t.applicationsAndDetailsBtn}
-                        </button>
-                        <button
-                          onClick={() => setActiveChatEventId(ev.id)}
-                          className="px-4 py-2.5 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                          style={{ backgroundColor: 'var(--accent-primary)' }}
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>{t.openChatBtn}</span>
-                        </button>
+                    return (
+                      <div
+                        key={ev.id}
+                        className="p-4 rounded-3xl border shadow-xs space-y-3"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div
+                            onClick={() => setSelectedEventForDetail(ev)}
+                            className="flex items-center gap-3.5 cursor-pointer"
+                          >
+                            <img
+                              src={ev.imageUrl}
+                              alt={ev.title}
+                              referrerPolicy="no-referrer"
+                              className="w-16 h-16 rounded-2xl object-cover shrink-0"
+                            />
+                            <div>
+                              <span
+                                className="text-sm font-bold block line-clamp-1"
+                                style={{ color: 'var(--text-primary)' }}
+                              >
+                                {ev.title}
+                              </span>
+                              <span className="text-xs block mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                {ev.isToday ? t.todayWord : ev.date} · {ev.time} · {ev.approximateArea}
+                              </span>
+                              <span
+                                className="text-xs font-bold block mt-1 tabular-nums"
+                                style={{ color: 'var(--accent-primary)' }}
+                              >
+                                {ev.occupiedSpots} {t.spotsOf} {ev.totalSpots}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInviteModalEventId(ev.id);
+                                setShowInviteModal(true);
+                              }}
+                              className="px-3.5 py-2.5 rounded-2xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition-colors hover:border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" />
+                              <span>{t.inviteFromListBtn}</span>
+                            </button>
+                            <button
+                              onClick={() => setSelectedEventForDetail(ev)}
+                              className="px-3.5 py-2.5 rounded-2xl text-xs font-bold cursor-pointer"
+                              style={{
+                                backgroundColor: 'var(--bg-elevated)',
+                                color: 'var(--text-primary)',
+                              }}
+                            >
+                              {t.applicationsAndDetailsBtn}
+                            </button>
+                            <button
+                              onClick={() => setActiveChatEventId(ev.id)}
+                              className="px-3.5 py-2.5 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                              style={{ backgroundColor: 'var(--accent-primary)' }}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>{t.openChatBtn}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Inline Pending Applications for Organizer to Accept or Reject directly */}
+                        {pendingGuestApps.length > 0 && (
+                          <div
+                            className="pt-3 border-t space-y-2"
+                            style={{ borderColor: 'var(--border-subtle)' }}
+                          >
+                            <span className="text-[11px] font-bold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
+                              {lang === 'en'
+                                ? `Incoming Requests (${pendingGuestApps.length})`
+                                : `Новые заявки на участие (${pendingGuestApps.length})`}
+                            </span>
+                            {pendingGuestApps.map(app => (
+                              <div
+                                key={app.id}
+                                className="p-2.5 px-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                                style={{
+                                  backgroundColor: 'var(--bg-elevated)',
+                                  borderColor: 'var(--border-subtle)',
+                                }}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <img
+                                    src={app.user.avatarUrl}
+                                    alt={app.user.name}
+                                    referrerPolicy="no-referrer"
+                                    className="w-9 h-9 rounded-xl object-cover shrink-0 cursor-pointer"
+                                    onClick={() => setInspectedUserId(app.user.id)}
+                                  />
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                                      {app.user.name}, {app.user.age} · ★ {app.user.reliability.score}
+                                    </div>
+                                    <p className="text-[11px] truncate" style={{ color: 'var(--text-secondary)' }}>
+                                      «{app.note}»
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRespondToApplication(app.id, 'accept')}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-white cursor-pointer flex items-center gap-1"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <span>{t.acceptBtn}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRespondToApplication(app.id, 'reject')}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 cursor-pointer flex items-center gap-1"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    <span>{t.declineInviteBtn}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Joined / Applied by me */}
+            {/* Joined / Applied / Invited */}
             <div className="space-y-3.5 pt-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2">
@@ -1050,6 +1208,7 @@ export default function App() {
                 <div className="space-y-3">
                   {filteredParticipationEvents.map(ev => {
                     const status = getEventAppStatus(ev);
+                    const isInvitation = Boolean(ev.myApplicationIsInvitation && status === 'pending');
                     const statusConfig = {
                       accepted: {
                         label: t.statusApproved,
@@ -1061,8 +1220,8 @@ export default function App() {
                         Icon: CheckCircle2,
                       },
                       pending: {
-                        label: t.statusPending,
-                        subtext: t.statusPendingSub,
+                        label: isInvitation ? t.statusInvited : t.statusPending,
+                        subtext: isInvitation ? t.statusInvitedSub : t.statusPendingSub,
                         badgeClass:
                           'bg-amber-500/12 text-amber-600 dark:text-amber-400 border-amber-500/30',
                         accentBarClass: 'bg-amber-500',
@@ -1123,7 +1282,7 @@ export default function App() {
                                 className="text-[11px] font-medium truncate"
                                 style={{ color: 'var(--text-muted)' }}
                               >
-                                {ev.category} · {ev.approximateArea}
+                                {translateCategory(ev.category, lang)} · {ev.approximateArea}
                               </span>
                             </div>
 
@@ -1137,10 +1296,10 @@ export default function App() {
 
                             {/* Date, Time & Organizer */}
                             <span className="text-xs block" style={{ color: 'var(--text-secondary)' }}>
-                              {ev.isToday ? 'Сегодня' : ev.date} в {ev.time} · Организатор: {ev.organizer.name}
+                              {ev.isToday ? t.todayWord : ev.date} · {ev.time} · Организатор: {ev.organizer.name}
                             </span>
 
-                            {/* Status details or submitted application note */}
+                            {/* Status details */}
                             <div className={`text-xs font-semibold flex items-center gap-1.5 pt-0.5 ${statusConfig.subtextClass}`}>
                               <span>{statusConfig.subtext}</span>
                             </div>
@@ -1150,18 +1309,18 @@ export default function App() {
                                 className="text-[11px] line-clamp-1 pt-0.5"
                                 style={{ color: 'var(--text-muted)' }}
                               >
-                                Ваше сообщение: «{ev.myApplicationNote}»
+                                «{ev.myApplicationNote}»
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pl-1.5 sm:pl-0 shrink-0">
+                        <div className="flex flex-wrap items-center gap-2 pl-1.5 sm:pl-0 shrink-0">
                           {status === 'accepted' ? (
                             <>
                               <button
                                 onClick={() => setSelectedEventForDetail(ev)}
-                                className="px-4 py-2.5 rounded-2xl text-xs font-bold cursor-pointer transition-opacity hover:opacity-90"
+                                className="px-3.5 py-2 rounded-2xl text-xs font-bold cursor-pointer transition-opacity hover:opacity-90"
                                 style={{
                                   backgroundColor: 'var(--bg-elevated)',
                                   color: 'var(--text-primary)',
@@ -1171,21 +1330,52 @@ export default function App() {
                               </button>
                               <button
                                 onClick={() => setActiveChatEventId(ev.id)}
-                                className="px-4 py-2.5 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-90"
+                                className="px-3.5 py-2 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-90"
                                 style={{ backgroundColor: 'var(--accent-primary)' }}
                               >
                                 <MessageSquare className="w-3.5 h-3.5" />
                                 <span>Чат гостей</span>
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectParticipation(ev.id)}
+                                className="px-3 py-2 rounded-2xl text-xs font-bold bg-rose-500/12 text-rose-600 dark:text-rose-400 border border-rose-500/25 flex items-center gap-1 cursor-pointer transition-colors hover:bg-rose-500/20"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>{t.declineInviteBtn}</span>
+                              </button>
                             </>
                           ) : status === 'pending' ? (
-                            <button
-                              onClick={() => setSelectedEventForDetail(ev)}
-                              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500/12 text-amber-600 dark:text-amber-400 border border-amber-500/25 flex items-center gap-1.5 cursor-pointer transition-colors hover:bg-amber-500/20"
-                            >
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>Статус заявки</span>
-                            </button>
+                            <>
+                              {ev.myApplicationIsInvitation && ev.myApplicationId && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRespondToApplication(ev.myApplicationId!, 'accept')}
+                                  className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500 text-white flex items-center gap-1 cursor-pointer shadow-xs"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>{t.acceptBtn}</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRejectParticipation(ev.id)}
+                                className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-rose-500/12 text-rose-600 dark:text-rose-400 border border-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors hover:bg-rose-500/20"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>{t.rejectApplicationBtn}</span>
+                              </button>
+                              <button
+                                onClick={() => setSelectedEventForDetail(ev)}
+                                className="px-3.5 py-2 rounded-2xl text-xs font-bold cursor-pointer"
+                                style={{
+                                  backgroundColor: 'var(--bg-elevated)',
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                {t.detailsBtn}
+                              </button>
+                            </>
                           ) : (
                             <button
                               onClick={() => setSelectedEventForDetail(ev)}
@@ -1195,7 +1385,7 @@ export default function App() {
                                 color: 'var(--text-secondary)',
                               }}
                             >
-                              Детали события
+                              {t.detailsBtn}
                             </button>
                           )}
                         </div>
@@ -1205,6 +1395,61 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Archive of Past Events (automatically archived after the day passes) */}
+            {archivedEvents.length > 0 && (
+              <div className="space-y-3 pt-4 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                    <Archive className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                    <span>{t.archivedEventsHeader} ({archivedEvents.length})</span>
+                  </h2>
+                  <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    {lang === 'en'
+                      ? 'Automatically moved after event date passed'
+                      : 'Перенесены автоматически после завершения дня встречи'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {archivedEvents.map(ev => (
+                    <div
+                      key={ev.id}
+                      onClick={() => setSelectedEventForDetail(ev)}
+                      className="p-4 rounded-3xl border opacity-85 hover:opacity-100 transition-all cursor-pointer flex items-center justify-between gap-3"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={ev.imageUrl}
+                          alt={ev.title}
+                          referrerPolicy="no-referrer"
+                          className="w-14 h-14 rounded-2xl object-cover grayscale-[35%] shrink-0"
+                        />
+                        <div className="min-w-0 space-y-0.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-500/15 text-slate-600 dark:text-slate-300 border border-slate-500/25">
+                            <Archive className="w-3 h-3" />
+                            <span>{t.archivedBadge}</span>
+                          </span>
+                          <div className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                            {ev.title}
+                          </div>
+                          <div className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>
+                            {ev.date} · {ev.time} · {ev.occupiedSpots}/{ev.totalSpots} {t.peopleShort}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold shrink-0" style={{ color: 'var(--accent-primary)' }}>
+                        {t.detailsBtn} →
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -1296,6 +1541,128 @@ export default function App() {
                   "{currentUser.bio}"
                 </div>
               )}
+
+              {/* Interactive Badge & Preferences: "Жду приглашений на мероприятие" */}
+              <div
+                className="p-4 sm:p-5 rounded-3xl border space-y-3.5"
+                style={{
+                  backgroundColor: currentUser.openToInvites
+                    ? 'color-mix(in srgb, #10b981 8%, var(--bg-elevated))'
+                    : 'var(--bg-elevated)',
+                  borderColor: currentUser.openToInvites
+                    ? 'rgba(16, 185, 129, 0.35)'
+                    : 'var(--border-subtle)',
+                }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CalendarCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="text-xs sm:text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {lang === 'en'
+                          ? 'Badge: "Open to Event Invitations"'
+                          : 'Метка «Жду приглашений на мероприятие»'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {lang === 'en'
+                        ? 'When enabled, organizers can find you in the "Add from List" filter by age, gender, and interests and invite you to their meetup.'
+                        : 'Когда метка включена, организаторы видят вас в разделе «Добавить из списка» по возрасту, полу и интересам и могут пригласить на встречу.'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleOpenToInvites(!currentUser.openToInvites)}
+                    className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                      currentUser.openToInvites
+                        ? 'bg-emerald-500 text-white shadow-xs'
+                        : 'border'
+                    }`}
+                    style={
+                      currentUser.openToInvites
+                        ? undefined
+                        : {
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-secondary)',
+                          }
+                    }
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>
+                      {currentUser.openToInvites
+                        ? lang === 'en'
+                          ? 'Active ✓'
+                          : 'Включена ✓'
+                        : lang === 'en'
+                        ? 'Enable'
+                        : 'Включить'}
+                    </span>
+                  </button>
+                </div>
+
+                {currentUser.openToInvites && (
+                  <div className="space-y-2.5 pt-2 border-t border-emerald-500/20">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                        {lang === 'en' ? 'Your gender for search filters:' : 'Ваш пол для фильтров подбора:'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {[
+                          { id: 'female' as const, label: lang === 'en' ? 'Woman' : 'Девушка' },
+                          { id: 'male' as const, label: lang === 'en' ? 'Man' : 'Мужчина' },
+                        ].map(g => (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => handleSaveInvitePreferences(g.id, inviteNoteDraft)}
+                            className="px-2.5 py-1 rounded-xl text-[11px] font-bold border cursor-pointer transition-all"
+                            style={
+                              currentUser.gender === g.id
+                                ? {
+                                    backgroundColor: 'var(--accent-primary)',
+                                    borderColor: 'var(--accent-primary)',
+                                    color: '#FFFFFF',
+                                  }
+                                : {
+                                    backgroundColor: 'var(--bg-surface)',
+                                    borderColor: 'var(--border-subtle)',
+                                    color: 'var(--text-secondary)',
+                                  }
+                            }
+                          >
+                            {g.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={inviteNoteDraft}
+                        onChange={e => setInviteNoteDraft(e.target.value)}
+                        placeholder="Например: Свободна вечером, пойду на настолки или ужин..."
+                        className="flex-1 p-2 rounded-xl border text-xs"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveInvitePreferences(currentUser.gender, inviteNoteDraft)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer shrink-0"
+                        style={{ backgroundColor: 'var(--accent-primary)' }}
+                      >
+                        {lang === 'en' ? 'Save' : 'Обновить'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* My Photos Gallery */}
               {(() => {
@@ -1765,11 +2132,28 @@ export default function App() {
 
       {showWizardModal && (
         <FindCompanyWizardModal
-          events={events}
+          events={activeEvents}
           onClose={() => setShowWizardModal(false)}
           onSelectEvent={(ev) => setSelectedEventForDetail(ev)}
         />
       )}
+
+      <AnimatePresence>
+        {showInviteModal && (
+          <InviteUsersModal
+            myEvents={myOrganizedEvents}
+            initialEventId={inviteModalEventId}
+            seekers={seekers}
+            onClose={() => setShowInviteModal(false)}
+            onInviteUser={handleInviteUserFromList}
+            onInspectUser={(uid) => {
+              setShowInviteModal(false);
+              setInspectedUserId(uid);
+            }}
+            lang={lang}
+          />
+        )}
+      </AnimatePresence>
 
       {activeChatEventId && (
         <ChatModal

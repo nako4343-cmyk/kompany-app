@@ -88,8 +88,8 @@ export const EventCard: React.FC<EventCardProps> = ({
     const d = new Date(dateStr);
     const day = d.getDate();
     const monthsRu = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-    const monthsEs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-    const months = lang === 'es' ? monthsEs : monthsRu;
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = lang === 'en' ? monthsEn : monthsRu;
     return `${day} ${months[d.getMonth()]}, ${timeStr}`;
   };
 

@@ -183,6 +183,20 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     </>
                   )}
                 </div>
+
+                {profile.openToInvites && (
+                  <div className="pt-1">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                      <CalendarCheck className="w-3.5 h-3.5" />
+                      <span>Жду приглашений на мероприятие</span>
+                    </span>
+                    {profile.openToInvitesNote && (
+                      <p className="text-xs italic mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        «{profile.openToInvitesNote}»
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
