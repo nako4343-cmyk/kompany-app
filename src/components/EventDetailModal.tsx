@@ -605,24 +605,48 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                     borderColor: hasFullAccess ? 'rgba(16, 185, 129, 0.28)' : 'var(--border-subtle)',
                   }}
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        hasFullAccess ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
-                      }`}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                          hasFullAccess ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
+                        }`}
+                      >
+                        {hasFullAccess ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+                          {hasFullAccess ? 'Точное место встречи открыто' : 'Точный адрес доступен участникам'}
+                        </h4>
+                        <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                          {hasFullAccess
+                            ? 'Вы в подтверждённом составе компании. Вам доступны точная геолокация на Яндекс Картах, инструкции организатора и инструменты встречи.'
+                            : `Сейчас виден только ориентир (${activeEvent.approximateArea}). Точное название заведения и адрес откроются автоматически после подтверждения вашей заявки.`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={
+                        hasFullAccess
+                          ? activeEvent.yandexMapsUrl ||
+                            `https://yandex.ru/maps/?text=${encodeURIComponent(
+                              `${activeEvent.city || 'Москва'}, ${activeEvent.exactAddress || activeEvent.exactVenue || activeEvent.approximateArea}`
+                            )}`
+                          : `https://yandex.ru/maps/?text=${encodeURIComponent(
+                              `${activeEvent.city || 'Москва'}, ${activeEvent.approximateArea}`
+                            )}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl bg-[#FC3F1D] hover:bg-[#e03516] text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
                     >
-                      {hasFullAccess ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
-                        {hasFullAccess ? 'Точное место встречи открыто' : 'Точный адрес доступен участникам'}
-                      </h4>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        {hasFullAccess
-                          ? 'Вы в подтверждённом составе компании. Вам доступны точная геолокация, инструкции организатора и инструменты встречи.'
-                          : `Сейчас виден только ориентир (${activeEvent.approximateArea}). Точное название заведения и адрес откроются автоматически после подтверждения вашей заявки.`}
-                      </p>
-                    </div>
+                      <span className="w-4 h-4 rounded bg-white text-[#FC3F1D] font-extrabold text-[10px] flex items-center justify-center">
+                        Я
+                      </span>
+                      <span className="hidden sm:inline">Яндекс Карты</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </a>
                   </div>
 
                   {hasFullAccess && (
@@ -664,6 +688,29 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                               </button>
                             )}
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Embedded Interactive Yandex Map Widget for Approved Participants / Organizer */}
+                      <div className="relative w-full h-44 sm:h-52 rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border-subtle)' }}>
+                        <iframe
+                          src={
+                            activeEvent.coordinates
+                              ? `https://yandex.ru/map-widget/v1/?ll=${activeEvent.coordinates.lon}%2C${activeEvent.coordinates.lat}&z=16&pt=${activeEvent.coordinates.lon}%2C${activeEvent.coordinates.lat}%2Cpm2rdm`
+                              : `https://yandex.ru/map-widget/v1/?ll=37.6225%2C55.7672&z=14&pt=37.6225%2C55.7672%2Cpm2rdm`
+                          }
+                          title="Точное место на Яндекс Картах"
+                          className="w-full h-full border-0"
+                          loading="lazy"
+                          allowFullScreen
+                        />
+                        <div className="pointer-events-none absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px]">
+                          <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 text-white backdrop-blur-xs font-medium truncate max-w-[70%]">
+                            {activeEvent.exactVenue ? `${activeEvent.exactVenue} · ` : ''}{activeEvent.exactAddress || activeEvent.approximateArea}
+                          </span>
+                          <span className="px-2 py-1 rounded-lg bg-[#FC3F1D] text-white font-bold shrink-0">
+                            Яндекс Карты
+                          </span>
                         </div>
                       </div>
 

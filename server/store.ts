@@ -18,7 +18,7 @@ const DATA_FILE_PATH = path.resolve(process.cwd(), 'server', 'data.json');
 export class DataStore {
   users: Map<string, UserProfile> = new Map();
   events: Map<string, EventItem> = new Map();
-  rawEventsSecret: Map<string, { exactVenue: string; exactAddress: string; organizerPhone: string; privateInstructions: string; allowPhoneSharing: boolean }> = new Map();
+  rawEventsSecret: Map<string, { exactVenue: string; exactAddress: string; yandexMapsUrl?: string; coordinates?: { lat: number; lon: number }; organizerPhone: string; privateInstructions: string; allowPhoneSharing: boolean }> = new Map();
   applications: Map<string, EventApplication> = new Map();
   chatMessages: Map<string, ChatMessage[]> = new Map(); // eventId -> messages
   questions: Map<string, EventQuestion[]> = new Map(); // eventId -> pre-approval Q&A
@@ -1475,16 +1475,20 @@ export class DataStore {
       else if (existingApp.status === 'pending') myApplicationStatus = 'pending';
     }
 
+    const secret = this.rawEventsSecret.get(event.id);
+
     const sanitized: EventItem = {
       ...event,
       approvedParticipants: participants,
       // Always available public summary
-      exactVenue: hasFullAccess ? this.rawEventsSecret.get(event.id)?.exactVenue : undefined,
-      exactAddress: hasFullAccess ? this.rawEventsSecret.get(event.id)?.exactAddress : undefined,
-      organizerPhone: hasFullAccess && this.rawEventsSecret.get(event.id)?.allowPhoneSharing 
-        ? this.rawEventsSecret.get(event.id)?.organizerPhone 
+      exactVenue: hasFullAccess ? secret?.exactVenue : undefined,
+      exactAddress: hasFullAccess ? secret?.exactAddress : undefined,
+      yandexMapsUrl: hasFullAccess ? secret?.yandexMapsUrl : undefined,
+      coordinates: hasFullAccess ? secret?.coordinates : undefined,
+      organizerPhone: hasFullAccess && secret?.allowPhoneSharing 
+        ? secret?.organizerPhone 
         : undefined,
-      privateInstructions: hasFullAccess ? this.rawEventsSecret.get(event.id)?.privateInstructions : undefined,
+      privateInstructions: hasFullAccess ? secret?.privateInstructions : undefined,
       myApplicationStatus,
       myApplicationNote: existingApp?.note,
     };
@@ -1564,6 +1568,57 @@ export class DataStore {
       'rejected',
       'Обожаю музыкальные квизы и саундтреки из кино, возьмете в команду?'
     );
+
+    if (!this.events.has('ev-wedding-1')) {
+      const anna = this.users.get('user-anna');
+      if (anna) {
+        const weddingEvent: EventItem = {
+          id: 'ev-wedding-1',
+          title: 'Камерная свадьба-вечеринка на террасе в Серебряном Бору',
+          category: 'Свадьба',
+          description:
+            'Празднуем нашу камерную свадьбу в формате тёплой летней вечеринки у воды без официоза! Приглашаем друзей и открытых творческих ребят разделить с нами этот вечер: живой джаз-бэнд, фуршет, танцы на пирсе и бенгальские огни.',
+          date: new Date().toISOString().split('T')[0],
+          time: '18:30',
+          isToday: true,
+          totalSpots: 24,
+          occupiedSpots: 5,
+          budget: '3 000–5 000 ₽',
+          city: 'Москва',
+          approximateArea: 'Серебряный Бор, берег реки, ~4.5 км',
+          distanceKm: 4.5,
+          imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80',
+          organizerId: anna.id,
+          organizer: {
+            id: anna.id,
+            name: anna.name,
+            age: anna.age,
+            avatarUrl: anna.avatarUrl,
+            reliability: anna.reliability,
+            isPhoneVerified: anna.isPhoneVerified,
+            isEmailVerified: anna.isEmailVerified,
+          },
+          status: 'open',
+          vibe: 'Праздничный вайб',
+          musicOrMood: 'Живой джаз, гирлянды у воды, шампанское и танцы',
+          icebreakerQuestion: 'Какой самый необычный или трогательный тост вы слышали в жизни?',
+          requirements: '23-38 лет, праздничное настроение, smart casual / коктейльный дресс-код',
+          rules: ['Подтвердить участие заранее', 'Позитивный настрой и уважение к гостям'],
+          approvedParticipantIds: ['user-elena', 'user-mikhail', 'user-external-1', 'user-external-2'],
+          createdAt: new Date().toISOString(),
+        };
+        this.events.set(weddingEvent.id, weddingEvent);
+        this.rawEventsSecret.set(weddingEvent.id, {
+          exactVenue: 'Банкетный шатёр и пирс «Серебряный Бор»',
+          exactAddress: 'Таманская ул., д. 46, стр. 1',
+          yandexMapsUrl: 'https://yandex.ru/maps/?ll=37.4342%2C55.7789&z=16&pt=37.4342%2C55.7789%2Cpm2rdm',
+          coordinates: { lat: 55.7789, lon: 37.4342 },
+          organizerPhone: anna.phoneNumber || '+7 (916) 555-01-92',
+          privateInstructions: 'Вход через центральную аллею к пирсу №2, ориентир — белая арка с ретро-гирляндами.',
+          allowPhoneSharing: true,
+        });
+      }
+    }
   }
 
   getEvents(viewerUserId?: string, filters?: {
@@ -1619,6 +1674,8 @@ export class DataStore {
     approximateArea: string;
     exactVenue: string;
     exactAddress: string;
+    yandexMapsUrl?: string;
+    coordinates?: { lat: number; lon: number };
     organizerPhone: string;
     privateInstructions: string;
     requirements: string;
@@ -1639,7 +1696,8 @@ export class DataStore {
 
     // Pick dynamic high-quality image if not provided
     let fallbackImg = '/src/assets/images/hero_community_event_1794332913246.jpg';
-    if (data.category === 'Настольные игры') fallbackImg = '/src/assets/images/event_board_games_1794332913325.jpg';
+    if (data.category === 'Свадьба') fallbackImg = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80';
+    else if (data.category === 'Настольные игры') fallbackImg = '/src/assets/images/event_board_games_1794332913325.jpg';
     else if (data.category === 'Пикник / Шашлыки') fallbackImg = '/src/assets/images/event_outdoor_picnic_1794332913731.jpg';
     else if (data.category === 'Кино / Концерт') fallbackImg = '/src/assets/images/event_live_concert_1794332915302.jpg';
 
@@ -1651,7 +1709,7 @@ export class DataStore {
       date: data.date,
       time: data.time,
       isToday,
-      totalSpots: Number(data.totalSpots) || 4,
+      totalSpots: Math.max(2, Number(data.totalSpots) || 4),
       occupiedSpots: 1, // Organizer is spot 1
       budget: data.budget,
       city: data.city || 'Москва',
@@ -1682,6 +1740,12 @@ export class DataStore {
     this.rawEventsSecret.set(id, {
       exactVenue: data.exactVenue,
       exactAddress: data.exactAddress,
+      yandexMapsUrl:
+        data.yandexMapsUrl ||
+        `https://yandex.ru/maps/?text=${encodeURIComponent(
+          `${data.city || 'Москва'}, ${data.exactAddress || data.exactVenue || ''}`
+        )}`,
+      coordinates: data.coordinates || { lat: 55.7558, lon: 37.6173 },
       organizerPhone: data.organizerPhone || organizer.phoneNumber || '',
       privateInstructions: data.privateInstructions || '',
       allowPhoneSharing: data.allowPhoneSharing ?? true,

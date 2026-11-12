@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v8';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v9';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -189,6 +189,58 @@ export class ClientLocalStore {
       'rejected',
       'Обожаю музыкальные квизы и саундтреки из кино, возьмете в команду?'
     );
+
+    // Ensure demo Wedding event exists so 'Свадьба' category has a rich example
+    if (!this.events.has('ev-wedding-1')) {
+      const anna = this.users.get('user-anna');
+      if (anna) {
+        const weddingEvent: EventItem = {
+          id: 'ev-wedding-1',
+          title: 'Камерная свадьба-вечеринка на террасе в Серебряном Бору',
+          category: 'Свадьба',
+          description:
+            'Празднуем нашу камерную свадьбу в формате тёплой летней вечеринки у воды без официоза! Приглашаем друзей и открытых творческих ребят разделить с нами этот вечер: живой джаз-бэнд, фуршет, танцы на пирсе и бенгальские огни.',
+          date: new Date().toISOString().split('T')[0],
+          time: '18:30',
+          isToday: true,
+          totalSpots: 24,
+          occupiedSpots: 5,
+          budget: '3 000–5 000 ₽',
+          city: 'Москва',
+          approximateArea: 'Серебряный Бор, берег реки, ~4.5 км',
+          distanceKm: 4.5,
+          imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80',
+          organizerId: anna.id,
+          organizer: {
+            id: anna.id,
+            name: anna.name,
+            age: anna.age,
+            avatarUrl: anna.avatarUrl,
+            reliability: anna.reliability,
+            isPhoneVerified: anna.isPhoneVerified,
+            isEmailVerified: anna.isEmailVerified,
+          },
+          status: 'open',
+          vibe: 'Праздничный вайб',
+          musicOrMood: 'Живой джаз, гирлянды у воды, шампанское и танцы',
+          icebreakerQuestion: 'Какой самый необычный или трогательный тост вы слышали в жизни?',
+          requirements: '23-38 лет, праздничное настроение, smart casual / коктейльный дресс-код',
+          rules: ['Подтвердить участие заранее', 'Позитивный настрой и уважение к гостям'],
+          approvedParticipantIds: ['user-elena', 'user-mikhail', 'user-external-1', 'user-external-2'],
+          createdAt: new Date().toISOString(),
+        };
+        this.events.set(weddingEvent.id, weddingEvent);
+        this.rawEventsSecret.set(weddingEvent.id, {
+          exactVenue: 'Банкетный шатёр и пирс «Серебряный Бор»',
+          exactAddress: 'Таманская ул., д. 46, стр. 1',
+          yandexMapsUrl: 'https://yandex.ru/maps/?ll=37.4342%2C55.7789&z=16&pt=37.4342%2C55.7789%2Cpm2rdm',
+          coordinates: { lat: 55.7789, lon: 37.4342 },
+          organizerPhone: anna.phoneNumber || '+7 (916) 555-01-92',
+          privateInstructions: 'Вход через центральную аллею к пирсу №2, ориентир — белая арка с ретро-гирляндами.',
+          allowPhoneSharing: true,
+        });
+      }
+    }
   }
 
   save() {
@@ -252,6 +304,8 @@ export class ClientLocalStore {
       approvedParticipants: participants,
       exactVenue: hasFullAccess ? secret?.exactVenue : undefined,
       exactAddress: hasFullAccess ? secret?.exactAddress : undefined,
+      yandexMapsUrl: hasFullAccess ? secret?.yandexMapsUrl : undefined,
+      coordinates: hasFullAccess ? secret?.coordinates : undefined,
       organizerPhone: hasFullAccess && secret?.allowPhoneSharing ? secret?.organizerPhone : undefined,
       privateInstructions: hasFullAccess ? secret?.privateInstructions : undefined,
       myApplicationStatus,
@@ -548,17 +602,34 @@ export class ClientLocalStore {
 
   createEvent(data: any): EventItem {
     const me = this.getMe();
+    const id = `ev-${Date.now()}`;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isToday = !data.date || data.date === 'Сегодня' || data.date === todayStr;
+
+    let fallbackImg = './assets/images/hero_community_event_1794332913246.jpg';
+    if (data.category === 'Свадьба') {
+      fallbackImg = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80';
+    } else if (data.category === 'Настольные игры') {
+      fallbackImg = './assets/images/event_board_games_1794332913325.jpg';
+    } else if (data.category === 'Пикник / Шашлыки') {
+      fallbackImg = './assets/images/event_outdoor_picnic_1794332913731.jpg';
+    } else if (data.category === 'Кино / Концерт') {
+      fallbackImg = './assets/images/event_live_concert_1794332915302.jpg';
+    }
+
+    const spotsCount = Math.max(2, Number(data.totalSpots) || 6);
+
     const newEvent: EventItem = {
-      id: `ev-${Date.now()}`,
+      id,
       title: data.title || 'Новая встреча',
       category: (data.category || 'Прогулка') as EventCategory,
       description: data.description || '',
-      date: data.date || 'Сегодня',
+      date: data.date || todayStr,
       time: data.time || '19:00',
       approximateArea: data.approximateArea || 'Центр города, ~1.5 км от вас',
-      distanceKm: 1.2,
+      distanceKm: 1.5,
       occupiedSpots: 1,
-      totalSpots: data.totalSpots || 4,
+      totalSpots: spotsCount,
       budget: (data.budget || '1 000–3 000 ₽') as EventBudgetTier,
       city: data.city || 'Москва',
       organizerId: this.activeUserId,
@@ -571,17 +642,47 @@ export class ClientLocalStore {
         isPhoneVerified: me.isPhoneVerified,
         isEmailVerified: me.isEmailVerified,
       },
-      imageUrl: data.imageUrl || './assets/images/hero_community_event_1794332913246.jpg',
-      isToday: true,
+      imageUrl: data.imageUrl || fallbackImg,
+      isToday,
       status: 'open',
+      vibe: data.vibe || 'Спокойная беседа',
+      musicOrMood: data.musicOrMood || 'Уютная дружелюбная атмосфера',
+      icebreakerQuestion: data.icebreakerQuestion || '',
       requirements: data.requirements || 'Пунктуальность и хорошее настроение',
-      rules: ['Безопасность', 'Взаимное уважение'],
-      approvedParticipantIds: [this.activeUserId],
+      rules: data.rules || ['Безопасность', 'Взаимное уважение'],
+      approvedParticipantIds: [],
       createdAt: new Date().toISOString(),
     };
+
+    this.rawEventsSecret.set(id, {
+      exactVenue: data.exactVenue || 'Указано организатором',
+      exactAddress: data.exactAddress || data.approximateArea || 'Москва',
+      yandexMapsUrl:
+        data.yandexMapsUrl ||
+        `https://yandex.ru/maps/?text=${encodeURIComponent(
+          `${data.city || 'Москва'}, ${data.exactAddress || data.exactVenue || data.approximateArea || ''}`
+        )}`,
+      coordinates: data.coordinates || { lat: 55.7558, lon: 37.6173 },
+      organizerPhone: data.organizerPhone || me.phoneNumber || '',
+      privateInstructions: data.privateInstructions || '',
+      allowPhoneSharing: data.allowPhoneSharing ?? true,
+    });
+
     this.events.set(newEvent.id, newEvent);
+    this.chatMessages.set(id, [
+      {
+        id: `msg-${Date.now()}`,
+        eventId: id,
+        senderId: 'system',
+        senderName: 'Kompany',
+        senderAvatar: '',
+        text: 'Мероприятие создано. Закрытый чат и точные контакты доступны только вам и подтвержденным участникам.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isSystemMessage: true,
+      },
+    ]);
     this.save();
-    return newEvent;
+    return this.sanitizeEvent(newEvent, this.activeUserId);
   }
 
   cancelEvent(id: string, reason?: string): EventItem {

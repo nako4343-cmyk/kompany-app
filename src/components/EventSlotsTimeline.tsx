@@ -141,6 +141,13 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
     };
   });
 
+  const maxVisibleCompactSlots = 8;
+  const maxVisibleDetailSlots = Math.max(occupiedSpots + 4, 10);
+  const compactVisibleSlots = slots.slice(0, maxVisibleCompactSlots);
+  const compactExtraCount = Math.max(0, slots.length - compactVisibleSlots.length);
+  const detailVisibleSlots = slots.slice(0, maxVisibleDetailSlots);
+  const detailExtraCount = Math.max(0, slots.length - detailVisibleSlots.length);
+
   // COMPACT VIEW FOR FEED CARDS
   if (compact) {
     return (
@@ -174,7 +181,7 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
           }}
         >
           <div className="flex items-center justify-between gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
-            {slots.map((slot) => {
+            {compactVisibleSlots.map((slot) => {
               if (slot.isOccupied) {
                 return (
                   <motion.div
@@ -262,6 +269,24 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
                 </div>
               );
             })}
+            {compactExtraCount > 0 && (
+              <div className="flex-1 min-w-[40px] max-w-[56px] flex flex-col items-center gap-1">
+                <div
+                  className="w-8 h-8 rounded-xl border flex items-center justify-center text-[10px] font-bold tabular-nums"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--accent-primary)',
+                  }}
+                  title={`Ещё ${compactExtraCount} мест`}
+                >
+                  +{compactExtraCount}
+                </div>
+                <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                  ещё
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Quick Schedule Footer in Compact Mode */}
@@ -397,7 +422,7 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
 
       {/* Section 2: Clean Unified Grid of Slots (Replaces duplicate roster) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {slots.map((slot, i) => {
+        {detailVisibleSlots.map((slot, i) => {
           if (slot.isOccupied) {
             return (
               <motion.div
@@ -559,6 +584,32 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
             </motion.div>
           );
         })}
+        {detailExtraCount > 0 && (
+          <div
+            className="p-3.5 rounded-2xl border border-dashed flex items-center justify-between gap-3"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center font-extrabold text-xs shrink-0 tabular-nums"
+                style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent-primary)' }}
+              >
+                +{detailExtraCount}
+              </div>
+              <div>
+                <span className="text-sm font-bold block" style={{ color: 'var(--text-primary)' }}>
+                  Ещё {detailExtraCount} свободных мест
+                </span>
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Всего предусмотрено {totalSpots} мест для гостей
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Section 3: Chronological Schedule / Milestones */}

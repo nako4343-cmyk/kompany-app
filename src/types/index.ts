@@ -46,6 +46,7 @@ export type EventBudgetTier =
 
 export type EventCategory =
   | 'День рождения'
+  | 'Свадьба'
   | 'Ресторан / Бар'
   | 'Настольные игры'
   | 'Кино / Концерт'
@@ -114,6 +115,8 @@ export interface EventItem {
   // STRICT PRIVACY FIELDS - only present if requester is organizer or approved participant!
   exactVenue?: string; // e.g. "Ресторан 'Горыныч', 2 этаж"
   exactAddress?: string; // e.g. "Рождественский бульвар, д. 1"
+  yandexMapsUrl?: string; // e.g. "https://yandex.ru/maps/..."
+  coordinates?: { lat: number; lon: number };
   organizerPhone?: string; // e.g. "+7 (999) 123-45-67"
   privateInstructions?: string; // e.g. "Столик забронирован на имя Анны, домофон 14"
   allowPhoneSharing?: boolean;
