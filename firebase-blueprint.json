@@ -1,0 +1,526 @@
+{
+  "entities": {
+    "UserPublicProfile": {
+      "title": "UserPublicProfile",
+      "description": "Public user profile for event organizers, participants, and seekers open to invites (no PII).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "User UID matching Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "age": {
+          "type": "number",
+          "description": "User age between 18 and 99"
+        },
+        "gender": {
+          "type": "string",
+          "description": "User gender for seeker filtering",
+          "enum": ["female", "male"]
+        },
+        "city": {
+          "type": "string",
+          "description": "City name",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "occupation": {
+          "type": "string",
+          "description": "User profession or role",
+          "maxLength": 100
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Profile avatar URL",
+          "maxLength": 500
+        },
+        "bio": {
+          "type": "string",
+          "description": "Short biography and interests description",
+          "maxLength": 600
+        },
+        "interests": {
+          "type": "array",
+          "description": "Bounded list of up to 10 interest tags"
+        },
+        "openToInvites": {
+          "type": "boolean",
+          "description": "Whether the user has the 'Waiting for event invitations' badge enabled"
+        },
+        "openToInvitesNote": {
+          "type": "string",
+          "description": "Short note for event organizers when open to invites",
+          "maxLength": 300
+        },
+        "reliabilityScore": {
+          "type": "number",
+          "description": "Reliability score from 1.0 to 5.0"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "age",
+        "gender",
+        "city",
+        "avatarUrl",
+        "bio",
+        "interests",
+        "openToInvites",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII document for user email and phone number accessible strictly to owner.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "description": "Private user email",
+          "maxLength": 150
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Private user phone number",
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["ownerId", "email", "createdAt", "updatedAt"]
+    },
+    "EventDoc": {
+      "title": "EventDoc",
+      "description": "Public event card and metadata (without exact private address).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Event ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "organizerId": {
+          "type": "string",
+          "description": "Organizer Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "organizerName": {
+          "type": "string",
+          "description": "Organizer display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "organizerAge": {
+          "type": "number",
+          "description": "Organizer age"
+        },
+        "organizerAvatar": {
+          "type": "string",
+          "description": "Organizer avatar URL",
+          "maxLength": 500
+        },
+        "title": {
+          "type": "string",
+          "description": "Event title",
+          "minLength": 3,
+          "maxLength": 140
+        },
+        "category": {
+          "type": "string",
+          "description": "Event category",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "description": {
+          "type": "string",
+          "description": "Event description",
+          "minLength": 1,
+          "maxLength": 1500
+        },
+        "date": {
+          "type": "string",
+          "description": "Event date YYYY-MM-DD",
+          "minLength": 10,
+          "maxLength": 10
+        },
+        "time": {
+          "type": "string",
+          "description": "Event time HH:MM",
+          "minLength": 4,
+          "maxLength": 10
+        },
+        "totalSpots": {
+          "type": "number",
+          "description": "Maximum number of guests"
+        },
+        "occupiedSpots": {
+          "type": "number",
+          "description": "Currently occupied spots"
+        },
+        "budget": {
+          "type": "string",
+          "description": "Budget tier",
+          "maxLength": 60
+        },
+        "city": {
+          "type": "string",
+          "description": "City name",
+          "maxLength": 60
+        },
+        "approximateArea": {
+          "type": "string",
+          "description": "Public approximate district/landmark",
+          "maxLength": 160
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Event cover image URL",
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "description": "Event lifecycle status",
+          "enum": ["open", "full", "completed", "cancelled"]
+        },
+        "groupChatInitialized": {
+          "type": "boolean",
+          "description": "Whether group chat is initialized"
+        },
+        "groupChatTitle": {
+          "type": "string",
+          "description": "Custom group chat title",
+          "maxLength": 140
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "organizerId",
+        "organizerName",
+        "organizerAge",
+        "organizerAvatar",
+        "title",
+        "category",
+        "description",
+        "date",
+        "time",
+        "totalSpots",
+        "occupiedSpots",
+        "budget",
+        "city",
+        "approximateArea",
+        "imageUrl",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EventSecretDoc": {
+      "title": "EventSecretDoc",
+      "description": "Protected exact venue, address, Yandex Maps link, and organizer contact unlocked after approval.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "description": "Parent event ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "organizerId": {
+          "type": "string",
+          "description": "Organizer UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "exactVenue": {
+          "type": "string",
+          "description": "Exact venue name",
+          "maxLength": 160
+        },
+        "exactAddress": {
+          "type": "string",
+          "description": "Exact street address",
+          "maxLength": 200
+        },
+        "yandexMapsUrl": {
+          "type": "string",
+          "description": "Yandex Maps URL",
+          "maxLength": 500
+        },
+        "organizerPhone": {
+          "type": "string",
+          "description": "Organizer phone number",
+          "maxLength": 40
+        },
+        "privateInstructions": {
+          "type": "string",
+          "description": "Private instructions for approved guests",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["eventId", "organizerId", "exactVenue", "exactAddress", "createdAt", "updatedAt"]
+    },
+    "EventParticipantDoc": {
+      "title": "EventParticipantDoc",
+      "description": "Application or invitation record for a user on an event.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "description": "Parent event ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Applicant or invited user UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "organizerId": {
+          "type": "string",
+          "description": "Event organizer UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Participant display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "userAge": {
+          "type": "number",
+          "description": "Participant age"
+        },
+        "userAvatar": {
+          "type": "string",
+          "description": "Participant avatar URL",
+          "maxLength": 500
+        },
+        "note": {
+          "type": "string",
+          "description": "Application or invitation note",
+          "maxLength": 500
+        },
+        "isInvitation": {
+          "type": "boolean",
+          "description": "True if invited by organizer from seeker list"
+        },
+        "status": {
+          "type": "string",
+          "description": "Participation status",
+          "enum": ["pending", "accepted", "rejected"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "eventId",
+        "userId",
+        "organizerId",
+        "userName",
+        "userAge",
+        "userAvatar",
+        "note",
+        "isInvitation",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChatMessageDoc": {
+      "title": "ChatMessageDoc",
+      "description": "Group chat message inside an event, supporting pinned messages.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Message ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "eventId": {
+          "type": "string",
+          "description": "Parent event ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderId": {
+          "type": "string",
+          "description": "Sender Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderName": {
+          "type": "string",
+          "description": "Sender display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "senderAvatar": {
+          "type": "string",
+          "description": "Sender avatar URL",
+          "maxLength": 500
+        },
+        "text": {
+          "type": "string",
+          "description": "Message content",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Formatted time HH:MM",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "isPinned": {
+          "type": "boolean",
+          "description": "Whether the message is pinned in the group chat"
+        },
+        "pinnedBy": {
+          "type": "string",
+          "description": "Name of user who pinned the message",
+          "maxLength": 80
+        },
+        "pinnedLabel": {
+          "type": "string",
+          "description": "Label of the pinned message (e.g. Address)",
+          "maxLength": 60
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "senderId",
+        "senderName",
+        "senderAvatar",
+        "text",
+        "timestamp",
+        "isPinned",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPublicProfile" },
+      "description": "Public user profiles for event hosts, participants, and seekers."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated private PII (email, phone) accessible only to the user owner."
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/EventDoc" },
+      "description": "Public event listings."
+    },
+    "/events/{eventId}/secrets/{secretId}": {
+      "schema": { "$ref": "#/entities/EventSecretDoc" },
+      "description": "Exact venue, address, and private instructions accessible only to the event organizer or accepted participants."
+    },
+    "/events/{eventId}/participants/{participantId}": {
+      "schema": { "$ref": "#/entities/EventParticipantDoc" },
+      "description": "Event applications, invitations, and accepted participants."
+    },
+    "/events/{eventId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessageDoc" },
+      "description": "Group chat messages for the event organizer and accepted participants."
+    }
+  }
+}

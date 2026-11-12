@@ -24,10 +24,19 @@ import { AdminPanelModal } from './components/AdminPanelModal.tsx';
 import { MapView } from './components/MapView.tsx';
 import { OnlineStatusBadge } from './components/OnlineStatusBadge.tsx';
 import { InviteUsersModal } from './components/InviteUsersModal.tsx';
+import { AuthModal } from './components/AuthModal.tsx';
 import { EventItem, UserProfile, AppNotification, UserReview } from './types/index.ts';
 import { api } from './services/api.ts';
 import { clientLocalStore } from './services/clientLocalStore.ts';
 import { AppLanguage, UI_TEXT, translateCategory } from './i18n/translations.ts';
+import {
+  auth,
+  onAuthStateChanged,
+  FirebaseUser,
+  fetchCloudSeekers,
+  fetchCloudUserProfile,
+  sanitizeValidId,
+} from './lib/firebase.ts';
 
 const CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'Все', label: 'Все события' },
@@ -157,6 +166,44 @@ export default function App() {
   const [showSafetyGuide, setShowSafetyGuide] = useState<boolean>(false);
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [showDemoShareModal, setShowDemoShareModal] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [cloudUser, setCloudUser] = useState<FirebaseUser | null>(null);
+
+  // Listen to Firebase Auth state and sync cloud seekers/profile
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async fbUser => {
+      setCloudUser(fbUser);
+      if (fbUser) {
+        try {
+          const uid = sanitizeValidId(fbUser.uid);
+          const cloudProf = await fetchCloudUserProfile(uid);
+          if (cloudProf && cloudProf.name) {
+            const registered = clientLocalStore.registerOrSwitchCloudUser({
+              ...clientLocalStore.getMe(),
+              ...cloudProf,
+              id: uid,
+              email: fbUser.email || cloudProf.email || 'user@kompa.app',
+              onlineStatus: 'online',
+              lastSeen: 'Онлайн сейчас',
+            } as UserProfile);
+            setCurrentUser({ ...registered });
+          }
+          const cloudSeekersList = await fetchCloudSeekers();
+          if (Array.isArray(cloudSeekersList) && cloudSeekersList.length > 0) {
+            for (const s of cloudSeekersList) {
+              if (!clientLocalStore.users.has(s.id)) {
+                clientLocalStore.users.set(s.id, s);
+              }
+            }
+            setSeekers(clientLocalStore.getSeekers());
+          }
+        } catch {
+          // ignore initial cloud sync errors
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Sync palette to document root
   useEffect(() => {
@@ -493,6 +540,8 @@ export default function App() {
         onOpenSafetyGuide={() => setShowSafetyGuide(true)}
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenDemoShare={() => setShowDemoShareModal(true)}
+        onOpenAuth={() => setShowAuthModal(true)}
+        isCloudConnected={Boolean(cloudUser)}
         activePalette={activePalette}
         onChangePalette={setActivePalette}
         lang={lang}
@@ -2230,6 +2279,21 @@ export default function App() {
         <DemoShareModal
           onClose={() => setShowDemoShareModal(false)}
           sharedUrl="https://nako4343-cmyk.github.io/kompany-app/"
+        />
+      )}
+
+      {showAuthModal && (
+        <AuthModal
+          currentUser={currentUser}
+          cloudUser={cloudUser}
+          onClose={() => setShowAuthModal(false)}
+          onProfileRegistered={updatedProfile => {
+            const saved = clientLocalStore.registerOrSwitchCloudUser(updatedProfile);
+            setCurrentUser({ ...saved });
+            setSeekers(clientLocalStore.getSeekers());
+            loadData();
+          }}
+          lang={lang}
         />
       )}
 

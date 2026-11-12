@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   Globe,
+  UserPlus,
 } from 'lucide-react';
 import { UserProfile, AppNotification } from '../types/index.ts';
 import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
@@ -65,6 +66,8 @@ interface HeaderProps {
   onOpenAdmin?: () => void;
   onOpenAdminPanel?: () => void;
   onOpenDemoShare: () => void;
+  onOpenAuth?: () => void;
+  isCloudConnected?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -82,6 +85,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdmin,
   onOpenAdminPanel,
   onOpenDemoShare,
+  onOpenAuth,
+  isCloudConnected = false,
 }) => {
   const t = UI_TEXT[lang];
   const [showNotifications, setShowNotifications] = useState(false);
@@ -541,6 +546,38 @@ export const Header: React.FC<HeaderProps> = ({
             </AnimatePresence>
           </div>
 
+          {/* Registration / Cloud Profile Button */}
+          {onOpenAuth && (
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={onOpenAuth}
+              className="px-2.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+              style={{
+                backgroundColor: isCloudConnected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                borderColor: 'var(--border-subtle)',
+                color: isCloudConnected ? 'var(--accent-text)' : 'var(--text-primary)',
+              }}
+              title={
+                lang === 'en'
+                  ? 'Registration & Cloud Database Profile'
+                  : 'Регистрация и облачный профиль в базе данных'
+              }
+            >
+              <UserPlus className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+              <span className="hidden md:inline">
+                {isCloudConnected
+                  ? lang === 'en'
+                    ? 'Cloud Profile'
+                    : 'Профиль в БД'
+                  : lang === 'en'
+                  ? 'Sign Up'
+                  : 'Регистрация'}
+              </span>
+            </motion.button>
+          )}
+
           {/* Demo User Switcher */}
           <div className="relative" ref={switcherRef}>
             <motion.button
@@ -606,6 +643,26 @@ export const Header: React.FC<HeaderProps> = ({
                     borderColor: 'var(--border-subtle)',
                   }}
                 >
+                  {onOpenAuth && (
+                    <div className="p-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserSwitcher(false);
+                          onOpenAuth();
+                        }}
+                        className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                        style={{ backgroundColor: 'var(--accent-primary)' }}
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>
+                          {lang === 'en'
+                            ? 'Register / Cloud Account'
+                            : 'Регистрация / Облачная анкета'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
                   <div
                     className="p-3 border-b flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider"
                     style={{

@@ -11,6 +11,11 @@ import {
   EventBudgetTier
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
+import {
+  syncUserProfileToCloud,
+  syncEventToCloud,
+  syncChatMessageToCloud,
+} from '../lib/firebase.ts';
 
 const LOCAL_STORAGE_KEY = 'kompany_client_store_v11';
 
@@ -714,11 +719,19 @@ export class ClientLocalStore {
     return { success: false, user: this.getMe() };
   }
 
+  registerOrSwitchCloudUser(profile: UserProfile): UserProfile {
+    this.users.set(profile.id, profile);
+    this.activeUserId = profile.id;
+    this.save();
+    return profile;
+  }
+
   updateProfile(data: Partial<UserProfile>): UserProfile {
     const user = this.getMe();
     if (user) {
       Object.assign(user, data);
       this.save();
+      syncUserProfileToCloud(user).catch(() => {});
       return user;
     }
     return user;
@@ -1002,6 +1015,7 @@ export class ClientLocalStore {
     messages.push(msg);
     this.chatMessages.set(eventId, messages);
     this.save();
+    syncChatMessageToCloud(eventId, msg).catch(() => {});
     return msg;
   }
 
@@ -1314,6 +1328,7 @@ export class ClientLocalStore {
       },
     ]);
     this.save();
+    syncEventToCloud(newEvent, this.rawEventsSecret.get(id)).catch(() => {});
     return this.sanitizeEvent(newEvent, this.activeUserId);
   }
 

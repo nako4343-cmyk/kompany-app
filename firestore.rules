@@ -1,0 +1,427 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net: Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'nako4343@gmail.com'
+      );
+    }
+
+    function isEventOrganizer(eventId) {
+      return exists(/databases/$(database)/documents/events/$(eventId)) &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+    }
+
+    function isApprovedEventMember(eventId) {
+      return isEventOrganizer(eventId) || (
+        exists(/databases/$(database)/documents/events/$(eventId)/participants/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/events/$(eventId)/participants/$(request.auth.uid)).data.status == 'accepted'
+      );
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+    function isValidUserPublicProfile(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'name', 'age', 'gender', 'city',
+          'avatarUrl', 'bio', 'interests', 'openToInvites',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'age', 'gender', 'city',
+          'occupation', 'avatarUrl', 'bio', 'interests',
+          'openToInvites', 'openToInvitesNote', 'reliabilityScore',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.id == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+        data.age is int && data.age >= 18 && data.age <= 99 &&
+        data.gender is string && (data.gender == 'female' || data.gender == 'male') &&
+        data.city is string && data.city.size() >= 1 && data.city.size() <= 60 &&
+        (!('occupation' in data) || (data.occupation is string && data.occupation.size() <= 100)) &&
+        data.avatarUrl is string && data.avatarUrl.size() >= 1 && data.avatarUrl.size() <= 500 &&
+        data.bio is string && data.bio.size() <= 600 &&
+        data.interests is list && data.interests.size() <= 10 &&
+        (data.interests.size() == 0 || (data.interests[0] is string && data.interests[0].size() <= 60)) &&
+        data.openToInvites is bool &&
+        (!('openToInvitesNote' in data) || (data.openToInvitesNote is string && data.openToInvitesNote.size() <= 300)) &&
+        (!('reliabilityScore' in data) || (data.reliabilityScore is number && data.reliabilityScore >= 1 && data.reliabilityScore <= 5)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll(['ownerId', 'email', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'email', 'phoneNumber', 'createdAt', 'updatedAt']) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() <= 40)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEventDoc(data) {
+      return data.keys().hasAll([
+          'id', 'organizerId', 'organizerName', 'organizerAge', 'organizerAvatar',
+          'title', 'category', 'description', 'date', 'time',
+          'totalSpots', 'occupiedSpots', 'budget', 'city', 'approximateArea',
+          'imageUrl', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'organizerId', 'organizerName', 'organizerAge', 'organizerAvatar',
+          'title', 'category', 'description', 'date', 'time',
+          'totalSpots', 'occupiedSpots', 'budget', 'city', 'approximateArea',
+          'imageUrl', 'status', 'groupChatInitialized', 'groupChatTitle',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.organizerId) &&
+        data.organizerId == request.auth.uid &&
+        data.organizerName is string && data.organizerName.size() >= 1 && data.organizerName.size() <= 80 &&
+        data.organizerAge is int && data.organizerAge >= 18 && data.organizerAge <= 99 &&
+        data.organizerAvatar is string && data.organizerAvatar.size() >= 1 && data.organizerAvatar.size() <= 500 &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 1500 &&
+        data.date is string && data.date.size() == 10 &&
+        data.time is string && data.time.size() >= 4 && data.time.size() <= 10 &&
+        data.totalSpots is int && data.totalSpots >= 2 && data.totalSpots <= 200 &&
+        data.occupiedSpots is int && data.occupiedSpots >= 1 && data.occupiedSpots <= data.totalSpots &&
+        data.budget is string && data.budget.size() >= 1 && data.budget.size() <= 60 &&
+        data.city is string && data.city.size() >= 1 && data.city.size() <= 60 &&
+        data.approximateArea is string && data.approximateArea.size() >= 1 && data.approximateArea.size() <= 160 &&
+        data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 500 &&
+        data.status is string && (data.status == 'open' || data.status == 'full' || data.status == 'completed' || data.status == 'cancelled') &&
+        (!('groupChatInitialized' in data) || data.groupChatInitialized is bool) &&
+        (!('groupChatTitle' in data) || (data.groupChatTitle is string && data.groupChatTitle.size() <= 140)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEventSecretDoc(data) {
+      return data.keys().hasAll(['eventId', 'organizerId', 'exactVenue', 'exactAddress', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'eventId', 'organizerId', 'exactVenue', 'exactAddress',
+          'yandexMapsUrl', 'organizerPhone', 'privateInstructions',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.eventId) &&
+        isValidId(data.organizerId) &&
+        data.organizerId == request.auth.uid &&
+        data.exactVenue is string && data.exactVenue.size() >= 1 && data.exactVenue.size() <= 160 &&
+        data.exactAddress is string && data.exactAddress.size() >= 1 && data.exactAddress.size() <= 200 &&
+        (!('yandexMapsUrl' in data) || (data.yandexMapsUrl is string && data.yandexMapsUrl.size() <= 500)) &&
+        (!('organizerPhone' in data) || (data.organizerPhone is string && data.organizerPhone.size() <= 40)) &&
+        (!('privateInstructions' in data) || (data.privateInstructions is string && data.privateInstructions.size() <= 500)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEventParticipantDoc(data) {
+      return data.keys().hasAll([
+          'eventId', 'userId', 'organizerId', 'userName', 'userAge',
+          'userAvatar', 'note', 'isInvitation', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'eventId', 'userId', 'organizerId', 'userName', 'userAge',
+          'userAvatar', 'note', 'isInvitation', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.eventId) &&
+        isValidId(data.userId) &&
+        isValidId(data.organizerId) &&
+        (data.userId == request.auth.uid || data.organizerId == request.auth.uid) &&
+        data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 80 &&
+        data.userAge is int && data.userAge >= 18 && data.userAge <= 99 &&
+        data.userAvatar is string && data.userAvatar.size() >= 1 && data.userAvatar.size() <= 500 &&
+        data.note is string && data.note.size() <= 500 &&
+        data.isInvitation is bool &&
+        data.status is string && (data.status == 'pending' || data.status == 'accepted' || data.status == 'rejected') &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidChatMessageDoc(data) {
+      return data.keys().hasAll([
+          'id', 'eventId', 'senderId', 'senderName', 'senderAvatar',
+          'text', 'timestamp', 'isPinned', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'eventId', 'senderId', 'senderName', 'senderAvatar',
+          'text', 'timestamp', 'isPinned', 'pinnedBy', 'pinnedLabel',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.eventId) &&
+        isValidId(data.senderId) &&
+        data.senderId == request.auth.uid &&
+        data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 80 &&
+        data.senderAvatar is string && data.senderAvatar.size() >= 1 && data.senderAvatar.size() <= 500 &&
+        data.text is string && data.text.size() >= 1 && data.text.size() <= 1000 &&
+        data.timestamp is string && data.timestamp.size() >= 1 && data.timestamp.size() <= 20 &&
+        data.isPinned is bool &&
+        (!('pinnedBy' in data) || (data.pinnedBy is string && data.pinnedBy.size() <= 80)) &&
+        (!('pinnedLabel' in data) || (data.pinnedLabel is string && data.pinnedLabel.size() <= 60)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Rules
+    // /users/{userId} - Public Profiles (No PII)
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && existing().ownerId == userId;
+      allow list: if isSignedIn() && existing().openToInvites == true;
+
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        userId == request.auth.uid &&
+        isValidUserPublicProfile(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserPublicProfile(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'age', 'gender', 'city', 'occupation', 'avatarUrl',
+              'bio', 'interests', 'openToInvites', 'openToInvitesNote',
+              'reliabilityScore', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isAdmin();
+
+      // /users/{userId}/private/{docId} - Strictly isolated PII
+      match /private/{docId} {
+        allow get: if isSignedIn() &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          (request.auth.uid == userId || isAdmin());
+
+        allow create: if isVerifiedUser() &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          userId == request.auth.uid &&
+          isValidUserPrivateInfo(incoming()) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isVerifiedUser() &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          isValidUserPrivateInfo(incoming()) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (
+              existing().ownerId == request.auth.uid &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['email', 'phoneNumber', 'updatedAt'])
+            )
+          );
+
+        allow delete: if isAdmin();
+      }
+    }
+
+    // /events/{eventId} - Public Event Metadata
+    match /events/{eventId} {
+      allow get: if isSignedIn() && isValidId(eventId) && existing().id == eventId;
+      allow list: if isSignedIn() && (existing().status == 'open' || existing().organizerId == request.auth.uid);
+
+      allow create: if isVerifiedUser() &&
+        isValidId(eventId) &&
+        incoming().id == eventId &&
+        isValidEventDoc(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      allow update: if isVerifiedUser() &&
+        isValidId(eventId) &&
+        isValidEventDoc(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().organizerId == existing().organizerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().organizerId == request.auth.uid &&
+            existing().status != 'completed' &&
+            existing().status != 'cancelled' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'description', 'date', 'time', 'totalSpots',
+              'occupiedSpots', 'budget', 'approximateArea', 'imageUrl',
+              'status', 'groupChatInitialized', 'groupChatTitle', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isAdmin();
+
+      // /events/{eventId}/secrets/{secretId} - Protected exact address & instructions
+      match /secrets/{secretId} {
+        allow get: if isSignedIn() &&
+          isValidId(eventId) &&
+          isValidId(secretId) &&
+          (existing().organizerId == request.auth.uid || isApprovedEventMember(eventId) || isAdmin());
+
+        allow create: if isVerifiedUser() &&
+          isValidId(eventId) &&
+          isValidId(secretId) &&
+          incoming().eventId == eventId &&
+          isValidEventSecretDoc(incoming()) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isEventOrganizer(eventId);
+
+        allow update: if isVerifiedUser() &&
+          isValidId(eventId) &&
+          isValidId(secretId) &&
+          isValidEventSecretDoc(incoming()) &&
+          incoming().eventId == existing().eventId &&
+          incoming().organizerId == existing().organizerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (
+              existing().organizerId == request.auth.uid &&
+              isEventOrganizer(eventId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'exactVenue', 'exactAddress', 'yandexMapsUrl',
+                'organizerPhone', 'privateInstructions', 'updatedAt'
+              ])
+            )
+          );
+
+        allow delete: if isAdmin();
+      }
+
+      // /events/{eventId}/participants/{participantId} - Applications & Confirmed Guests
+      match /participants/{participantId} {
+        allow get: if isSignedIn() &&
+          isValidId(eventId) &&
+          isValidId(participantId) &&
+          (existing().userId == request.auth.uid || existing().organizerId == request.auth.uid || isApprovedEventMember(eventId) || isAdmin());
+
+        allow list: if isSignedIn() &&
+          (existing().userId == request.auth.uid || existing().organizerId == request.auth.uid || existing().status == 'accepted');
+
+        allow create: if isVerifiedUser() &&
+          isValidId(eventId) &&
+          isValidId(participantId) &&
+          incoming().eventId == eventId &&
+          incoming().userId == participantId &&
+          isValidEventParticipantDoc(incoming()) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/events/$(eventId)) &&
+          get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == incoming().organizerId;
+
+        allow update: if isVerifiedUser() &&
+          isValidId(eventId) &&
+          isValidId(participantId) &&
+          isValidEventParticipantDoc(incoming()) &&
+          incoming().eventId == existing().eventId &&
+          incoming().userId == existing().userId &&
+          incoming().organizerId == existing().organizerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (
+              (existing().organizerId == request.auth.uid || existing().userId == request.auth.uid) &&
+              exists(/databases/$(database)/documents/events/$(eventId)) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'note', 'updatedAt'])
+            )
+          );
+
+        allow delete: if isAdmin();
+      }
+
+      // /events/{eventId}/messages/{messageId} - Group Chat Messages & Pinned Messages
+      match /messages/{messageId} {
+        allow get: if isSignedIn() &&
+          isValidId(eventId) &&
+          isValidId(messageId) &&
+          (isApprovedEventMember(eventId) || isAdmin());
+
+        allow list: if isSignedIn() &&
+          existing().eventId == eventId &&
+          (existing().senderId == request.auth.uid || existing().isPinned == true || existing().isPinned == false);
+
+        allow create: if isVerifiedUser() &&
+          isValidId(eventId) &&
+          isValidId(messageId) &&
+          incoming().id == messageId &&
+          incoming().eventId == eventId &&
+          isValidChatMessageDoc(incoming()) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isApprovedEventMember(eventId);
+
+        allow update: if isVerifiedUser() &&
+          isValidId(eventId) &&
+          isValidId(messageId) &&
+          isValidChatMessageDoc(incoming()) &&
+          incoming().id == existing().id &&
+          incoming().eventId == existing().eventId &&
+          incoming().senderId == existing().senderId &&
+          incoming().text == existing().text &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (
+              isApprovedEventMember(eventId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['isPinned', 'pinnedBy', 'pinnedLabel', 'updatedAt'])
+            )
+          );
+
+        allow delete: if isAdmin();
+      }
+    }
+
+    // /admins/{adminId} - Trusted RBAC collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && request.auth.uid == adminId;
+      allow write: if false;
+    }
+  }
+}
