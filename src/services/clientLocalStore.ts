@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v7';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v8';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -34,6 +34,7 @@ export class ClientLocalStore {
     try {
       if (typeof window !== 'undefined') {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem('kompany_client_store_v7');
         localStorage.removeItem('kompany_client_store_v6');
         localStorage.removeItem('kompany_client_store_v5');
         localStorage.removeItem('kompany_user_id');
@@ -76,6 +77,8 @@ export class ClientLocalStore {
         this.notifications = new Map(Array.isArray(parsed.notifications) ? parsed.notifications : initialData.notifications as any);
         this.activeUserId = parsed.activeUserId || 'user-anna';
 
+        this.ensureDemoApplications();
+
         if (this.users.size === 0 || this.events.size < 20 || !this.users.has(this.activeUserId)) {
           this.seedFromInitial();
           this.save();
@@ -103,9 +106,89 @@ export class ClientLocalStore {
       this.reports = new Map(initialData.reports as any);
       this.notifications = new Map(initialData.notifications as any);
       this.activeUserId = (initialData.activeUserId as any) || 'user-anna';
+      this.ensureDemoApplications();
     } catch (e) {
       console.error('Seeding error:', e);
     }
+  }
+
+  private ensureDemoApplications() {
+    const seedApp = (
+      id: string,
+      eventId: string,
+      userId: string,
+      status: 'pending' | 'accepted' | 'rejected',
+      note: string
+    ) => {
+      if (this.applications.has(id)) return;
+      const ev = this.events.get(eventId);
+      const u = this.users.get(userId);
+      if (!ev || !u) return;
+
+      this.applications.set(id, {
+        id,
+        eventId: ev.id,
+        eventTitle: ev.title,
+        userId: u.id,
+        user: {
+          id: u.id,
+          name: u.name,
+          age: u.age,
+          avatarUrl: u.avatarUrl,
+          city: u.city,
+          bio: u.bio,
+          interests: u.interests,
+          reliability: u.reliability,
+          isPhoneVerified: u.isPhoneVerified,
+          isEmailVerified: u.isEmailVerified,
+        },
+        note,
+        status,
+        createdAt: '2026-11-11T15:30:00.000Z',
+        attendanceStatus: 'not_marked',
+      });
+    };
+
+    // Demo applications for Anna (Pending + Rejected; Accepted already in ev-5, ev-7)
+    seedApp(
+      'app-demo-anna-pending',
+      'ev-3',
+      'user-anna',
+      'pending',
+      'Привет, Елена! Обожаю камерную инди-музыку и живой звук, с радостью составлю компанию на вечер!'
+    );
+    seedApp(
+      'app-demo-anna-rejected',
+      'ev-6',
+      'user-anna',
+      'rejected',
+      'Хотела бы попробовать падел-теннис впервые, если еще осталось место на корте!'
+    );
+
+    // Demo applications for Mikhail (Rejected; Pending already on ev-1; Accepted on ev-4, ev-6, ev-8)
+    seedApp(
+      'app-demo-mikhail-rejected',
+      'ev-3',
+      'user-mikhail',
+      'rejected',
+      'Привет! Буду рядом после работы, с удовольствием послушаю акустический сет.'
+    );
+
+    // Demo applications for Elena (Pending + Rejected; Accepted on ev-1, ev-4, ev-7)
+    seedApp(
+      'app-demo-elena-pending',
+      'ev-2',
+      'user-elena',
+      'pending',
+      'Привет, Михаил! Очень хочу сыграть партию в «Покорение Марса», быстро схватываю правила.'
+    );
+    seedApp(
+      'app-demo-elena-rejected',
+      'ev-8',
+      'user-elena',
+      'rejected',
+      'Обожаю музыкальные квизы и саундтреки из кино, возьмете в команду?'
+    );
   }
 
   save() {
@@ -151,6 +234,19 @@ export class ClientLocalStore {
 
     const secret = this.rawEventsSecret.get(event.id);
 
+    const existingApp = uid
+      ? Array.from(this.applications.values()).find(a => a.eventId === event.id && a.userId === uid)
+      : undefined;
+
+    let myApplicationStatus: 'pending' | 'accepted' | 'rejected' | null = null;
+    if (isApprovedParticipant) {
+      myApplicationStatus = 'accepted';
+    } else if (existingApp) {
+      if (existingApp.status === 'accepted') myApplicationStatus = 'accepted';
+      else if (existingApp.status === 'rejected') myApplicationStatus = 'rejected';
+      else if (existingApp.status === 'pending') myApplicationStatus = 'pending';
+    }
+
     return {
       ...event,
       approvedParticipants: participants,
@@ -158,6 +254,8 @@ export class ClientLocalStore {
       exactAddress: hasFullAccess ? secret?.exactAddress : undefined,
       organizerPhone: hasFullAccess && secret?.allowPhoneSharing ? secret?.organizerPhone : undefined,
       privateInstructions: hasFullAccess ? secret?.privateInstructions : undefined,
+      myApplicationStatus,
+      myApplicationNote: existingApp?.note,
     };
   }
 

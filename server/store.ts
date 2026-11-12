@@ -33,10 +33,12 @@ export class DataStore {
       this.seedExtendedCatalog();
       this.seedQuestions();
       this.seedReviews();
+      this.seedDemoApplications();
       this.saveToFile();
     } else {
       this.seedExtendedCatalog();
       this.seedReviews();
+      this.seedDemoApplications();
       this.saveToFile();
     }
   }
@@ -1460,6 +1462,19 @@ export class DataStore {
         reliability: u.reliability,
       }));
 
+    const existingApp = viewerUserId
+      ? Array.from(this.applications.values()).find(a => a.eventId === event.id && a.userId === viewerUserId)
+      : undefined;
+
+    let myApplicationStatus: 'pending' | 'accepted' | 'rejected' | null = null;
+    if (isApprovedParticipant) {
+      myApplicationStatus = 'accepted';
+    } else if (existingApp) {
+      if (existingApp.status === 'accepted') myApplicationStatus = 'accepted';
+      else if (existingApp.status === 'rejected') myApplicationStatus = 'rejected';
+      else if (existingApp.status === 'pending') myApplicationStatus = 'pending';
+    }
+
     const sanitized: EventItem = {
       ...event,
       approvedParticipants: participants,
@@ -1470,9 +1485,85 @@ export class DataStore {
         ? this.rawEventsSecret.get(event.id)?.organizerPhone 
         : undefined,
       privateInstructions: hasFullAccess ? this.rawEventsSecret.get(event.id)?.privateInstructions : undefined,
+      myApplicationStatus,
+      myApplicationNote: existingApp?.note,
     };
 
     return sanitized;
+  }
+
+  seedDemoApplications() {
+    const seedApp = (
+      id: string,
+      eventId: string,
+      userId: string,
+      status: 'pending' | 'accepted' | 'rejected',
+      note: string
+    ) => {
+      if (this.applications.has(id)) return;
+      const ev = this.events.get(eventId);
+      const u = this.users.get(userId);
+      if (!ev || !u) return;
+
+      this.applications.set(id, {
+        id,
+        eventId: ev.id,
+        eventTitle: ev.title,
+        userId: u.id,
+        user: {
+          id: u.id,
+          name: u.name,
+          age: u.age,
+          avatarUrl: u.avatarUrl,
+          city: u.city,
+          bio: u.bio,
+          interests: u.interests,
+          reliability: u.reliability,
+          isPhoneVerified: u.isPhoneVerified,
+          isEmailVerified: u.isEmailVerified,
+        },
+        note,
+        status,
+        createdAt: '2026-11-11T15:30:00.000Z',
+        attendanceStatus: 'not_marked',
+      });
+    };
+
+    seedApp(
+      'app-demo-anna-pending',
+      'ev-3',
+      'user-anna',
+      'pending',
+      'Привет, Елена! Обожаю камерную инди-музыку и живой звук, с радостью составлю компанию на вечер!'
+    );
+    seedApp(
+      'app-demo-anna-rejected',
+      'ev-6',
+      'user-anna',
+      'rejected',
+      'Хотела бы попробовать падел-теннис впервые, если еще осталось место на корте!'
+    );
+    seedApp(
+      'app-demo-mikhail-rejected',
+      'ev-3',
+      'user-mikhail',
+      'rejected',
+      'Привет! Буду рядом после работы, с удовольствием послушаю акустический сет.'
+    );
+    seedApp(
+      'app-demo-elena-pending',
+      'ev-2',
+      'user-elena',
+      'pending',
+      'Привет, Михаил! Очень хочу сыграть партию в «Покорение Марса», быстро схватываю правила.'
+    );
+    seedApp(
+      'app-demo-elena-rejected',
+      'ev-8',
+      'user-elena',
+      'rejected',
+      'Обожаю музыкальные квизы и саундтреки из кино, возьмете в команду?'
+    );
   }
 
   getEvents(viewerUserId?: string, filters?: {

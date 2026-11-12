@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Lock, Unlock, Compass, ArrowUpRight, Bookmark, Star, Radio } from 'lucide-react';
+import { Lock, Unlock, Compass, ArrowUpRight, Bookmark, Star, Radio, Clock, XCircle, CheckCircle2 } from 'lucide-react';
 import { EventItem, UserProfile } from '../types/index.ts';
 import { EventSlotsTimeline } from './EventSlotsTimeline.tsx';
 
@@ -24,6 +24,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const isOrganizer = currentUser.id === event.organizerId;
   const isApproved = event.approvedParticipantIds.includes(currentUser.id);
+  const appStatus = isApproved ? 'accepted' : (event.myApplicationStatus ?? null);
   const isSaved = currentUser.savedEventIds?.includes(event.id) ?? false;
   const isFull = event.occupiedSpots >= event.totalSpots;
   const availableSpots = Math.max(0, event.totalSpots - event.occupiedSpots);
@@ -269,10 +270,20 @@ export const EventCard: React.FC<EventCardProps> = ({
                 >
                   Вы хост
                 </span>
-              ) : isApproved ? (
-                <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1 whitespace-nowrap">
-                  <Shield className="w-3.5 h-3.5" />
-                  Вы идёте
+              ) : appStatus === 'accepted' ? (
+                <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Принят</span>
+                </span>
+              ) : appStatus === 'pending' ? (
+                <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  <span>Ожидает одобрения</span>
+                </span>
+              ) : appStatus === 'rejected' ? (
+                <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <XCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Отклонен</span>
                 </span>
               ) : isFull ? (
                 <span

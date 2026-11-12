@@ -117,6 +117,10 @@ export interface EventItem {
   organizerPhone?: string; // e.g. "+7 (999) 123-45-67"
   privateInstructions?: string; // e.g. "Столик забронирован на имя Анны, домофон 14"
   allowPhoneSharing?: boolean;
+
+  // Viewer's own participation / application status for instant display in lists
+  myApplicationStatus?: 'pending' | 'accepted' | 'rejected' | null;
+  myApplicationNote?: string;
 }
 
 export interface EventApplication {

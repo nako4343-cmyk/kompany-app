@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Flame, Plus, Compass, ShieldCheck, Briefcase,
   MapPin, MessageSquare, CheckCircle2, RefreshCw, Star, Palette, Lock,
-  Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2
+  Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2,
+  Clock, XCircle
 } from 'lucide-react';
 import { Header, ColorPaletteId } from './components/Header.tsx';
 import { BottomNav, NavTab } from './components/BottomNav.tsx';
@@ -94,6 +95,7 @@ export default function App() {
   const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [feedViewMode, setFeedViewMode] = useState<'cards' | 'map'>('cards');
+  const [participationStatusFilter, setParticipationStatusFilter] = useState<'all' | 'accepted' | 'pending' | 'rejected'>('all');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Profile Edit State
@@ -320,7 +322,32 @@ export default function App() {
 
   const activeUser = currentUser || clientLocalStore.getMe();
   const myOrganizedEvents = events.filter(e => e.organizerId === activeUser.id);
-  const myJoinedEvents = events.filter(e => (e.approvedParticipantIds || []).includes(activeUser.id));
+  const myParticipationEvents = events.filter(
+    e =>
+      e.organizerId !== activeUser.id &&
+      ((e.approvedParticipantIds || []).includes(activeUser.id) ||
+        e.myApplicationStatus === 'accepted' ||
+        e.myApplicationStatus === 'pending' ||
+        e.myApplicationStatus === 'rejected')
+  );
+  const getEventAppStatus = (ev: EventItem): 'accepted' | 'pending' | 'rejected' => {
+    if ((ev.approvedParticipantIds || []).includes(activeUser.id) || ev.myApplicationStatus === 'accepted') {
+      return 'accepted';
+    }
+    if (ev.myApplicationStatus === 'rejected') {
+      return 'rejected';
+    }
+    return 'pending';
+  };
+  const participationCounts = {
+    all: myParticipationEvents.length,
+    accepted: myParticipationEvents.filter(ev => getEventAppStatus(ev) === 'accepted').length,
+    pending: myParticipationEvents.filter(ev => getEventAppStatus(ev) === 'pending').length,
+    rejected: myParticipationEvents.filter(ev => getEventAppStatus(ev) === 'rejected').length,
+  };
+  const filteredParticipationEvents = myParticipationEvents.filter(ev =>
+    participationStatusFilter === 'all' ? true : getEventAppStatus(ev) === participationStatusFilter
+  );
 
   return (
     <div
@@ -926,13 +953,80 @@ export default function App() {
               )}
             </div>
 
-            {/* Joined by me */}
-            <div className="space-y-3 pt-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                Я участвую ({myJoinedEvents.length})
-              </h2>
+            {/* Joined / Applied by me */}
+            <div className="space-y-3.5 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                    Я участвую ({myParticipationEvents.length})
+                  </h2>
+                </div>
 
-              {myJoinedEvents.length === 0 ? (
+                {/* Color-coded status filter tabs */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setParticipationStatusFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      participationStatusFilter === 'all'
+                        ? 'text-white shadow-xs'
+                        : 'hover:opacity-85'
+                    }`}
+                    style={
+                      participationStatusFilter === 'all'
+                        ? { backgroundColor: 'var(--accent-primary)', color: '#FFFFFF' }
+                        : { backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }
+                    }
+                  >
+                    <span>Все</span>
+                    <span className="opacity-80 tabular-nums">{participationCounts.all}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setParticipationStatusFilter('accepted')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      participationStatusFilter === 'accepted'
+                        ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/15'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Принят</span>
+                    <span className="opacity-85 tabular-nums">{participationCounts.accepted}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setParticipationStatusFilter('pending')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      participationStatusFilter === 'pending'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 hover:bg-amber-500/15'
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span>Ожидает одобрения</span>
+                    <span className="opacity-85 tabular-nums">{participationCounts.pending}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setParticipationStatusFilter('rejected')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      participationStatusFilter === 'rejected'
+                        ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/15'
+                    }`}
+                  >
+                    <XCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Отклонен</span>
+                    <span className="opacity-85 tabular-nums">{participationCounts.rejected}</span>
+                  </button>
+                </div>
+              </div>
+
+              {filteredParticipationEvents.length === 0 ? (
                 <div
                   className="p-6 rounded-3xl border text-center text-xs"
                   style={{
@@ -941,68 +1035,166 @@ export default function App() {
                     color: 'var(--text-muted)',
                   }}
                 >
-                  Вы пока не подтверждены ни в одном мероприятии. Подайте заявку в ленте!
+                  {myParticipationEvents.length === 0
+                    ? 'Вы пока не подавали заявок ни в одно мероприятие. Выберите событие в ленте!'
+                    : 'Нет заявок с выбранным статусом.'}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {myJoinedEvents.map(ev => (
-                    <div
-                      key={ev.id}
-                      className="p-4 rounded-3xl border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-subtle)',
-                      }}
-                    >
-                      <div
-                        onClick={() => setSelectedEventForDetail(ev)}
-                        className="flex items-center gap-3.5 cursor-pointer"
-                      >
-                        <img
-                          src={ev.imageUrl}
-                          alt={ev.title}
-                          referrerPolicy="no-referrer"
-                          className="w-16 h-16 rounded-2xl object-cover shrink-0"
-                        />
-                        <div>
-                          <span
-                            className="text-sm font-bold block line-clamp-1"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
-                            {ev.title}
-                          </span>
-                          <span className="text-xs block mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                            {ev.isToday ? 'Сегодня' : ev.date} в {ev.time} · Орг: {ev.organizer.name}
-                          </span>
-                          <span className="text-xs text-emerald-500 font-bold flex items-center gap-1 mt-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Точный адрес и чат доступны
-                          </span>
-                        </div>
-                      </div>
+                  {filteredParticipationEvents.map(ev => {
+                    const status = getEventAppStatus(ev);
+                    const statusConfig = {
+                      accepted: {
+                        label: 'Принят',
+                        subtext: 'Точный адрес и закрытый чат участников открыты',
+                        badgeClass:
+                          'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+                        accentBarClass: 'bg-emerald-500',
+                        subtextClass: 'text-emerald-600 dark:text-emerald-400',
+                        Icon: CheckCircle2,
+                      },
+                      pending: {
+                        label: 'Ожидает одобрения',
+                        subtext: 'Организатор рассматривает вашу заявку · точный адрес пока скрыт',
+                        badgeClass:
+                          'bg-amber-500/12 text-amber-600 dark:text-amber-400 border-amber-500/30',
+                        accentBarClass: 'bg-amber-500',
+                        subtextClass: 'text-amber-600 dark:text-amber-400',
+                        Icon: Clock,
+                      },
+                      rejected: {
+                        label: 'Отклонен',
+                        subtext: 'К сожалению, группа уже укомплектована или заявка отклонена',
+                        badgeClass:
+                          'bg-rose-500/12 text-rose-600 dark:text-rose-400 border-rose-500/30',
+                        accentBarClass: 'bg-rose-500',
+                        subtextClass: 'text-rose-600 dark:text-rose-400',
+                        Icon: XCircle,
+                      },
+                    }[status];
+                    const StatusIcon = statusConfig.Icon;
 
-                      <div className="flex items-center gap-2">
-                        <button
+                    return (
+                      <motion.div
+                        key={ev.id}
+                        layout
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative overflow-hidden p-4 sm:p-5 rounded-3xl border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-shadow hover:shadow-md"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
+                      >
+                        {/* Left color-coded status indicator bar */}
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 w-1.5 ${statusConfig.accentBarClass}`}
+                          aria-hidden="true"
+                        />
+
+                        <div
                           onClick={() => setSelectedEventForDetail(ev)}
-                          className="px-4 py-2.5 rounded-2xl text-xs font-bold cursor-pointer"
-                          style={{
-                            backgroundColor: 'var(--bg-elevated)',
-                            color: 'var(--text-primary)',
-                          }}
+                          className="flex items-start sm:items-center gap-3.5 cursor-pointer pl-1.5 min-w-0 flex-1"
                         >
-                          Точный адрес
-                        </button>
-                        <button
-                          onClick={() => setActiveChatEventId(ev.id)}
-                          className="px-4 py-2.5 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                          style={{ backgroundColor: 'var(--accent-primary)' }}
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Чат гостей</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                          <img
+                            src={ev.imageUrl}
+                            alt={ev.title}
+                            referrerPolicy="no-referrer"
+                            className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover shrink-0 border"
+                            style={{ borderColor: 'var(--border-subtle)' }}
+                          />
+                          <div className="min-w-0 flex-1 space-y-1">
+                            {/* Status Badge + Category Row */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl text-[11px] font-bold border ${statusConfig.badgeClass}`}
+                              >
+                                <StatusIcon className="w-3.5 h-3.5 shrink-0" />
+                                <span>{statusConfig.label}</span>
+                              </span>
+                              <span
+                                className="text-[11px] font-medium truncate"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                {ev.category} · {ev.approximateArea}
+                              </span>
+                            </div>
+
+                            {/* Event Title */}
+                            <span
+                              className="text-sm font-bold block line-clamp-1"
+                              style={{ color: 'var(--text-primary)' }}
+                            >
+                              {ev.title}
+                            </span>
+
+                            {/* Date, Time & Organizer */}
+                            <span className="text-xs block" style={{ color: 'var(--text-secondary)' }}>
+                              {ev.isToday ? 'Сегодня' : ev.date} в {ev.time} · Организатор: {ev.organizer.name}
+                            </span>
+
+                            {/* Status details or submitted application note */}
+                            <div className={`text-xs font-semibold flex items-center gap-1.5 pt-0.5 ${statusConfig.subtextClass}`}>
+                              <span>{statusConfig.subtext}</span>
+                            </div>
+
+                            {ev.myApplicationNote && (
+                              <p
+                                className="text-[11px] line-clamp-1 pt-0.5"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                Ваше сообщение: «{ev.myApplicationNote}»
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pl-1.5 sm:pl-0 shrink-0">
+                          {status === 'accepted' ? (
+                            <>
+                              <button
+                                onClick={() => setSelectedEventForDetail(ev)}
+                                className="px-4 py-2.5 rounded-2xl text-xs font-bold cursor-pointer transition-opacity hover:opacity-90"
+                                style={{
+                                  backgroundColor: 'var(--bg-elevated)',
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                Точный адрес
+                              </button>
+                              <button
+                                onClick={() => setActiveChatEventId(ev.id)}
+                                className="px-4 py-2.5 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-90"
+                                style={{ backgroundColor: 'var(--accent-primary)' }}
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                <span>Чат гостей</span>
+                              </button>
+                            </>
+                          ) : status === 'pending' ? (
+                            <button
+                              onClick={() => setSelectedEventForDetail(ev)}
+                              className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-500/12 text-amber-600 dark:text-amber-400 border border-amber-500/25 flex items-center gap-1.5 cursor-pointer transition-colors hover:bg-amber-500/20"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Статус заявки</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setSelectedEventForDetail(ev)}
+                              className="px-4 py-2.5 rounded-2xl text-xs font-bold cursor-pointer transition-opacity hover:opacity-90"
+                              style={{
+                                backgroundColor: 'var(--bg-elevated)',
+                                color: 'var(--text-secondary)',
+                              }}
+                            >
+                              Детали события
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>
