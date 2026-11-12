@@ -2160,6 +2160,7 @@ export default function App() {
           eventId={activeChatEventId}
           currentUser={currentUser}
           onClose={() => setActiveChatEventId(null)}
+          lang={lang}
         />
       )}
 

@@ -130,6 +130,10 @@ export interface EventItem {
   myApplicationStatus?: 'pending' | 'accepted' | 'rejected' | null;
   myApplicationNote?: string;
   myApplicationIsInvitation?: boolean;
+
+  // Group chat & pinned messages metadata
+  groupChatInitialized?: boolean;
+  groupChatTitle?: string;
 }
 
 export interface EventApplication {
@@ -167,6 +171,9 @@ export interface ChatMessage {
   imageUrl?: string;
   timestamp: string;
   isSystemMessage?: boolean;
+  isPinned?: boolean;
+  pinnedBy?: string;
+  pinnedLabel?: string;
 }
 
 export interface UserReview {

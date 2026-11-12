@@ -12,7 +12,7 @@ import {
 } from '../types/index.ts';
 import { initialData } from './mockData.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v10';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v11';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -554,6 +554,45 @@ export class ClientLocalStore {
         this.events.set(pastEvent2.id, pastEvent2);
       }
     }
+
+    // 4. Seed initial group chat & pinned address messages for main demo events
+    const seedPinnedForEvent = (evId: string) => {
+      const ev = this.events.get(evId);
+      const secret = this.rawEventsSecret.get(evId);
+      if (!ev) return;
+      const msgs = this.chatMessages.get(evId) || [];
+      const alreadyHasPinned = msgs.some(m => m.isPinned);
+      if (!alreadyHasPinned && secret) {
+        const org = this.users.get(ev.organizerId);
+        const pinText = [
+          `📍 Место сбора: ${secret.exactVenue || ev.approximateArea}`,
+          secret.exactAddress ? `🏠 Точный адрес: ${secret.exactAddress}` : '',
+          secret.privateInstructions ? `🔑 Как найти / ориентир: ${secret.privateInstructions}` : '',
+          secret.organizerPhone ? `📞 Контакт организатора: ${secret.organizerPhone}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        msgs.unshift({
+          id: `msg-pin-addr-${evId}`,
+          eventId: evId,
+          senderId: ev.organizerId,
+          senderName: org?.name || ev.organizer.name,
+          senderAvatar: org?.avatarUrl || ev.organizer.avatarUrl,
+          text: pinText,
+          timestamp: '18:00',
+          isPinned: true,
+          pinnedBy: org?.name || ev.organizer.name,
+          pinnedLabel: 'Адрес и инструкции',
+        });
+        this.chatMessages.set(evId, msgs);
+        ev.groupChatInitialized = true;
+        ev.groupChatTitle = `Групповой чат · ${ev.title}`;
+      }
+    };
+
+    seedPinnedForEvent('ev-1');
+    seedPinnedForEvent('ev-wedding-1');
   }
 
   save() {
@@ -941,21 +980,176 @@ export class ClientLocalStore {
     return this.chatMessages.get(eventId) || [];
   }
 
-  sendChatMessage(eventId: string, text: string): ChatMessage {
+  sendChatMessage(
+    eventId: string,
+    text: string,
+    options?: { isPinned?: boolean; pinnedLabel?: string }
+  ): ChatMessage {
     const messages = this.chatMessages.get(eventId) || [];
+    const me = this.getMe();
     const msg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
       eventId,
       senderId: this.activeUserId,
-      senderName: this.getMe().name,
-      senderAvatar: this.getMe().avatarUrl,
+      senderName: me.name,
+      senderAvatar: me.avatarUrl,
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isPinned: Boolean(options?.isPinned),
+      pinnedBy: options?.isPinned ? me.name : undefined,
+      pinnedLabel: options?.isPinned ? options.pinnedLabel || 'Важное сообщение' : undefined,
     };
     messages.push(msg);
     this.chatMessages.set(eventId, messages);
     this.save();
     return msg;
+  }
+
+  togglePinChatMessage(eventId: string, messageId: string, label?: string): ChatMessage[] {
+    const messages = this.chatMessages.get(eventId) || [];
+    const me = this.getMe();
+    const target = messages.find(m => m.id === messageId);
+    if (target) {
+      target.isPinned = !target.isPinned;
+      if (target.isPinned) {
+        target.pinnedBy = me.name;
+        target.pinnedLabel =
+          label ||
+          (target.text.toLowerCase().includes('адрес') || target.text.includes('📍')
+            ? 'Адрес и место встречи'
+            : 'Важное сообщение');
+      } else {
+        target.pinnedBy = undefined;
+        target.pinnedLabel = undefined;
+      }
+      this.chatMessages.set(eventId, [...messages]);
+      this.save();
+    }
+    return this.chatMessages.get(eventId) || [];
+  }
+
+  createGroupChat(
+    eventId: string,
+    options?: { title?: string; pinAddress?: boolean; welcomeNote?: string }
+  ): { event: EventItem; messages: ChatMessage[] } {
+    const ev = this.events.get(eventId);
+    if (!ev) throw new Error('Мероприятие не найдено');
+    const me = this.getMe();
+    const secret = this.rawEventsSecret.get(eventId);
+
+    ev.groupChatInitialized = true;
+    ev.groupChatTitle = (options?.title || '').trim() || `Групповой чат · ${ev.title}`;
+
+    const messages = this.chatMessages.get(eventId) || [];
+    const sanitized = this.sanitizeEvent(ev, this.activeUserId);
+    const confirmedNames = [
+      ev.organizer.name,
+      ...(sanitized.approvedParticipants || []).map(p => p.name),
+    ];
+    const uniqueNames = Array.from(new Set(confirmedNames));
+
+    const sysMsg: ChatMessage = {
+      id: `msg-group-init-${Date.now()}`,
+      eventId,
+      senderId: 'system',
+      senderName: 'Kompany',
+      senderAvatar: '',
+      text: `✨ Создан групповой чат «${ev.groupChatTitle}» для всех подтвержденных участников (${uniqueNames.length}): ${uniqueNames.join(', ')}.`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isSystemMessage: true,
+    };
+    messages.push(sysMsg);
+
+    if (options?.pinAddress !== false) {
+      const addressLine = [
+        `📍 Место сбора: ${secret?.exactVenue || ev.approximateArea}`,
+        secret?.exactAddress ? `🏠 Точный адрес: ${secret.exactAddress}` : '',
+        secret?.privateInstructions ? `🔑 Инструкция для участников: ${secret.privateInstructions}` : '',
+        secret?.organizerPhone ? `📞 Связь с организатором: ${secret.organizerPhone}` : '',
+        options?.welcomeNote ? `💬 Комментарий: ${options.welcomeNote.trim()}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      // Check if an address pin already exists; if so update it, otherwise add new pinned message
+      const existingAddrPin = messages.find(m => m.id === `msg-pin-addr-${eventId}`);
+      if (existingAddrPin) {
+        existingAddrPin.text = addressLine;
+        existingAddrPin.isPinned = true;
+        existingAddrPin.pinnedBy = me.name;
+        existingAddrPin.pinnedLabel = 'Адрес и инструкции';
+      } else {
+        messages.push({
+          id: `msg-pin-addr-${eventId}`,
+          eventId,
+          senderId: me.id,
+          senderName: me.name,
+          senderAvatar: me.avatarUrl,
+          text: addressLine,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isPinned: true,
+          pinnedBy: me.name,
+          pinnedLabel: 'Адрес и инструкции',
+        });
+      }
+    } else if (options?.welcomeNote?.trim()) {
+      messages.push({
+        id: `msg-welcome-${Date.now()}`,
+        eventId,
+        senderId: me.id,
+        senderName: me.name,
+        senderAvatar: me.avatarUrl,
+        text: options.welcomeNote.trim(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isPinned: true,
+        pinnedBy: me.name,
+        pinnedLabel: 'Организационное',
+      });
+    }
+
+    this.chatMessages.set(eventId, messages);
+    this.save();
+    return {
+      event: this.sanitizeEvent(ev, this.activeUserId),
+      messages: [...messages],
+    };
+  }
+
+  pinEventAddressToChat(eventId: string, customNote?: string): ChatMessage[] {
+    const ev = this.events.get(eventId);
+    if (!ev) throw new Error('Мероприятие не найдено');
+    const me = this.getMe();
+    const secret = this.rawEventsSecret.get(eventId);
+    const messages = this.chatMessages.get(eventId) || [];
+
+    const text = customNote?.trim()
+      ? customNote.trim()
+      : [
+          `📍 Место встречи: ${secret?.exactVenue || ev.approximateArea}`,
+          secret?.exactAddress ? `🏠 Точный адрес: ${secret.exactAddress}` : `🗺 Локация: ${ev.city}, ${ev.approximateArea}`,
+          secret?.privateInstructions ? `🔑 Ориентир / бронь: ${secret.privateInstructions}` : '',
+          secret?.organizerPhone ? `📞 Телефон организатора: ${secret.organizerPhone}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+    const msg: ChatMessage = {
+      id: `msg-pin-${Date.now()}`,
+      eventId,
+      senderId: me.id,
+      senderName: me.name,
+      senderAvatar: me.avatarUrl,
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isPinned: true,
+      pinnedBy: me.name,
+      pinnedLabel: 'Адрес и место встречи',
+    };
+
+    messages.push(msg);
+    this.chatMessages.set(eventId, messages);
+    this.save();
+    return [...messages];
   }
 
   markAttendance(eventId: string, participantId: string, status: 'attended' | 'no_show'): UserProfile {

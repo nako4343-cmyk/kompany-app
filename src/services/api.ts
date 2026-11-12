@@ -275,11 +275,31 @@ class ApiService {
     return this.request(`/api/events/${eventId}/chat`);
   }
 
-  async sendChatMessage(eventId: string, text: string): Promise<ChatMessage> {
-    return this.request(`/api/events/${eventId}/chat`, {
-      method: 'POST',
-      body: JSON.stringify({ text }),
-    });
+  async sendChatMessage(
+    eventId: string,
+    text: string,
+    options?: { isPinned?: boolean; pinnedLabel?: string }
+  ): Promise<ChatMessage> {
+    return clientLocalStore.sendChatMessage(eventId, text, options);
+  }
+
+  async togglePinChatMessage(
+    eventId: string,
+    messageId: string,
+    label?: string
+  ): Promise<ChatMessage[]> {
+    return clientLocalStore.togglePinChatMessage(eventId, messageId, label);
+  }
+
+  async createGroupChat(
+    eventId: string,
+    options?: { title?: string; pinAddress?: boolean; welcomeNote?: string }
+  ): Promise<{ event: EventItem; messages: ChatMessage[] }> {
+    return clientLocalStore.createGroupChat(eventId, options);
+  }
+
+  async pinEventAddressToChat(eventId: string, customNote?: string): Promise<ChatMessage[]> {
+    return clientLocalStore.pinEventAddressToChat(eventId, customNote);
   }
 
   // Attendance & Reviews
