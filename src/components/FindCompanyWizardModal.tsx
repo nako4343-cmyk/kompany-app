@@ -19,12 +19,12 @@ export const FindCompanyWizardModal: React.FC<FindCompanyWizardModalProps> = ({
   const [selectedBudget, setSelectedBudget] = useState<string>('any');
 
   const activities = [
-    { id: 'Ресторан / Бар', label: '🍕 Ресторан или бар' },
-    { id: 'Настольные игры', label: '🎲 Настольные игры' },
-    { id: 'День рождения', label: '🎂 День рождения / Праздник' },
-    { id: 'Кино / Концерт', label: '🎬 Кино или концерт' },
-    { id: 'Пикник / Шашлыки', label: '🌳 Пикник или шашлыки' },
-    { id: 'all', label: '✨ Любая интересная идея' },
+    { id: 'Ресторан / Бар', label: 'Ресторан или бар' },
+    { id: 'Настольные игры', label: 'Настольные игры' },
+    { id: 'День рождения', label: 'День рождения / Праздник' },
+    { id: 'Кино / Концерт', label: 'Кино или концерт' },
+    { id: 'Пикник / Шашлыки', label: 'Пикник или шашлыки' },
+    { id: 'all', label: 'Любая интересная идея' },
   ];
 
   const filteredEvents = events.filter(e => {

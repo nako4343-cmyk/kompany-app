@@ -1,5 +1,6 @@
 import React from 'react';
-import { Compass, Flame, Target, SlidersHorizontal, X, Sparkles, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Compass, Flame, Target, SlidersHorizontal, X, MapPin } from 'lucide-react';
 
 export type QuickFilterType = 'all' | 'nearby' | 'popular' | 'interests';
 
@@ -30,7 +31,6 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
     label: string;
     icon: React.ReactNode;
     count: number;
-    badge?: string;
   }> = [
     {
       id: 'all',
@@ -40,46 +40,37 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
     },
     {
       id: 'nearby',
-      label: 'Только поблизости',
+      label: 'Поблизости',
       icon: <Compass className="w-3.5 h-3.5" />,
       count: counts.nearby,
-      badge: 'до 3 км',
     },
     {
       id: 'popular',
-      label: 'Самые популярные',
+      label: 'Популярные',
       icon: <Flame className="w-3.5 h-3.5" />,
       count: counts.popular,
-      badge: 'топ мест',
     },
     {
       id: 'interests',
-      label: 'Наиболее подходящие по интересам',
+      label: 'По интересам',
       icon: <Target className="w-3.5 h-3.5" />,
       count: counts.interests,
-      badge: 'AI совпадение',
     },
   ];
 
   return (
-    <div className="space-y-2 mb-4">
-      {/* Filter Buttons Segmented Bar */}
+    <div className="space-y-2.5 mb-5">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar w-full">
-          <span className="text-[11px] font-bold uppercase tracking-wider shrink-0 mr-1 hidden sm:inline-block" style={{ color: 'var(--text-muted)' }}>
-            Быстрые фильтры:
-          </span>
-
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full">
           {filterOptions.map(opt => {
             const isActive = activeFilter === opt.id;
             return (
-              <button
+              <motion.button
                 key={opt.id}
                 type="button"
+                whileTap={{ scale: 0.96 }}
                 onClick={() => onChangeFilter(opt.id)}
-                className={`group px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer border flex items-center gap-2 ${
-                  isActive ? 'shadow-sm scale-[1.01]' : 'hover:opacity-95'
-                }`}
+                className="relative px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-colors shrink-0 cursor-pointer border flex items-center gap-2"
                 style={{
                   backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--bg-surface)',
                   color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
@@ -99,65 +90,74 @@ export const QuickFiltersBar: React.FC<QuickFiltersBarProps> = ({
                 >
                   {opt.count}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
 
-      {/* Helpful Active Context Indicator Strip */}
-      {activeFilter !== 'all' && (
-        <div
-          className="p-2.5 px-3.5 rounded-2xl border text-xs flex flex-wrap items-center justify-between gap-2 animate-in fade-in slide-in-from-top-1 duration-150"
-          style={{
-            backgroundColor: 'var(--accent-soft)',
-            borderColor: 'var(--border-subtle)',
-            color: 'var(--accent-text)',
-          }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            {activeFilter === 'nearby' && (
-              <>
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
-                <span className="truncate">
-                  <b>Только поблизости:</b> события в радиусе до 3 км, упорядочены от ближайших к вам ({filteredCount} найдено)
-                </span>
-              </>
-            )}
-
-            {activeFilter === 'popular' && (
-              <>
-                <Flame className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-                <span className="truncate">
-                  <b>Самые популярные:</b> компании с наибольшей заполненностью и активным набором участников
-                </span>
-              </>
-            )}
-
-            {activeFilter === 'interests' && (
-              <>
-                <Sparkles className="w-3.5 h-3.5 shrink-0 text-violet-500" />
-                <span className="truncate">
-                  <b>По вашим интересам:</b>{' '}
-                  {currentUserInterests.length > 0
-                    ? currentUserInterests.slice(0, 3).join(', ') + (currentUserInterests.length > 3 ? '...' : '')
-                    : 'на основе профиля'}
-                </span>
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onChangeFilter('all')}
-            className="text-[11px] font-bold inline-flex items-center gap-1 hover:underline cursor-pointer shrink-0 ml-auto"
-            style={{ color: 'var(--accent-primary)' }}
+      <AnimatePresence initial={false}>
+        {activeFilter !== 'all' && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
           >
-            <X className="w-3 h-3" />
-            <span>Сбросить быстрый фильтр</span>
-          </button>
-        </div>
-      )}
+            <div
+              className="p-2.5 px-3.5 rounded-2xl border text-xs flex flex-wrap items-center justify-between gap-2"
+              style={{
+                backgroundColor: 'var(--accent-soft)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--accent-text)',
+              }}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {activeFilter === 'nearby' && (
+                  <>
+                    <MapPin className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                    <span className="truncate">
+                      <strong>Поблизости:</strong> события в радиусе до 3 км ({filteredCount} найдено)
+                    </span>
+                  </>
+                )}
+
+                {activeFilter === 'popular' && (
+                  <>
+                    <Flame className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                    <span className="truncate">
+                      <strong>Популярные:</strong> компании с высокой активностью и набором участников
+                    </span>
+                  </>
+                )}
+
+                {activeFilter === 'interests' && (
+                  <>
+                    <Target className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      <strong>По вашим интересам:</strong>{' '}
+                      {currentUserInterests.length > 0
+                        ? currentUserInterests.slice(0, 3).join(', ') + (currentUserInterests.length > 3 ? '...' : '')
+                        : 'на основе профиля'}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onChangeFilter('all')}
+                className="text-[11px] font-bold inline-flex items-center gap-1 hover:underline cursor-pointer shrink-0 ml-auto"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                <X className="w-3 h-3" />
+                <span>Сбросить</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Clock, UserCheck, UserPlus, 
-  Sparkles, CheckCircle2, ChevronDown, ChevronUp, 
-  Calendar, ShieldCheck, Flame
+  Users, Clock, UserPlus, CheckCircle2, ChevronDown, 
+  Calendar, Crown, Check, Star, Briefcase, UserCheck, UserX
 } from 'lucide-react';
 import { EventItem } from '../types/index.ts';
+import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
 
 interface EventSlotsTimelineProps {
   event: EventItem;
   compact?: boolean;
   isOrganizer?: boolean;
   onSlotClick?: (slotIndex: number, participant?: any) => void;
+  onMarkAttendance?: (participantId: string, status: 'attended' | 'no_show') => void;
 }
 
 export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
@@ -18,6 +20,7 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
   compact = false,
   isOrganizer = false,
   onSlotClick,
+  onMarkAttendance,
 }) => {
   const [showScheduleDetails, setShowScheduleDetails] = useState(false);
 
@@ -26,7 +29,6 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
   const availableSpots = Math.max(0, totalSpots - occupiedSpots);
   const fillRate = Math.round((occupiedSpots / totalSpots) * 100);
 
-  // Helper to calculate milestone times
   const calculateTimelineTimes = (startTimeStr: string) => {
     try {
       const [hStr, mStr] = (startTimeStr || '19:00').split(':');
@@ -43,19 +45,19 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
         {
           time: formatTime(startH, startM),
           phase: 'Сбор и знакомство',
-          desc: 'Встреча у входа, заказ напитков, представление участников',
+          desc: 'Встреча у входа, приветствие участников и быстрый старт общения',
           status: 'start',
         },
         {
           time: formatTime(startH, startM + 30),
           phase: 'Основная программа',
-          desc: event.vibe ? `Активность в атмосфере: ${event.vibe}` : 'Обсуждение, ужин, настольная игра или концерт',
+          desc: event.vibe ? `Формат встречи: ${event.vibe}` : 'Основная часть встречи, ужин, игра или мероприятие',
           status: 'main',
         },
         {
           time: formatTime(startH + 2, startM),
           phase: 'Свободное общение',
-          desc: 'Обмен впечатлениями, контактами и фото в чате компании',
+          desc: 'Обмен впечатлениями, контактами и совместными фото в чате',
           status: 'end',
         },
       ];
@@ -70,19 +72,21 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
 
   const schedulePhases = calculateTimelineTimes(event.time);
 
-  // Prepare slot array
-  // Slot 0 is organizer, next slots are approved participants, rest are open slots
   const slots = Array.from({ length: totalSpots }).map((_, index) => {
     if (index === 0) {
       return {
         index,
+        userId: event.organizerId,
         isOccupied: true,
         isOrganizer: true,
         name: event.organizer.name,
+        age: event.organizer.age,
         avatarUrl: event.organizer.avatarUrl,
         label: 'Организатор',
-        occupation: (event.organizer as any).occupation || 'Хост встречи',
+        occupation: (event.organizer as any).occupation || 'Автор встречи',
         rating: event.organizer.reliability?.score || 5.0,
+        onlineStatus: (event.organizer as any).onlineStatus || 'online',
+        lastSeen: (event.organizer as any).lastSeen,
       };
     }
 
@@ -90,78 +94,93 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
     if (participant) {
       return {
         index,
+        userId: participant.id,
         isOccupied: true,
         isOrganizer: false,
         name: participant.name,
+        age: participant.age,
         avatarUrl: participant.avatarUrl,
         label: 'Участник',
         occupation: participant.occupation || 'В компании',
         rating: participant.reliability?.score || 5.0,
+        onlineStatus: participant.onlineStatus || 'recent',
+        lastSeen: participant.lastSeen,
       };
     }
 
-    // Remaining occupied without full profile metadata
     if (index < occupiedSpots) {
       return {
         index,
+        userId: event.approvedParticipantIds?.[index - 1] || `slot-${index}`,
         isOccupied: true,
         isOrganizer: false,
         name: `Участник #${index + 1}`,
+        age: undefined,
         avatarUrl: '',
-        label: 'Подтвержден',
+        label: 'Подтверждён',
         occupation: 'Одобренная заявка',
         rating: 5.0,
+        onlineStatus: 'recent' as const,
+        lastSeen: undefined,
       };
     }
 
-    // Free available slot
     return {
       index,
+      userId: null,
       isOccupied: false,
       isOrganizer: false,
       name: `Свободный слот #${index + 1}`,
+      age: undefined,
       avatarUrl: '',
       label: 'Свободно',
-      occupation: 'Ждет заявку',
+      occupation: 'Открыт для заявки',
       rating: null,
+      onlineStatus: undefined,
+      lastSeen: undefined,
     };
   });
 
   // COMPACT VIEW FOR FEED CARDS
   if (compact) {
     return (
-      <div className="space-y-2 pt-1">
-        {/* Header line with occupancy stats */}
+      <div className="space-y-2.5 pt-1">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 font-semibold" style={{ color: 'var(--text-primary)' }}>
             <Users className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-            <span>График слотов ({occupiedSpots}/{totalSpots})</span>
+            <span>Состав компании</span>
+            <span className="tabular-nums font-normal" style={{ color: 'var(--text-muted)' }}>
+              · {occupiedSpots} из {totalSpots}
+            </span>
           </div>
 
           <span
-            className="text-[11px] font-bold tabular-nums"
+            className="text-[11px] font-semibold tabular-nums"
             style={{
               color: availableSpots === 0 ? 'var(--text-muted)' : 'var(--accent-primary)',
             }}
           >
-            {availableSpots === 0 ? 'Группа набрана' : `Осталось ${availableSpots} ${availableSpots === 1 ? 'место' : availableSpots < 5 ? 'места' : 'мест'}`}
+            {availableSpots === 0
+              ? 'Группа набрана'
+              : `Свободно ${availableSpots} ${availableSpots === 1 ? 'место' : availableSpots < 5 ? 'места' : 'мест'}`}
           </span>
         </div>
 
-        {/* Visual Slots Timeline Track */}
         <div
-          className="p-2 sm:p-2.5 rounded-2xl border transition-all"
+          className="p-2.5 rounded-2xl border transition-colors"
           style={{
             backgroundColor: 'var(--bg-elevated)',
             borderColor: 'var(--border-subtle)',
           }}
         >
-          <div className="flex items-center justify-between gap-1 overflow-x-auto py-0.5 no-scrollbar">
+          <div className="flex items-center justify-between gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
             {slots.map((slot) => {
               if (slot.isOccupied) {
                 return (
-                  <div
+                  <motion.div
                     key={slot.index}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={(e) => {
                       if (onSlotClick) {
                         e.stopPropagation();
@@ -169,7 +188,7 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
                       }
                     }}
                     title={`${slot.name} (${slot.label})`}
-                    className="relative group/slot flex-1 min-w-[32px] max-w-[48px] flex flex-col items-center gap-1 cursor-pointer"
+                    className="relative group/slot flex-1 min-w-[36px] max-w-[52px] flex flex-col items-center gap-1 cursor-pointer"
                   >
                     <div className="relative">
                       {slot.avatarUrl ? (
@@ -177,14 +196,14 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
                           src={slot.avatarUrl}
                           alt={slot.name}
                           referrerPolicy="no-referrer"
-                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 transition-transform group-hover/slot:scale-110 shadow-xs"
+                          className="w-8 h-8 rounded-xl object-cover border transition-transform"
                           style={{
                             borderColor: slot.isOrganizer ? 'var(--accent-primary)' : 'var(--border-subtle)',
                           }}
                         />
                       ) : (
                         <div
-                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white transition-transform group-hover/slot:scale-110 shadow-xs"
+                          className="w-8 h-8 rounded-xl border flex items-center justify-center text-[11px] font-bold text-white"
                           style={{
                             backgroundColor: slot.isOrganizer ? 'var(--accent-primary)' : '#64748b',
                             borderColor: 'var(--bg-surface)',
@@ -196,49 +215,48 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
 
                       {slot.isOrganizer ? (
                         <span
-                          className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] text-white font-bold ring-1 ring-white"
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-white ring-2 ring-white dark:ring-slate-900"
                           style={{ backgroundColor: 'var(--accent-primary)' }}
                           title="Организатор"
                         >
-                          ★
+                          <Crown className="w-2.5 h-2.5" />
                         </span>
                       ) : (
                         <span
-                          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full flex items-center justify-center bg-emerald-500 text-white text-[8px] ring-1 ring-white"
-                          title="Подтвержден"
+                          className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center bg-emerald-500 text-white ring-2 ring-white dark:ring-slate-900"
+                          title="Подтверждён"
                         >
-                          ✓
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </span>
                       )}
                     </div>
 
                     <span
-                      className="text-[9px] font-medium truncate max-w-full block"
+                      className="text-[10px] font-medium truncate max-w-full block"
                       style={{ color: 'var(--text-secondary)' }}
                     >
-                      {slot.isOrganizer ? 'Орг' : slot.name.split(' ')[0]}
+                      {slot.isOrganizer ? 'Хост' : slot.name.split(' ')[0]}
                     </span>
-                  </div>
+                  </motion.div>
                 );
               }
 
-              // Empty Slot Box
               return (
                 <div
                   key={slot.index}
-                  className="flex-1 min-w-[32px] max-w-[48px] flex flex-col items-center gap-1 group/empty"
+                  className="flex-1 min-w-[36px] max-w-[52px] flex flex-col items-center gap-1 group/empty"
                 >
                   <div
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-xl border border-dashed flex items-center justify-center transition-colors"
                     style={{
                       borderColor: 'var(--border-subtle)',
                       backgroundColor: 'var(--bg-surface)',
                     }}
                     title={`Слот #${slot.index + 1} свободен`}
                   >
-                    <UserPlus className="w-3 h-3 text-slate-400 group-hover/empty:text-orange-500 transition-colors" />
+                    <UserPlus className="w-3.5 h-3.5 opacity-50 group-hover/empty:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }} />
                   </div>
-                  <span className="text-[9px] text-slate-400 font-medium">
+                  <span className="text-[10px] font-medium tabular-nums" style={{ color: 'var(--text-muted)' }}>
                     #{slot.index + 1}
                   </span>
                 </div>
@@ -248,13 +266,14 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
 
           {/* Quick Schedule Footer in Compact Mode */}
           <div
-            className="mt-2 pt-2 border-t flex items-center justify-between text-[11px]"
+            className="mt-2.5 pt-2 border-t flex items-center justify-between text-[11px]"
             style={{ borderColor: 'var(--border-subtle)' }}
           >
-            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 truncate">
-              <Clock className="w-3 h-3 shrink-0" style={{ color: 'var(--accent-primary)' }} />
-              <span className="font-semibold text-slate-700 dark:text-slate-200">{event.time}</span>
-              <span className="truncate">· {schedulePhases[0].phase}</span>
+            <div className="flex items-center gap-1.5 truncate" style={{ color: 'var(--text-secondary)' }}>
+              <Clock className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+              <span className="font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>{event.time}</span>
+              <span aria-hidden="true">·</span>
+              <span className="truncate">{schedulePhases[0].phase}</span>
             </div>
 
             <button
@@ -263,45 +282,58 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
                 e.stopPropagation();
                 setShowScheduleDetails(!showScheduleDetails);
               }}
-              className="font-bold flex items-center gap-0.5 shrink-0 hover:underline cursor-pointer transition-colors"
+              className="font-semibold flex items-center gap-1 shrink-0 hover:opacity-80 cursor-pointer transition-opacity"
               style={{ color: 'var(--accent-primary)' }}
             >
-              <span>{showScheduleDetails ? 'Скрыть план' : 'Расписание'}</span>
-              {showScheduleDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              <span>{showScheduleDetails ? 'Скрыть' : 'Тайминг'}</span>
+              <motion.span
+                animate={{ rotate: showScheduleDetails ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </motion.span>
             </button>
           </div>
 
-          {/* Inline Collapsible Schedule Details for Card */}
-          {showScheduleDetails && (
-            <div
-              className="mt-2.5 pt-2.5 border-t space-y-2 animate-in fade-in slide-in-from-top-1 duration-150"
-              style={{ borderColor: 'var(--border-subtle)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {schedulePhases.map((phase, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-xs">
-                  <span
-                    className="font-mono font-bold text-[11px] px-1.5 py-0.5 rounded-md shrink-0 tabular-nums"
-                    style={{
-                      backgroundColor: 'var(--bg-surface)',
-                      color: 'var(--accent-primary)',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    {phase.time}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-bold block text-[11px]" style={{ color: 'var(--text-primary)' }}>
-                      {phase.phase}
-                    </span>
-                    <span className="text-[10px] line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
-                      {phase.desc}
-                    </span>
-                  </div>
+          <AnimatePresence initial={false}>
+            {showScheduleDetails && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="mt-2.5 pt-2.5 border-t space-y-2"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
+                  {schedulePhases.map((phase, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-xs">
+                      <span
+                        className="font-mono font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shrink-0 tabular-nums"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          color: 'var(--accent-primary)',
+                        }}
+                      >
+                        {phase.time}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="font-semibold block text-[11px]" style={{ color: 'var(--text-primary)' }}>
+                          {phase.phase}
+                        </span>
+                        <span className="text-[11px] line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
+                          {phase.desc}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     );
@@ -309,241 +341,281 @@ export const EventSlotsTimeline: React.FC<EventSlotsTimelineProps> = ({
 
   // DETAILED VIEW FOR EVENT DETAIL MODAL
   return (
-    <section
-      className="p-4 sm:p-5 rounded-3xl border space-y-4"
-      style={{
-        backgroundColor: 'var(--bg-elevated)',
-        borderColor: 'var(--border-subtle)',
-      }}
-    >
-      {/* Title & Stats */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs"
-            style={{
-              backgroundColor: 'var(--accent-soft)',
-              color: 'var(--accent-primary)',
-            }}
-          >
-            <Clock className="w-4 h-4" />
-          </div>
+    <div className="space-y-6">
+      {/* Section 1: Occupancy Overview & Progress */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-              <span>Расписание и занятость слотов</span>
-              {isOrganizer && (
-                <span
-                  className="px-2 py-0.5 rounded-full text-[9px] font-bold text-white bg-purple-600"
-                >
-                  Организатор
-                </span>
-              )}
+            <h3 className="text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+              Участники и свободные слоты
             </h3>
-            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              Индикатор подтвержденных гостей и хронометраж встречи
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+              Нажмите на карточку участника, чтобы открыть подробный профиль и отзывы
             </p>
           </div>
+
+          <div className="flex items-center gap-2 text-xs font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+            <span>Занято {occupiedSpots} из {totalSpots}</span>
+            <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>·</span>
+            <span style={{ color: availableSpots === 0 ? '#10b981' : 'var(--accent-primary)' }}>
+              {fillRate}%
+            </span>
+          </div>
         </div>
 
-        {/* Status Pill */}
-        <div className="flex items-center gap-2 text-xs font-bold tabular-nums">
-          <span
-            className="px-3 py-1 rounded-full border text-[11px]"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderColor: 'var(--border-subtle)',
-              color: availableSpots === 0 ? '#10b981' : 'var(--text-primary)',
-            }}
-          >
-            {occupiedSpots} из {totalSpots} мест занято ({fillRate}%)
-          </span>
-        </div>
-      </div>
-
-      {/* Progress Track Bar */}
-      <div className="space-y-1.5">
-        <div
-          className="w-full h-2 rounded-full overflow-hidden"
-          style={{ backgroundColor: 'var(--bg-surface)' }}
-        >
+        {/* Animated Progress Track */}
+        <div className="space-y-1.5">
           <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${fillRate}%`,
-              backgroundColor: availableSpots === 0 ? '#10b981' : 'var(--accent-primary)',
-            }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>
-          <span>Хост подтвержден</span>
-          <span>
-            {availableSpots === 0
-              ? '🎉 Все слоты заполнены'
-              : `Осталось свободных слотов: ${availableSpots}`}
-          </span>
+            className="w-full h-2 rounded-full overflow-hidden"
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+          >
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${fillRate}%` }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full rounded-full"
+              style={{
+                backgroundColor: availableSpots === 0 ? '#10b981' : 'var(--accent-primary)',
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span>Организатор подтверждён</span>
+            <span className="inline-flex items-center gap-1 font-medium" style={{ color: availableSpots === 0 ? '#10b981' : 'var(--text-secondary)' }}>
+              {availableSpots === 0 ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Все слоты заполнены</span>
+                </>
+              ) : (
+                <span>Свободно слотов: {availableSpots}</span>
+              )}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Grid of Slots Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
-        {slots.map((slot) => {
+      {/* Section 2: Clean Unified Grid of Slots (Replaces duplicate roster) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {slots.map((slot, i) => {
           if (slot.isOccupied) {
             return (
-              <div
+              <motion.div
                 key={slot.index}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, delay: i * 0.04 }}
+                whileHover={{ y: -2 }}
                 onClick={() => onSlotClick && onSlotClick(slot.index, slot)}
-                className={`p-3 rounded-2xl border transition-all flex flex-col justify-between gap-2 shadow-2xs ${
-                  onSlotClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''
+                className={`p-3.5 rounded-2xl border transition-shadow flex flex-col justify-between gap-3 ${
+                  onSlotClick ? 'cursor-pointer hover:shadow-md' : ''
                 }`}
                 style={{
-                  backgroundColor: 'var(--bg-surface)',
+                  backgroundColor: 'var(--bg-elevated)',
                   borderColor: slot.isOrganizer ? 'var(--accent-primary)' : 'var(--border-subtle)',
                 }}
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="relative shrink-0">
-                    {slot.avatarUrl ? (
-                      <img
-                        src={slot.avatarUrl}
-                        alt={slot.name}
-                        referrerPolicy="no-referrer"
-                        className="w-9 h-9 rounded-xl object-cover border"
-                        style={{ borderColor: 'var(--border-subtle)' }}
-                      />
-                    ) : (
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white"
-                        style={{ backgroundColor: slot.isOrganizer ? 'var(--accent-primary)' : '#64748b' }}
-                      >
-                        {slot.name.charAt(0)}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      {slot.avatarUrl ? (
+                        <img
+                          src={slot.avatarUrl}
+                          alt={slot.name}
+                          referrerPolicy="no-referrer"
+                          className="w-11 h-11 rounded-2xl object-cover border"
+                          style={{ borderColor: 'var(--border-subtle)' }}
+                        />
+                      ) : (
+                        <div
+                          className="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm text-white"
+                          style={{ backgroundColor: slot.isOrganizer ? 'var(--accent-primary)' : '#64748b' }}
+                        >
+                          {slot.name.charAt(0)}
+                        </div>
+                      )}
+
+                      {slot.isOrganizer ? (
+                        <span
+                          className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full flex items-center justify-center text-white ring-2 ring-white dark:ring-slate-900"
+                          style={{ backgroundColor: 'var(--accent-primary)' }}
+                          title="Организатор встречи"
+                        >
+                          <Crown className="w-2.5 h-2.5" />
+                        </span>
+                      ) : (
+                        <span
+                          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center bg-emerald-500 text-white ring-2 ring-white dark:ring-slate-900"
+                          title="Участие подтверждено"
+                        >
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                          {slot.name}{slot.age ? `, ${slot.age}` : ''}
+                        </span>
                       </div>
-                    )}
-
-                    {slot.isOrganizer ? (
-                      <span
-                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white font-bold ring-2 ring-white"
-                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                      >
-                        ★
-                      </span>
-                    ) : (
-                      <span
-                        className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center bg-emerald-500 text-white text-[9px] ring-2 ring-white"
-                      >
-                        ✓
-                      </span>
-                    )}
+                      <div className="flex items-center gap-1.5 mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <Briefcase className="w-3 h-3 shrink-0 opacity-70" />
+                        <span className="truncate">{slot.occupation}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="min-w-0 flex-1">
-                    <span className="text-xs font-bold block truncate" style={{ color: 'var(--text-primary)' }}>
-                      {slot.name}
-                    </span>
-                    <span
-                      className="text-[10px] font-semibold truncate block"
-                      style={{ color: slot.isOrganizer ? 'var(--accent-primary)' : 'var(--accent-text)' }}
-                    >
-                      {slot.label}
-                    </span>
-                  </div>
+                  {slot.rating && (
+                    <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-500 tabular-nums shrink-0">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>{slot.rating}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div
-                  className="pt-1.5 border-t flex items-center justify-between text-[10px]"
-                  style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}
+                  className="pt-2.5 border-t flex items-center justify-between gap-2 text-xs"
+                  style={{ borderColor: 'var(--border-subtle)' }}
                 >
-                  <span className="truncate">{slot.occupation}</span>
-                  {slot.rating && (
-                    <span className="font-bold text-amber-500 tabular-nums shrink-0">
-                      ★ {slot.rating}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="font-semibold"
+                      style={{ color: slot.isOrganizer ? 'var(--accent-primary)' : 'var(--text-muted)' }}
+                    >
+                      {slot.label}
                     </span>
+                    <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>·</span>
+                    <OnlineStatusBadge
+                      status={slot.onlineStatus}
+                      lastSeen={slot.lastSeen}
+                      size="sm"
+                    />
+                  </div>
+
+                  {/* Organizer Attendance Controls directly inside the participant card */}
+                  {isOrganizer && !slot.isOrganizer && slot.userId && onMarkAttendance && (
+                    <div
+                      className="flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onMarkAttendance(slot.userId!, 'attended')}
+                        className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Отметить явку"
+                      >
+                        <UserCheck className="w-3 h-3" />
+                        <span>Был</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onMarkAttendance(slot.userId!, 'no_show')}
+                        className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25 flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Отметить неявку"
+                      >
+                        <UserX className="w-3 h-3" />
+                        <span>Не был</span>
+                      </button>
+                    </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           }
 
-          // Available slot
+          // Available Open Slot
           return (
-            <div
+            <motion.div
               key={slot.index}
-              className="p-3 rounded-2xl border border-dashed flex flex-col justify-between items-center text-center gap-2 group/emptySlot transition-all"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, delay: i * 0.04 }}
+              className="p-3.5 rounded-2xl border border-dashed flex items-center justify-between gap-3 transition-colors"
               style={{
                 backgroundColor: 'var(--bg-surface)',
                 borderColor: 'var(--border-subtle)',
               }}
             >
-              <div
-                className="w-9 h-9 rounded-xl border border-dashed flex items-center justify-center transition-colors"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <UserPlus className="w-4 h-4 text-slate-400 group-hover/emptySlot:text-orange-500 transition-colors" />
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-11 h-11 rounded-2xl border border-dashed flex items-center justify-center shrink-0"
+                  style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-elevated)' }}
+                >
+                  <UserPlus className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                </div>
+                <div>
+                  <span className="text-sm font-bold block" style={{ color: 'var(--text-secondary)' }}>
+                    Свободный слот #{slot.index + 1}
+                  </span>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    Открыт для новых участников
+                  </span>
+                </div>
               </div>
-
-              <div>
-                <span className="text-xs font-bold block" style={{ color: 'var(--text-secondary)' }}>
-                  Слот #{slot.index + 1}
-                </span>
-                <span className="text-[10px] text-emerald-500 font-semibold block">
-                  Свободен
-                </span>
-              </div>
-
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-md font-medium"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                Ждет участника
+              <span className="text-xs font-medium tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                Место #{slot.index + 1}
               </span>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Visual Timeline of Event Milestones */}
+      {/* Section 3: Chronological Schedule / Milestones */}
       <div
-        className="pt-3 border-t space-y-3"
+        className="pt-5 border-t space-y-4"
         style={{ borderColor: 'var(--border-subtle)' }}
       >
-        <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-          <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-          <span>Хронометраж и этапы встречи ({event.date}, старт в {event.time})</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+            <Calendar className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+            <span>План и тайминг встречи</span>
+          </div>
+          <span className="text-xs font-medium tabular-nums" style={{ color: 'var(--text-muted)' }}>
+            {event.date} · старт в {event.time}
+          </span>
         </div>
 
-        <div className="relative pl-6 space-y-3.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {schedulePhases.map((phase, idx) => (
-            <div key={idx} className="relative flex items-start gap-3 text-xs">
-              {/* Dot */}
-              <div
-                className="absolute -left-6 top-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-bold text-white shadow-xs"
-                style={{
-                  backgroundColor: idx === 0 ? 'var(--accent-primary)' : idx === 1 ? '#3b82f6' : '#10b981',
-                }}
-              >
-                {idx + 1}
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.1 + idx * 0.06 }}
+              className="p-3.5 rounded-2xl border flex flex-col justify-between gap-2"
+              style={{
+                backgroundColor: 'var(--bg-elevated)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className="font-mono font-bold text-xs px-2 py-0.5 rounded-lg tabular-nums"
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    color: 'var(--accent-primary)',
+                  }}
+                >
+                  {phase.time}
+                </span>
+                <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                  Этап 0{idx + 1}
+                </span>
               </div>
 
-              <div className="space-y-0.5 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-xs tabular-nums text-slate-800 dark:text-slate-100">
-                    {phase.time}
-                  </span>
-                  <span aria-hidden="true" className="text-slate-400">·</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    {phase.phase}
-                  </span>
-                </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              <div>
+                <h4 className="text-xs font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  {phase.phase}
+                </h4>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   {phase.desc}
                 </p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 };

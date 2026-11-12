@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, MapPin, Clock, Users, Shield, Lock, Unlock, Phone, 
   MessageSquare, AlertTriangle, Check, CheckCircle2, Copy, 
-  Sparkles, Flag, Music
+  Flag, Music, CalendarPlus, Receipt, Radio, UserCheck, 
+  ShieldCheck, Star, ArrowUpRight, Send, MessageCircle, Trash2
 } from 'lucide-react';
 import { EventItem, UserProfile, EventApplication, EventQuestion } from '../types/index.ts';
 import { api } from '../services/api.ts';
 import { SafetyShareModal } from './SafetyShareModal.tsx';
 import { BillSplitterModal } from './BillSplitterModal.tsx';
-import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
 import { EventSlotsTimeline } from './EventSlotsTimeline.tsx';
 
 interface EventDetailModalProps {
@@ -21,6 +22,8 @@ interface EventDetailModalProps {
   onEventUpdated: () => void;
 }
 
+type DetailSectionTab = 'overview' | 'schedule' | 'qa';
+
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   event,
   currentUser,
@@ -31,12 +34,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   onEventUpdated,
 }) => {
   const [activeEvent, setActiveEvent] = useState<EventItem>(event);
+  const [activeTab, setActiveTab] = useState<DetailSectionTab>('overview');
   const [myApplication, setMyApplication] = useState<EventApplication | null>(null);
   const [organizerApplications, setOrganizerApplications] = useState<EventApplication[]>([]);
   const [questions, setQuestions] = useState<EventQuestion[]>([]);
   const [newQuestionText, setNewQuestionText] = useState('');
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
   const [applyNote, setApplyNote] = useState('');
+  const [showApplyForm, setShowApplyForm] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [isSubmittingDecision, setIsSubmittingDecision] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
@@ -50,6 +55,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   const isApproved = activeEvent.approvedParticipantIds.includes(currentUser.id);
   const isPending = myApplication?.status === 'pending';
   const hasFullAccess = isOrganizer || isApproved;
+  const pendingAppsCount = organizerApplications.filter(a => a.status === 'pending').length;
 
   const loadDetails = async () => {
     try {
@@ -105,6 +111,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       const app = await api.applyToEvent(activeEvent.id, applyNote);
       setMyApplication(app);
       setApplyNote('');
+      setShowApplyForm(false);
       await loadDetails();
       onEventUpdated();
     } catch (err: any) {
@@ -180,707 +187,579 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     }
   };
 
+  const tabs: Array<{ id: DetailSectionTab; label: string; count?: number }> = [
+    { id: 'overview', label: 'Обзор встречи' },
+    {
+      id: 'schedule',
+      label: 'Слоты и тайминг',
+      count: isOrganizer && pendingAppsCount > 0 ? pendingAppsCount : activeEvent.occupiedSpots,
+    },
+    { id: 'qa', label: 'Вопросы', count: questions.length > 0 ? questions.length : undefined },
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs">
-      <div
-        className="w-full max-w-2xl max-h-[92vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom duration-200"
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 36, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.97 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[93vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
           color: 'var(--text-primary)',
         }}
       >
-        {/* Modal Header */}
-        <div className="relative aspect-[16/8] sm:aspect-[16/7] w-full overflow-hidden bg-slate-900 shrink-0">
-          <img
+        {/* 1. HERO MEDIA HEADER */}
+        <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-slate-900 shrink-0">
+          <motion.img
+            initial={{ scale: 1.08 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
             src={activeEvent.imageUrl}
             alt={activeEvent.title}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover opacity-90"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-black/35" />
 
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/70 transition-colors z-10 cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Top Bar Controls */}
+          <div className="absolute top-4 left-5 right-4 flex items-center justify-between gap-2 z-10">
+            <div className="flex items-center gap-2 text-xs text-white/95 font-semibold">
+              <span>{activeEvent.category}</span>
+              {activeEvent.isToday && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-amber-300 font-bold">Сегодня вечером</span>
+                </>
+              )}
+            </div>
 
-          {/* Top Kicker */}
-          <div className="absolute top-4 left-4 flex items-center gap-2 text-xs text-white font-semibold">
-            <span className="px-3 py-1 rounded-xl bg-black/50 backdrop-blur-md border border-white/15">
-              {activeEvent.category}
-            </span>
-            {activeEvent.isToday && (
-              <span
-                className="px-3 py-1 rounded-xl text-white font-bold shadow-sm"
-                style={{ backgroundColor: 'var(--accent-primary)' }}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportCalendar}
+                title="Сохранить в календарь (.ics)"
+                className="h-9 px-3 rounded-xl bg-black/45 hover:bg-black/65 backdrop-blur-md border border-white/15 text-white text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                Сегодня вечером
-              </span>
-            )}
+                <CalendarPlus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">В календарь</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onOpenReport('event', activeEvent.id, activeEvent.title)}
+                title="Пожаловаться на событие"
+                className="w-9 h-9 rounded-xl bg-black/45 hover:bg-rose-500/80 backdrop-blur-md border border-white/15 text-white/80 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <Flag className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                title="Закрыть"
+                className="w-9 h-9 rounded-xl bg-black/55 hover:bg-black/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
           </div>
 
-          {/* Bottom Title on Image */}
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <h2 className="text-lg sm:text-xl font-display font-bold leading-tight line-clamp-2">
+          {/* Bottom Title & Metadata inside Hero */}
+          <div className="absolute bottom-4 left-5 right-5 text-white">
+            <h2 className="text-lg sm:text-2xl font-display font-bold leading-snug line-clamp-2">
               {activeEvent.title}
             </h2>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-200 tabular-nums">
-              <span className="flex items-center gap-1">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-200 tabular-nums">
+              <span className="inline-flex items-center gap-1.5 font-medium">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
-                {activeEvent.isToday ? `Сегодня в ${activeEvent.time}` : `${activeEvent.date} в ${activeEvent.time}`}
+                <span>{activeEvent.isToday ? `Сегодня в ${activeEvent.time}` : `${activeEvent.date} в ${activeEvent.time}`}</span>
               </span>
-              <span aria-hidden="true">·</span>
-              <span className="flex items-center gap-1">
+              <span aria-hidden="true" className="text-white/40">·</span>
+              <span className="inline-flex items-center gap-1.5 font-medium">
                 <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                {activeEvent.approximateArea}
+                <span>{activeEvent.approximateArea}</span>
               </span>
-              <span aria-hidden="true">·</span>
-              <span className="font-semibold text-amber-300">
+              <span aria-hidden="true" className="text-white/40">·</span>
+              <span className="font-bold text-amber-300">
                 {activeEvent.budget}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
+        {/* 2. SEGMENTED NAVIGATION BAR */}
+        <div
+          className="px-5 pt-3 pb-2 border-b flex items-center justify-between gap-2 shrink-0 overflow-x-auto no-scrollbar"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          <div
+            className="flex items-center gap-1 p-1 rounded-2xl w-full sm:w-auto"
+            style={{ backgroundColor: 'var(--bg-elevated)' }}
+          >
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className="relative flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
+                  style={{
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="eventDetailActiveTab"
+                      transition={{ type: 'spring', damping: 26, stiffness: 350 }}
+                      className="absolute inset-0 rounded-xl shadow-xs"
+                      style={{ backgroundColor: 'var(--bg-surface)' }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                  {tab.count !== undefined && (
+                    <span
+                      className="relative z-10 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold tabular-nums"
+                      style={{
+                        backgroundColor:
+                          tab.id === 'schedule' && isOrganizer && pendingAppsCount > 0
+                            ? 'var(--accent-primary)'
+                            : 'var(--bg-elevated)',
+                        color:
+                          tab.id === 'schedule' && isOrganizer && pendingAppsCount > 0
+                            ? '#FFFFFF'
+                            : 'var(--text-secondary)',
+                      }}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Privacy Status Indicator */}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold shrink-0">
+            {hasFullAccess ? (
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                <Unlock className="w-3.5 h-3.5" />
+                <span>Точный адрес открыт</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                <span>Координаты после одобрения</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 3. SCROLLABLE BODY CONTENT */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500 flex items-center gap-2">
+            <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* 1. SAFETY & PRIVACY STATUS BANNER */}
-          <div
-            className={`p-4 rounded-2xl border transition-colors ${
-              hasFullAccess
-                ? 'bg-emerald-500/10 border-emerald-500/30'
-                : 'bg-amber-500/10 border-amber-500/30'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={`p-2 rounded-xl shrink-0 ${
-                  hasFullAccess ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-500/20 text-amber-500'
-                }`}
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && (
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-6"
               >
-                {hasFullAccess ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">
-                  {hasFullAccess ? 'Точные координаты открыты' : 'Защита личных данных активна'}
-                </h4>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  {hasFullAccess
-                    ? 'Вы подтвержденный участник или организатор. Вам открыты точное название заведения, адрес и прямой закрытый чат встречи.'
-                    : 'Для безопасности точный адрес и телефон организатора скрыты от посторонних. Они автоматически откроются вам сразу после того, как организатор подтвердит вашу заявку.'}
-                </p>
-
-                {/* UNLOCKED PRIVATE SPACE CONTENT */}
-                {hasFullAccess && (
+                {/* Organizer Notification if Pending Applications exist */}
+                {isOrganizer && pendingAppsCount > 0 && (
                   <div
-                    className="mt-4 p-3.5 rounded-2xl border space-y-3"
+                    className="p-4 rounded-2xl border flex items-center justify-between gap-3"
+                    style={{
+                      backgroundColor: 'var(--accent-soft)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white"
+                        style={{ backgroundColor: 'var(--accent-primary)' }}
+                      >
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
+                          У вас {pendingAppsCount} {pendingAppsCount === 1 ? 'новая заявка' : 'новых заявки'} на участие
+                        </span>
+                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          Проверьте анкеты кандидатов и подтвердите слоты
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('schedule')}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-white shrink-0 cursor-pointer"
+                      style={{ backgroundColor: 'var(--accent-primary)' }}
+                    >
+                      Открыть заявки
+                    </button>
+                  </div>
+                )}
+
+                {/* Event Description */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
+                    О встрече
+                  </h3>
+                  <p className="text-sm sm:text-[15px] leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-primary)' }}>
+                    {activeEvent.description}
+                  </p>
+                </div>
+
+                {/* Vibe & Icebreaker Strip */}
+                {(activeEvent.vibe || activeEvent.musicOrMood || activeEvent.icebreakerQuestion) && (
+                  <div
+                    className="p-4 rounded-2xl border space-y-3"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
                       borderColor: 'var(--border-subtle)',
                     }}
                   >
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wide block" style={{ color: 'var(--text-muted)' }}>
-                        Точное заведение / локация:
-                      </span>
-                      <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                        {activeEvent.exactVenue || 'Указано организатором'}
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                        <Radio className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                        <span>Атмосфера и формат общения</span>
+                      </div>
+                      {activeEvent.vibe && (
+                        <span className="text-xs font-semibold" style={{ color: 'var(--accent-text)' }}>
+                          {activeEvent.vibe}
+                        </span>
+                      )}
                     </div>
 
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wide block" style={{ color: 'var(--text-muted)' }}>
-                        Точный адрес:
-                      </span>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {activeEvent.exactAddress || activeEvent.approximateArea}
-                        </span>
-                        {activeEvent.exactAddress && (
+                    {activeEvent.musicOrMood && (
+                      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <Music className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                        <span><strong style={{ color: 'var(--text-primary)' }}>Музыка и фон:</strong> {activeEvent.musicOrMood}</span>
+                      </div>
+                    )}
+
+                    {activeEvent.icebreakerQuestion && (
+                      <div
+                        className="pt-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        style={{ borderColor: 'var(--border-subtle)' }}
+                      >
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                            <MessageCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                            <span>Тема для начала разговора:</span>
+                          </span>
+                          <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            «{activeEvent.icebreakerQuestion}»
+                          </p>
+                        </div>
+                        {!isOrganizer && !isApproved && !isPending && (
                           <button
-                            onClick={() => handleCopyAddress(activeEvent.exactAddress!)}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-1 transition-colors cursor-pointer"
+                            type="button"
+                            onClick={() => {
+                              setApplyNote(prev =>
+                                prev
+                                  ? prev
+                                  : `Привет! По вашей теме встречи («${activeEvent.icebreakerQuestion}»): с радостью поделюсь своей историей за столом!`
+                              );
+                              setShowApplyForm(true);
+                            }}
+                            className="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition-transform active:scale-95"
                             style={{
-                              backgroundColor: 'var(--bg-surface)',
-                              borderColor: 'var(--border-subtle)',
-                              color: 'var(--text-secondary)',
+                              backgroundColor: 'var(--accent-soft)',
+                              color: 'var(--accent-text)',
                             }}
                           >
-                            <Copy className="w-3 h-3" />
-                            {copiedAddress ? 'Скопировано!' : 'Копировать'}
+                            Ответить в заявке
                           </button>
                         )}
                       </div>
-                    </div>
+                    )}
+                  </div>
+                )}
 
-                    {activeEvent.privateInstructions && (
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wide block" style={{ color: 'var(--text-muted)' }}>
-                          Инструкции по прибытию:
+                {/* Who we expect & Rules */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div
+                    className="p-4 rounded-2xl border space-y-1.5"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      <UserCheck className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                      <span>Кого ждём в компании</span>
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {activeEvent.requirements || 'Любой желающий с открытым и позитивным настроем'}
+                    </p>
+                  </div>
+
+                  <div
+                    className="p-4 rounded-2xl border space-y-1.5"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      <ShieldCheck className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                      <span>Договорённости встречи</span>
+                    </div>
+                    <ul className="text-xs space-y-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {activeEvent.rules?.map((rule, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                          <span>{rule}</span>
+                        </li>
+                      )) || <li>Взаимное уважение и пунктуальность</li>}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Organizer Card */}
+                <div
+                  className="p-4 rounded-2xl border flex items-center justify-between gap-4"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-subtle)',
+                  }}
+                >
+                  <div
+                    onClick={() => onOpenUserProfile(activeEvent.organizer.id)}
+                    className="flex items-center gap-3.5 cursor-pointer group min-w-0"
+                  >
+                    <img
+                      src={activeEvent.organizer.avatarUrl}
+                      alt={activeEvent.organizer.name}
+                      referrerPolicy="no-referrer"
+                      className="w-12 h-12 rounded-2xl object-cover border shrink-0 transition-transform group-hover:scale-105"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold truncate group-hover:underline" style={{ color: 'var(--text-primary)' }}>
+                          {activeEvent.organizer.name}, {activeEvent.organizer.age}
                         </span>
-                        <p
-                          className="text-xs mt-1 p-2.5 rounded-xl border"
+                        {activeEvent.organizer.isPhoneVerified && (
+                          <span title="Профиль подтверждён" className="inline-flex">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs flex flex-wrap items-center gap-1.5 mt-0.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="inline-flex items-center gap-1 font-bold text-amber-500">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span>{activeEvent.organizer.reliability.score}</span>
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>{activeEvent.organizer.reliability.eventsOrganized} организовано</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                          {activeEvent.organizer.reliability.attendanceRate}% явка
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onOpenUserProfile(activeEvent.organizer.id)}
+                    className="px-3.5 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 hover:opacity-90"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <span>Профиль</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Location & Private Access Block */}
+                <div
+                  className="p-4 sm:p-5 rounded-2xl border space-y-4"
+                  style={{
+                    backgroundColor: hasFullAccess ? 'rgba(16, 185, 129, 0.06)' : 'var(--bg-elevated)',
+                    borderColor: hasFullAccess ? 'rgba(16, 185, 129, 0.28)' : 'var(--border-subtle)',
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        hasFullAccess ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'
+                      }`}
+                    >
+                      {hasFullAccess ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+                        {hasFullAccess ? 'Точное место встречи открыто' : 'Точный адрес доступен участникам'}
+                      </h4>
+                      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        {hasFullAccess
+                          ? 'Вы в подтверждённом составе компании. Вам доступны точная геолокация, инструкции организатора и инструменты встречи.'
+                          : `Сейчас виден только ориентир (${activeEvent.approximateArea}). Точное название заведения и адрес откроются автоматически после подтверждения вашей заявки.`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {hasFullAccess && (
+                    <div
+                      className="pt-4 border-t space-y-3.5"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-[11px] font-medium block" style={{ color: 'var(--text-muted)' }}>
+                            Заведение / локация
+                          </span>
+                          <span className="text-sm font-bold block mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                            {activeEvent.exactVenue || 'Указано организатором'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-[11px] font-medium block" style={{ color: 'var(--text-muted)' }}>
+                            Точный адрес
+                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                              {activeEvent.exactAddress || activeEvent.approximateArea}
+                            </span>
+                            {activeEvent.exactAddress && (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyAddress(activeEvent.exactAddress!)}
+                                className="px-2 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                                style={{
+                                  backgroundColor: 'var(--bg-surface)',
+                                  borderColor: 'var(--border-subtle)',
+                                  color: 'var(--text-secondary)',
+                                }}
+                              >
+                                {copiedAddress ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                                <span>{copiedAddress ? 'Скопировано' : 'Копировать'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {activeEvent.privateInstructions && (
+                        <div
+                          className="p-3 rounded-xl border text-xs"
                           style={{
                             backgroundColor: 'var(--bg-surface)',
                             borderColor: 'var(--border-subtle)',
                             color: 'var(--text-secondary)',
                           }}
                         >
+                          <span className="font-bold block mb-0.5" style={{ color: 'var(--text-primary)' }}>
+                            Как найти компанию на месте:
+                          </span>
                           {activeEvent.privateInstructions}
-                        </p>
-                      </div>
-                    )}
-
-                    {activeEvent.organizerPhone && (
-                      <div className="flex items-center gap-2 pt-1 text-xs">
-                        <Phone className="w-4 h-4 text-emerald-500" />
-                        <span className="font-semibold">Телефон организатора:</span>
-                        <a href={`tel:${activeEvent.organizerPhone}`} className="text-emerald-500 font-bold hover:underline tabular-nums">
-                          {activeEvent.organizerPhone}
-                        </a>
-                      </div>
-                    )}
-
-                    {/* Tools for confirmed members: Chat, Safety Share, Bill Splitter, Calendar */}
-                    <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <button
-                        onClick={() => onOpenChat(activeEvent.id)}
-                        className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        <span>Закрытый чат</span>
-                      </button>
-
-                      <button
-                        onClick={() => setShowSafetyShare(true)}
-                        className="py-2.5 px-3 rounded-xl text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                      >
-                        <Shield className="w-4 h-4" />
-                        <span>Отправить близким</span>
-                      </button>
-
-                      <button
-                        onClick={() => setShowBillSplitter(true)}
-                        className="py-2.5 px-3 rounded-xl border font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      >
-                        <span>🧮 Сплит счета</span>
-                      </button>
-
-                      <button
-                        onClick={handleExportCalendar}
-                        className="py-2.5 px-3 rounded-xl border font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      >
-                        <span>📅 В календарь (.ics)</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 1.5 VIBE CHECK SECTION (Атмосфера и темп встречи) */}
-          {(activeEvent.vibe || activeEvent.musicOrMood || activeEvent.icebreakerQuestion) && (
-            <div
-              className="p-4 rounded-2xl border space-y-2.5"
-              style={{
-                backgroundColor: 'var(--accent-soft)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--accent-text)' }}>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Vibe Check · Атмосфера встречи</span>
-                </div>
-                {activeEvent.vibe && (
-                  <span
-                    className="text-xs font-bold px-2.5 py-1 rounded-xl"
-                    style={{
-                      backgroundColor: 'var(--bg-surface)',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    ✦ {activeEvent.vibe}
-                  </span>
-                )}
-              </div>
-
-              {activeEvent.musicOrMood && (
-                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <Music className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-text)' }} />
-                  <span><strong style={{ color: 'var(--text-primary)' }}>Настроение и фон:</strong> {activeEvent.musicOrMood}</span>
-                </div>
-              )}
-
-              {activeEvent.icebreakerQuestion && (
-                <div
-                  className="p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                >
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
-                      Тема для легкого знакомства (Icebreaker):
-                    </span>
-                    <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      «{activeEvent.icebreakerQuestion}»
-                    </span>
-                  </div>
-                  {!isOrganizer && !isApproved && !isPending && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setApplyNote(prev =>
-                          prev
-                            ? prev
-                            : `Привет! По вашей теме дня («${activeEvent.icebreakerQuestion}»): с радостью поделюсь своей историей за встречей!`
-                        );
-                      }}
-                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95"
-                      style={{
-                        backgroundColor: 'var(--accent-soft)',
-                        color: 'var(--accent-text)',
-                      }}
-                    >
-                      Ответить в заявке
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 2. DESCRIPTION & DETAILS */}
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-              О мероприятии
-            </h3>
-            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-primary)' }}>
-              {activeEvent.description}
-            </p>
-          </div>
-
-          {/* Requirements & Rules */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              className="p-3.5 rounded-2xl border"
-              style={{
-                backgroundColor: 'var(--bg-elevated)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <span className="text-xs font-bold block mb-1" style={{ color: 'var(--text-primary)' }}>
-                Кого ждем:
-              </span>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                {activeEvent.requirements || 'Любой желающий с позитивным настроем'}
-              </p>
-            </div>
-
-            <div
-              className="p-3.5 rounded-2xl border"
-              style={{
-                backgroundColor: 'var(--bg-elevated)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <span className="text-xs font-bold block mb-1" style={{ color: 'var(--text-primary)' }}>
-                Правила встречи:
-              </span>
-              <ul className="text-xs space-y-1" style={{ color: 'var(--text-secondary)' }}>
-                {activeEvent.rules?.map((rule, idx) => (
-                  <li key={idx} className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: 'var(--accent-primary)' }} />
-                    <span>{rule}</span>
-                  </li>
-                )) || <li>Взаимное уважение и пунктуальность</li>}
-              </ul>
-            </div>
-          </div>
-
-          {/* 3. ORGANIZER PROFILE PREVIEW */}
-          <div
-            className="p-4 rounded-2xl border flex items-center justify-between gap-3"
-            style={{
-              backgroundColor: 'var(--bg-elevated)',
-              borderColor: 'var(--border-subtle)',
-            }}
-          >
-            <div
-              onClick={() => onOpenUserProfile(activeEvent.organizer.id)}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <img
-                src={activeEvent.organizer.avatarUrl}
-                alt={activeEvent.organizer.name}
-                referrerPolicy="no-referrer"
-                className="w-12 h-12 rounded-2xl object-cover border"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              />
-              <div>
-                <div className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                  <span>{activeEvent.organizer.name}, {activeEvent.organizer.age}</span>
-                  {activeEvent.organizer.isPhoneVerified && (
-                    <span title="Телефон подтвержден" className="inline-flex">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    </span>
-                  )}
-                </div>
-                <div className="text-xs flex flex-wrap items-center gap-1.5 mt-0.5 tabular-nums" style={{ color: 'var(--text-muted)' }}>
-                  <span className="text-amber-500 font-bold">★ {activeEvent.organizer.reliability.score}</span>
-                  <span>·</span>
-                  <span>{activeEvent.organizer.reliability.eventsOrganized} встреч создано</span>
-                  <span>·</span>
-                  <span className="text-emerald-500 font-semibold">{activeEvent.organizer.reliability.attendanceRate}% явка</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onOpenUserProfile(activeEvent.organizer.id)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors cursor-pointer shrink-0"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              Профиль
-            </button>
-          </div>
-
-          {/* 4. VISUAL SLOTS TIMELINE & SCHEDULE */}
-          <EventSlotsTimeline
-            event={activeEvent}
-            compact={false}
-            isOrganizer={isOrganizer}
-            onSlotClick={(slotIndex, slot) => {
-              if (slot?.isOccupied) {
-                if (slot.isOrganizer) {
-                  onOpenUserProfile(activeEvent.organizerId);
-                } else {
-                  const p = activeEvent.approvedParticipants?.[slotIndex - 1];
-                  if (p) onOpenUserProfile(p.id);
-                }
-              }
-            }}
-          />
-
-          {/* 5. PARTICIPANTS ROSTER */}
-          <div>
-            <div className="flex items-center justify-between mb-2 tabular-nums">
-              <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                Участники ({activeEvent.occupiedSpots}/{activeEvent.totalSpots})
-              </h3>
-              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                Свободно {Math.max(0, activeEvent.totalSpots - activeEvent.occupiedSpots)} мест
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {/* Organizer Row */}
-              <div
-                className="flex items-center justify-between p-2.5 rounded-xl border"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <img
-                    src={activeEvent.organizer.avatarUrl}
-                    alt={activeEvent.organizer.name}
-                    className="w-8 h-8 rounded-xl object-cover"
-                  />
-                  <div>
-                    <span className="text-xs font-semibold block" style={{ color: 'var(--text-primary)' }}>
-                      {activeEvent.organizer.name}
-                    </span>
-                    <span className="text-[10px] font-semibold" style={{ color: 'var(--accent-text)' }}>
-                      Организатор
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-amber-500 tabular-nums">
-                  ★ {activeEvent.organizer.reliability.score}
-                </span>
-              </div>
-
-              {/* Other approved members */}
-              {activeEvent.approvedParticipants && activeEvent.approvedParticipants.length > 0 ? (
-                activeEvent.approvedParticipants.map(participant => (
-                  <div
-                    key={participant.id}
-                    className="flex items-center justify-between p-3 rounded-2xl border transition-all"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                  >
-                    <div
-                      onClick={() => onOpenUserProfile(participant.id)}
-                      className="flex items-center gap-3 cursor-pointer group min-w-0"
-                    >
-                      <div className="relative shrink-0">
-                        <img
-                          src={participant.avatarUrl}
-                          alt={participant.name}
-                          className="w-9 h-9 rounded-xl object-cover border"
-                          style={{ borderColor: 'var(--border-subtle)' }}
-                        />
-                        <span
-                          className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${
-                            participant.onlineStatus === 'online'
-                              ? 'bg-emerald-500'
-                              : participant.onlineStatus === 'recent'
-                              ? 'bg-amber-500'
-                              : 'bg-slate-400'
-                          }`}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold group-hover:underline flex items-center gap-1.5 truncate" style={{ color: 'var(--text-primary)' }}>
-                          <span>{participant.name}, {participant.age}</span>
-                          <OnlineStatusBadge
-                            status={participant.onlineStatus || 'recent'}
-                            lastSeen={participant.lastSeen}
-                            size="sm"
-                          />
-                        </div>
-                        <div className="text-[11px] font-medium flex items-center gap-1 truncate" style={{ color: 'var(--accent-text)' }}>
-                          <span>💼 {participant.occupation || 'Участник'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-bold text-amber-500 tabular-nums">
-                        ★ {participant.reliability?.score || 5.0}
-                      </span>
-                      {isOrganizer && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleMarkAttendance(participant.id, 'attended')}
-                            className="p-1 px-2 text-[10px] font-semibold rounded-lg bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25 cursor-pointer"
-                            title="Отметить: Пришел на встречу"
-                          >
-                            Пришел
-                          </button>
-                          <button
-                            onClick={() => handleMarkAttendance(participant.id, 'no_show')}
-                            className="p-1 px-2 text-[10px] font-semibold rounded-lg bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 cursor-pointer"
-                            title="Отметить: Не явился"
-                          >
-                            Не явился
-                          </button>
                         </div>
                       )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                activeEvent.approvedParticipantIds.map(pId => (
-                  <div
-                    key={pId}
-                    className="flex items-center justify-between p-2.5 rounded-xl border"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                  >
-                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Подтвержденный участник</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
 
-          {/* 5. ORGANIZER APPLICATIONS REVIEW SECTION */}
-          {isOrganizer && (
-            <div
-              className="p-4 rounded-2xl border space-y-3"
-              style={{
-                backgroundColor: 'var(--accent-soft)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--accent-text)' }}>
-                  <Users className="w-4 h-4" />
-                  <span>Заявки на рассмотрение ({organizerApplications.filter(a => a.status === 'pending').length})</span>
-                </h4>
-              </div>
+                      {activeEvent.organizerPhone && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                          <span style={{ color: 'var(--text-secondary)' }}>Связь с организатором:</span>
+                          <a href={`tel:${activeEvent.organizerPhone}`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline tabular-nums">
+                            {activeEvent.organizerPhone}
+                          </a>
+                        </div>
+                      )}
 
-              {organizerApplications.filter(a => a.status === 'pending').length === 0 ? (
-                <p className="text-xs py-1" style={{ color: 'var(--text-secondary)' }}>
-                  Пока нет новых заявок на рассмотрении.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {organizerApplications.filter(a => a.status === 'pending').map(app => (
-                    <div
-                      key={app.id}
-                      className="p-3 rounded-xl border space-y-2"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-subtle)',
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div
-                          onClick={() => onOpenUserProfile(app.user.id)}
-                          className="flex items-center gap-2.5 cursor-pointer group"
+                      {/* Clean Action Utilities Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => onOpenChat(activeEvent.id)}
+                          className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <img
-                            src={app.user.avatarUrl}
-                            alt={app.user.name}
-                            className="w-10 h-10 rounded-xl object-cover"
-                          />
-                          <div>
-                            <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                              {app.user.name}, {app.user.age}
-                            </span>
-                            <div className="text-[11px] flex items-center gap-1.5 tabular-nums" style={{ color: 'var(--text-muted)' }}>
-                              <span className="text-amber-500 font-semibold">★ {app.user.reliability.score}</span>
-                              <span>·</span>
-                              <span>{app.user.reliability.attendanceRate}% явка ({app.user.reliability.eventsAttended} встреч)</span>
-                            </div>
-                          </div>
-                        </div>
+                          <MessageSquare className="w-4 h-4" />
+                          <span>Чат компании</span>
+                        </button>
 
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            disabled={isSubmittingDecision}
-                            onClick={() => handleDecision(app.id, 'accept')}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            Принять
-                          </button>
-                          <button
-                            disabled={isSubmittingDecision}
-                            onClick={() => handleDecision(app.id, 'reject')}
-                            className="px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer"
-                            style={{
-                              backgroundColor: 'var(--bg-elevated)',
-                              borderColor: 'var(--border-subtle)',
-                              color: 'var(--text-secondary)',
-                            }}
-                          >
-                            Отклонить
-                          </button>
-                        </div>
-                      </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowBillSplitter(true)}
+                          className="py-2.5 px-3 rounded-xl border font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          <Receipt className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                          <span>Разделить счёт</span>
+                        </button>
 
-                      <div
-                        className="p-2.5 rounded-xl text-xs border"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-secondary)',
-                        }}
-                      >
-                        <span className="font-semibold block text-[10px] uppercase mb-0.5" style={{ color: 'var(--text-muted)' }}>
-                          Почему хочет присоединиться:
-                        </span>
-                        «{app.note}»
+                        <button
+                          type="button"
+                          onClick={() => setShowSafetyShare(true)}
+                          className="py-2.5 px-3 rounded-xl border font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          <Shield className="w-4 h-4 text-emerald-500" />
+                          <span>Карточка близким</span>
+                        </button>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* 5.5 PRE-APPROVAL Q&A SECTION */}
-          <div
-            className="p-4 rounded-2xl border space-y-3"
-            style={{
-              backgroundColor: 'var(--bg-elevated)',
-              borderColor: 'var(--border-subtle)',
-            }}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                <MessageSquare className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                <span>Вопросы организатору ({questions.length})</span>
-              </h4>
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                Доступно до подачи заявки · Контакты маскируются
-              </span>
-            </div>
-
-            {questions.length === 0 ? (
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                Пока никто не задавал уточняющих вопросов. Спросите о формате, меню или правилах!
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {questions.map(q => (
+                {/* Organizer Event Cancellation Control */}
+                {isOrganizer && activeEvent.status !== 'cancelled' && (
                   <div
-                    key={q.id}
-                    className="p-3 rounded-xl border text-xs space-y-2"
-                    style={{
-                      backgroundColor: 'var(--bg-surface)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
+                    className="pt-3 border-t flex items-center justify-between text-xs"
+                    style={{ borderColor: 'var(--border-subtle)' }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <img src={q.askerAvatar} alt={q.askerName} className="w-5 h-5 rounded-full object-cover" />
-                        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{q.askerName}</span>
-                      </div>
-                      <span className="text-[10px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{q.createdAt}</span>
-                    </div>
-                    <p style={{ color: 'var(--text-secondary)' }}>«{q.question}»</p>
-
-                    {q.answer ? (
-                      <div
-                        className="p-2.5 rounded-xl border"
-                        style={{
-                          backgroundColor: 'var(--accent-soft)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
+                    <span style={{ color: 'var(--text-muted)' }}>Управление статусом встречи</span>
+                    {!showCancelPrompt ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelPrompt(true)}
+                        className="text-rose-500 hover:underline font-medium flex items-center gap-1 cursor-pointer"
                       >
-                        <span className="text-[10px] font-bold uppercase block mb-0.5" style={{ color: 'var(--accent-text)' }}>
-                          Ответ организатора ({activeEvent.organizer.name.split(' ')[0]}):
-                        </span>
-                        <p>{q.answer}</p>
-                      </div>
-                    ) : isOrganizer ? (
-                      <div className="flex items-center gap-2 pt-1">
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Отменить встречу</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
                         <input
                           type="text"
-                          value={answerDrafts[q.id] || ''}
-                          onChange={e => setAnswerDrafts(prev => ({ ...prev, [q.id]: e.target.value }))}
-                          placeholder="Напишите ответ кандидату..."
-                          className="flex-1 p-2 rounded-lg border text-xs focus:outline-none"
+                          placeholder="Причина отмены..."
+                          value={cancelReason}
+                          onChange={e => setCancelReason(e.target.value)}
+                          className="p-1.5 px-2.5 border rounded-xl text-xs"
                           style={{
                             backgroundColor: 'var(--bg-elevated)',
                             borderColor: 'var(--border-subtle)',
@@ -889,157 +768,270 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                         />
                         <button
                           type="button"
-                          onClick={() => handleAnswerQuestion(q.id)}
-                          className="px-3 py-2 rounded-lg text-white text-xs font-bold cursor-pointer"
-                          style={{ backgroundColor: 'var(--accent-primary)' }}
+                          onClick={handleCancelEvent}
+                          className="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold cursor-pointer"
                         >
-                          Ответить
+                          Подтвердить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowCancelPrompt(false)}
+                          className="text-xs cursor-pointer"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          Назад
                         </button>
                       </div>
-                    ) : (
-                      <span className="text-[11px] italic block" style={{ color: 'var(--text-muted)' }}>
-                        Ожидает ответа организатора...
-                      </span>
                     )}
                   </div>
-                ))}
-              </div>
+                )}
+              </motion.div>
             )}
 
-            {!isOrganizer && (
-              <form onSubmit={handleAskQuestion} className="flex items-center gap-2 pt-1">
-                <input
-                  type="text"
-                  value={newQuestionText}
-                  onChange={e => setNewQuestionText(e.target.value)}
-                  placeholder="Задать короткий вопрос организатору без раскрытия контактов..."
-                  className="flex-1 p-2.5 rounded-xl border text-xs focus:outline-none"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
+            {activeTab === 'schedule' && (
+              <motion.div
+                key="schedule"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-6"
+              >
+                {/* Organizer Pending Applications Section */}
+                {isOrganizer && (
+                  <div
+                    className="p-4 rounded-2xl border space-y-3"
+                    style={{
+                      backgroundColor: 'var(--accent-soft)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: 'var(--accent-text)' }}>
+                        <Users className="w-4 h-4" />
+                        <span>Заявки на рассмотрении ({pendingAppsCount})</span>
+                      </h4>
+                    </div>
+
+                    {pendingAppsCount === 0 ? (
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        Новых заявок на рассмотрении сейчас нет.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {organizerApplications.filter(a => a.status === 'pending').map(app => (
+                          <div
+                            key={app.id}
+                            className="p-3.5 rounded-2xl border space-y-2.5"
+                            style={{
+                              backgroundColor: 'var(--bg-surface)',
+                              borderColor: 'var(--border-subtle)',
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div
+                                onClick={() => onOpenUserProfile(app.user.id)}
+                                className="flex items-center gap-3 cursor-pointer group"
+                              >
+                                <img
+                                  src={app.user.avatarUrl}
+                                  alt={app.user.name}
+                                  className="w-10 h-10 rounded-xl object-cover"
+                                />
+                                <div>
+                                  <span className="text-xs font-bold block group-hover:underline" style={{ color: 'var(--text-primary)' }}>
+                                    {app.user.name}, {app.user.age}
+                                  </span>
+                                  <div className="text-[11px] flex items-center gap-1.5 tabular-nums mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                                    <span className="inline-flex items-center gap-0.5 text-amber-500 font-semibold">
+                                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                      <span>{app.user.reliability.score}</span>
+                                    </span>
+                                    <span>·</span>
+                                    <span>{app.user.reliability.attendanceRate}% явка ({app.user.reliability.eventsAttended} встреч)</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={isSubmittingDecision}
+                                  onClick={() => handleDecision(app.id, 'accept')}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Принять</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isSubmittingDecision}
+                                  onClick={() => handleDecision(app.id, 'reject')}
+                                  className="px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors cursor-pointer"
+                                  style={{
+                                    backgroundColor: 'var(--bg-elevated)',
+                                    borderColor: 'var(--border-subtle)',
+                                    color: 'var(--text-secondary)',
+                                  }}
+                                >
+                                  Отклонить
+                                </button>
+                              </div>
+                            </div>
+
+                            {app.note && (
+                              <div
+                                className="p-2.5 rounded-xl text-xs"
+                                style={{
+                                  backgroundColor: 'var(--bg-elevated)',
+                                  color: 'var(--text-secondary)',
+                                }}
+                              >
+                                «{app.note}»
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Unified Visual Slots & Timeline Component */}
+                <EventSlotsTimeline
+                  event={activeEvent}
+                  compact={false}
+                  isOrganizer={isOrganizer}
+                  onMarkAttendance={handleMarkAttendance}
+                  onSlotClick={(slotIndex, slot) => {
+                    if (slot?.isOccupied) {
+                      if (slot.isOrganizer) {
+                        onOpenUserProfile(activeEvent.organizerId);
+                      } else if (slot.userId) {
+                        onOpenUserProfile(slot.userId);
+                      } else {
+                        const p = activeEvent.approvedParticipants?.[slotIndex - 1];
+                        if (p) onOpenUserProfile(p.id);
+                      }
+                    }
                   }}
                 />
-                <button
-                  type="submit"
-                  disabled={!newQuestionText.trim()}
-                  className="px-4 py-2.5 rounded-xl disabled:opacity-40 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
-                  style={{ backgroundColor: 'var(--accent-primary)' }}
-                >
-                  Спросить
-                </button>
-              </form>
+              </motion.div>
             )}
-          </div>
 
-          {/* 6. APPLICANT INTERACTION CTA */}
-          {!isOrganizer && (
-            <div className="pt-2">
-              {isApproved ? (
-                <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-500 text-xs font-bold">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>Вы в списке участников! До встречи на событии.</span>
-                  </div>
-                  <button
-                    onClick={() => onOpenChat(activeEvent.id)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    В чат
-                  </button>
-                </div>
-              ) : isPending ? (
-                <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-xs">
-                  <div className="font-bold mb-1 flex items-center gap-2 text-amber-500">
-                    <Clock className="w-4 h-4" />
-                    <span>Ваша заявка отправлена и ожидает одобрения организатора</span>
-                  </div>
-                  <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-                    Организатор проверит ваш профиль и примет решение. Как только заявка будет принята, точный адрес и закрытый чат откроются автоматически.
-                  </p>
-                </div>
-              ) : activeEvent.occupiedSpots >= activeEvent.totalSpots ? (
-                <div
-                  className="p-4 rounded-2xl text-center text-xs font-medium"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  Все места на это мероприятие уже заняты
-                </div>
-              ) : (
-                <div
-                  className="p-4 rounded-2xl border shadow-xs space-y-3"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                >
+            {activeTab === 'qa' && (
+              <motion.div
+                key="qa"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                      Хотите присоединиться? Напишите организатору пару слов:
-                    </label>
-                    <textarea
-                      value={applyNote}
-                      onChange={(e) => setApplyNote(e.target.value)}
-                      placeholder="Например: Недавно переехал в город, увлекаюсь кино и настолками, буду рад познакомиться и составить компанию!"
-                      className="w-full h-20 p-3 rounded-xl border text-xs focus:outline-none resize-none"
-                      style={{
-                        backgroundColor: 'var(--bg-surface)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                    />
+                    <h3 className="text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Вопросы организатору ({questions.length})
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                      Уточните детали формата, дресс-кода или меню до отправки заявки
+                    </p>
                   </div>
-
-                  <button
-                    disabled={isApplying}
-                    onClick={handleApply}
-                    className="w-full py-3 rounded-xl text-white text-xs font-bold shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  >
-                    {isApplying ? 'Отправка...' : 'Отправить заявку на участие'}
-                  </button>
-                  <p className="text-[11px] text-center" style={{ color: 'var(--text-muted)' }}>
-                    🔒 Организатор увидит ваш профиль и рейтинг надёжности перед принятием решения.
-                  </p>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Safety & Cancellation Actions */}
-          <div
-            className="pt-4 border-t flex items-center justify-between text-xs"
-            style={{ borderColor: 'var(--border-subtle)' }}
-          >
-            <button
-              onClick={() => onOpenReport('event', activeEvent.id, activeEvent.title)}
-              className="flex items-center gap-1.5 hover:text-rose-500 transition-colors cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              <Flag className="w-3.5 h-3.5" />
-              <span>Пожаловаться</span>
-            </button>
-
-            {isOrganizer && activeEvent.status !== 'cancelled' && (
-              <div>
-                {!showCancelPrompt ? (
-                  <button
-                    onClick={() => setShowCancelPrompt(true)}
-                    className="text-rose-500 hover:underline text-xs cursor-pointer"
+                {questions.length === 0 ? (
+                  <div
+                    className="p-8 rounded-2xl border text-center space-y-2"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
                   >
-                    Отменить мероприятие
-                  </button>
+                    <MessageSquare className="w-6 h-6 mx-auto opacity-50" style={{ color: 'var(--accent-primary)' }} />
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      Пока никто не задавал вопросов
+                    </p>
+                    <p className="text-xs max-w-sm mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                      Спросите организатора о любых деталях встречи — ответ увидят все заинтересованные участники.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="space-y-3">
+                    {questions.map(q => (
+                      <div
+                        key={q.id}
+                        className="p-4 rounded-2xl border text-xs space-y-2.5"
+                        style={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          borderColor: 'var(--border-subtle)',
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <img src={q.askerAvatar} alt={q.askerName} className="w-6 h-6 rounded-full object-cover" />
+                            <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{q.askerName}</span>
+                          </div>
+                          <span className="text-[11px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{q.createdAt}</span>
+                        </div>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                          «{q.question}»
+                        </p>
+
+                        {q.answer ? (
+                          <div
+                            className="p-3 rounded-xl border"
+                            style={{
+                              backgroundColor: 'var(--bg-surface)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            <span className="text-[11px] font-bold block mb-0.5" style={{ color: 'var(--accent-primary)' }}>
+                              Ответ организатора ({activeEvent.organizer.name.split(' ')[0]}):
+                            </span>
+                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{q.answer}</p>
+                          </div>
+                        ) : isOrganizer ? (
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="text"
+                              value={answerDrafts[q.id] || ''}
+                              onChange={e => setAnswerDrafts(prev => ({ ...prev, [q.id]: e.target.value }))}
+                              placeholder="Напишите ответ кандидату..."
+                              className="flex-1 p-2.5 rounded-xl border text-xs focus:outline-none"
+                              style={{
+                                backgroundColor: 'var(--bg-surface)',
+                                borderColor: 'var(--border-subtle)',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAnswerQuestion(q.id)}
+                              className="px-3.5 py-2.5 rounded-xl text-white text-xs font-bold cursor-pointer"
+                              style={{ backgroundColor: 'var(--accent-primary)' }}
+                            >
+                              Ответить
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] block" style={{ color: 'var(--text-muted)' }}>
+                            Ожидает ответа организатора...
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!isOrganizer && (
+                  <form onSubmit={handleAskQuestion} className="flex items-center gap-2 pt-2">
                     <input
                       type="text"
-                      placeholder="Причина отмены"
-                      value={cancelReason}
-                      onChange={e => setCancelReason(e.target.value)}
-                      className="p-1 px-2 border rounded-lg text-xs"
+                      value={newQuestionText}
+                      onChange={e => setNewQuestionText(e.target.value)}
+                      placeholder="Задать вопрос организатору..."
+                      className="flex-1 p-3 rounded-2xl border text-xs focus:outline-none"
                       style={{
                         backgroundColor: 'var(--bg-elevated)',
                         borderColor: 'var(--border-subtle)',
@@ -1047,25 +1039,149 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       }}
                     />
                     <button
-                      onClick={handleCancelEvent}
-                      className="px-2.5 py-1 bg-rose-600 text-white rounded-lg text-xs font-bold cursor-pointer"
+                      type="submit"
+                      disabled={!newQuestionText.trim()}
+                      className="px-4 py-3 rounded-2xl disabled:opacity-40 text-white text-xs font-bold transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+                      style={{ backgroundColor: 'var(--accent-primary)' }}
                     >
-                      Подтвердить
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Спросить</span>
                     </button>
-                    <button
-                      onClick={() => setShowCancelPrompt(false)}
-                      className="text-xs cursor-pointer"
-                      style={{ color: 'var(--text-muted)' }}
+                  </form>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 4. STICKY BOTTOM ACTION BAR */}
+        <div
+          className="p-4 sm:px-6 border-t shrink-0"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          {isOrganizer ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs">
+                <span className="font-bold block" style={{ color: 'var(--text-primary)' }}>
+                  Вы организатор этой встречи
+                </span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  Заполнено {activeEvent.occupiedSpots} из {activeEvent.totalSpots} мест
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenChat(activeEvent.id)}
+                className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Открыть чат компании</span>
+              </button>
+            </div>
+          ) : isApproved ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>Вы в составе участников! Точный адрес открыт.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenChat(activeEvent.id)}
+                className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-colors cursor-pointer shrink-0"
+              >
+                В чат встречи
+              </button>
+            </div>
+          ) : isPending ? (
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5 text-amber-500 font-bold">
+                <Clock className="w-4 h-4 shrink-0" />
+                <span>Заявка отправлена и ожидает подтверждения организатора</span>
+              </div>
+            </div>
+          ) : activeEvent.occupiedSpots >= activeEvent.totalSpots ? (
+            <div className="text-center text-xs font-semibold py-1" style={{ color: 'var(--text-muted)' }}>
+              Все слоты на эту встречу уже заняты
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <AnimatePresence initial={false}>
+                {showApplyForm && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <label className="font-bold" style={{ color: 'var(--text-primary)' }}>
+                        Короткое сообщение для организатора:
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowApplyForm(false)}
+                        className="text-[11px] hover:underline cursor-pointer"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        Свернуть
+                      </button>
+                    </div>
+                    <textarea
+                      value={applyNote}
+                      onChange={(e) => setApplyNote(e.target.value)}
+                      placeholder="Напишите пару слов о себе: почему вам близка эта встреча и чем увлекаетесь..."
+                      className="w-full h-20 p-3 rounded-2xl border text-xs focus:outline-none resize-none"
+                      style={{
+                        backgroundColor: 'var(--bg-elevated)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex items-center justify-between gap-3">
+                {!showApplyForm ? (
+                  <>
+                    <div className="hidden sm:flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Организатор увидит ваш профиль и индекс надёжности</span>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={() => setShowApplyForm(true)}
+                      className="w-full sm:w-auto sm:ml-auto px-6 py-3 rounded-2xl text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      style={{ backgroundColor: 'var(--accent-primary)' }}
                     >
-                      Назад
-                    </button>
-                  </div>
+                      <span>Присоединиться к компании</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </motion.button>
+                  </>
+                ) : (
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    disabled={isApplying}
+                    onClick={handleApply}
+                    className="w-full py-3 rounded-2xl text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ backgroundColor: 'var(--accent-primary)' }}
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{isApplying ? 'Отправка заявки...' : 'Подтвердить и отправить заявку'}</span>
+                  </motion.button>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </div>
+      </motion.div>
 
       {showSafetyShare && (
         <SafetyShareModal

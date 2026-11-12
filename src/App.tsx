@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, Flame, Plus, Sparkles, ShieldCheck, 
+  Search, Flame, Plus, Compass, ShieldCheck, Briefcase,
   MapPin, MessageSquare, CheckCircle2, RefreshCw, Star, Palette, Lock,
   Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2
 } from 'lucide-react';
@@ -29,7 +29,7 @@ import { clientLocalStore } from './services/clientLocalStore.ts';
 const CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'Все', label: 'Все события' },
   { id: 'Сегодня', label: 'Сегодня вечером' },
-  { id: 'Сохраненные', label: 'Сохраненные ★' },
+  { id: 'Сохраненные', label: 'Сохраненные' },
   { id: 'День рождения', label: 'День рождения' },
   { id: 'Ресторан / Бар', label: 'Ресторан / Бар' },
   { id: 'Настольные игры', label: 'Настольные игры' },
@@ -583,7 +583,7 @@ export default function App() {
                       className="w-8 h-8 rounded-2xl text-white flex items-center justify-center shrink-0"
                       style={{ backgroundColor: 'var(--accent-primary)' }}
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <Compass className="w-4 h-4" />
                     </div>
                     <div>
                       <h2
@@ -1055,7 +1055,8 @@ export default function App() {
                   </div>
                   {currentUser.occupation && (
                     <div className="text-xs font-semibold mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--accent-text)' }}>
-                      <span>💼 {currentUser.occupation}</span>
+                      <Briefcase className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                      <span>{currentUser.occupation}</span>
                       {currentUser.companyOrIndustry && (
                         <>
                           <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>·</span>
@@ -1536,20 +1537,23 @@ export default function App() {
       />
 
       {/* 4. MODALS & DRAWERS */}
-      {selectedEventForDetail && (
-        <EventDetailModal
-          event={selectedEventForDetail}
-          currentUser={currentUser}
-          onClose={() => setSelectedEventForDetail(null)}
-          onOpenChat={(id) => {
-            setSelectedEventForDetail(null);
-            setActiveChatEventId(id);
-          }}
-          onOpenUserProfile={(id) => setInspectedUserId(id)}
-          onOpenReport={(type, id, title) => setReportModalData({ targetType: type, targetId: id, targetTitle: title })}
-          onEventUpdated={loadData}
-        />
-      )}
+      <AnimatePresence>
+        {selectedEventForDetail && (
+          <EventDetailModal
+            key={selectedEventForDetail.id}
+            event={selectedEventForDetail}
+            currentUser={currentUser}
+            onClose={() => setSelectedEventForDetail(null)}
+            onOpenChat={(id) => {
+              setSelectedEventForDetail(null);
+              setActiveChatEventId(id);
+            }}
+            onOpenUserProfile={(id) => setInspectedUserId(id)}
+            onOpenReport={(type, id, title) => setReportModalData({ targetType: type, targetId: id, targetTitle: title })}
+            onEventUpdated={loadData}
+          />
+        )}
+      </AnimatePresence>
 
       {showCreateModal && (
         <CreateEventModal
@@ -1575,26 +1579,29 @@ export default function App() {
         />
       )}
 
-      {inspectedUserId && (
-        <UserProfileModal
-          userId={inspectedUserId}
-          currentUserId={currentUser.id}
-          onClose={() => setInspectedUserId(null)}
-          onOpenReport={(type, id, title) => setReportModalData({ targetType: type, targetId: id, targetTitle: title })}
-          onUserBlocked={loadData}
-          onOpenReview={(targetUserId, targetUserName) => {
-            setReviewModalData({
-              eventId: 'ev-1',
-              targetUserId,
-              targetUserName,
-              eventName: 'Совместное мероприятие',
-            });
-          }}
-          onSelectUser={(userId) => {
-            setInspectedUserId(userId);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {inspectedUserId && (
+          <UserProfileModal
+            key={inspectedUserId}
+            userId={inspectedUserId}
+            currentUserId={currentUser.id}
+            onClose={() => setInspectedUserId(null)}
+            onOpenReport={(type, id, title) => setReportModalData({ targetType: type, targetId: id, targetTitle: title })}
+            onUserBlocked={loadData}
+            onOpenReview={(targetUserId, targetUserName) => {
+              setReviewModalData({
+                eventId: 'ev-1',
+                targetUserId,
+                targetUserName,
+                eventName: 'Совместное мероприятие',
+              });
+            }}
+            onSelectUser={(userId) => {
+              setInspectedUserId(userId);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {reviewModalData && (
         <ReviewModal

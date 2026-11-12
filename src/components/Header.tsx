@@ -382,7 +382,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <span>{currentUser.city}</span>
                     <span>·</span>
                     <span className="text-emerald-600 font-semibold tabular-nums">
-                      ★ {currentUser.reliability.score} ({currentUser.reliability.attendanceRate}% явка)
+                      Рейтинг {currentUser.reliability.score} ({currentUser.reliability.attendanceRate}% явка)
                     </span>
                   </div>
                 </div>
@@ -433,10 +433,11 @@ export const Header: React.FC<HeaderProps> = ({
                       onOpenSafetyGuide();
                       setShowUserDropdown(false);
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center gap-2"
                     style={{ color: 'var(--text-secondary)' }}
                   >
-                    🛡️ Правила безопасных встреч
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                    <span>Правила безопасных встреч</span>
                   </button>
                   {currentUser.role === 'admin' && (
                     <button
@@ -446,7 +447,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className="w-full text-left px-3 py-2 rounded-xl text-xs text-purple-600 font-bold"
                     >
-                      ⚡ Открыть панель модерации
+                      Открыть панель модерации
                     </button>
                   )}
                 </div>
