@@ -9,9 +9,9 @@ import {
   Palette,
   Check,
   ShieldCheck,
-  Sparkles,
   Globe,
   UserPlus,
+  LogOut,
 } from 'lucide-react';
 import { UserProfile, AppNotification } from '../types/index.ts';
 import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
@@ -67,6 +67,7 @@ interface HeaderProps {
   onOpenAdminPanel?: () => void;
   onOpenDemoShare: () => void;
   onOpenAuth?: () => void;
+  onLogout?: () => void;
   isCloudConnected?: boolean;
 }
 
@@ -86,6 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdminPanel,
   onOpenDemoShare,
   onOpenAuth,
+  onLogout,
   isCloudConnected = false,
 }) => {
   const t = UI_TEXT[lang];
@@ -489,7 +491,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border-subtle)]">
                     {notifications.length === 0 ? (
                       <div className="p-8 text-center space-y-2">
-                        <Sparkles
+                        <Bell
                           className="w-6 h-6 mx-auto opacity-40"
                           style={{ color: 'var(--text-muted)' }}
                         />
@@ -546,7 +548,7 @@ export const Header: React.FC<HeaderProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* Registration / Cloud Profile Button */}
+          {/* Registration / Profile Button */}
           {onOpenAuth && (
             <motion.button
               type="button"
@@ -561,16 +563,16 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               title={
                 lang === 'en'
-                  ? 'Registration & Cloud Database Profile'
-                  : 'Регистрация и облачный профиль в базе данных'
+                  ? 'Account & Registration'
+                  : 'Анкета участника и регистрация'
               }
             >
               <UserPlus className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
               <span className="hidden md:inline">
                 {isCloudConnected
                   ? lang === 'en'
-                    ? 'Cloud Profile'
-                    : 'Профиль в БД'
+                    ? 'My Account'
+                    : 'Моя анкета'
                   : lang === 'en'
                   ? 'Sign Up'
                   : 'Регистрация'}
@@ -643,24 +645,41 @@ export const Header: React.FC<HeaderProps> = ({
                     borderColor: 'var(--border-subtle)',
                   }}
                 >
-                  {onOpenAuth && (
-                    <div className="p-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowUserSwitcher(false);
-                          onOpenAuth();
-                        }}
-                        className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
-                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                      >
-                        <UserPlus className="w-3.5 h-3.5" />
-                        <span>
-                          {lang === 'en'
-                            ? 'Register / Cloud Account'
-                            : 'Регистрация / Облачная анкета'}
-                        </span>
-                      </button>
+                  {(onOpenAuth || onLogout) && (
+                    <div className="p-2 border-b space-y-1.5" style={{ borderColor: 'var(--border-subtle)' }}>
+                      {onOpenAuth && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserSwitcher(false);
+                            onOpenAuth();
+                          }}
+                          className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                          style={{ backgroundColor: 'var(--accent-primary)' }}
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          <span>
+                            {lang === 'en'
+                              ? 'Edit Account Profile'
+                              : 'Настроить мою анкету'}
+                          </span>
+                        </button>
+                      )}
+                      {onLogout && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserSwitcher(false);
+                            onLogout();
+                          }}
+                          className="w-full py-2 px-3 rounded-xl text-xs font-bold border border-rose-500/30 bg-rose-500/10 text-rose-500 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-rose-500/15 transition-colors"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>
+                            {lang === 'en' ? 'Sign Out' : 'Выйти из аккаунта'}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   )}
                   <div

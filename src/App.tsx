@@ -4,7 +4,7 @@ import {
   Search, Flame, Plus, Compass, ShieldCheck, Briefcase,
   MapPin, MessageSquare, CheckCircle2, RefreshCw, Star, Palette, Lock,
   Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2,
-  Clock, XCircle, Navigation, UserPlus, Archive, CalendarCheck, Sparkles
+  Clock, XCircle, Navigation, UserPlus, Archive, CalendarCheck, LogOut
 } from 'lucide-react';
 import { Header, ColorPaletteId } from './components/Header.tsx';
 import { BottomNav, NavTab } from './components/BottomNav.tsx';
@@ -36,6 +36,7 @@ import {
   fetchCloudSeekers,
   fetchCloudUserProfile,
   sanitizeValidId,
+  signOutCloudUser,
 } from './lib/firebase.ts';
 
 const CATEGORIES: Array<{ id: string; label: string }> = [
@@ -166,8 +167,33 @@ export default function App() {
   const [showSafetyGuide, setShowSafetyGuide] = useState<boolean>(false);
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [showDemoShareModal, setShowDemoShareModal] = useState<boolean>(false);
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [isAuthCompleted, setIsAuthCompleted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('kompa_auth_completed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('kompa_auth_completed') !== 'true';
+    } catch {
+      return true;
+    }
+  });
   const [cloudUser, setCloudUser] = useState<FirebaseUser | null>(null);
+
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('kompa_auth_completed');
+    } catch {
+      // ignore storage errors
+    }
+    await signOutCloudUser().catch(() => {});
+    setCloudUser(null);
+    setIsAuthCompleted(false);
+    setShowAuthModal(true);
+  };
 
   // Listen to Firebase Auth state and sync cloud seekers/profile
   useEffect(() => {
@@ -541,7 +567,8 @@ export default function App() {
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenDemoShare={() => setShowDemoShareModal(true)}
         onOpenAuth={() => setShowAuthModal(true)}
-        isCloudConnected={Boolean(cloudUser)}
+        onLogout={handleLogout}
+        isCloudConnected={isAuthCompleted || Boolean(cloudUser)}
         activePalette={activePalette}
         onChangePalette={setActivePalette}
         lang={lang}
@@ -1638,7 +1665,7 @@ export default function App() {
                           }
                     }
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>
                       {currentUser.openToInvites
                         ? lang === 'en'
@@ -2115,8 +2142,8 @@ export default function App() {
                 />
               </div>
 
-              {/* Action to leave review for a fellow participant */}
-              <div className="pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+              {/* Action to leave review for a fellow participant & Logout */}
+              <div className="pt-2 border-t space-y-2.5" style={{ borderColor: 'var(--border-subtle)' }}>
                 <button
                   onClick={() => setReviewModalData({
                     eventId: 'ev-1',
@@ -2129,6 +2156,15 @@ export default function App() {
                 >
                   <MessageSquareQuote className="w-4 h-4" />
                   <span>Оставить отзыв об участнике совместной встречи</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full py-3 rounded-2xl text-xs font-bold border border-rose-500/30 bg-rose-500/10 text-rose-500 transition-all cursor-pointer hover:bg-rose-500/15 flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>{lang === 'en' ? 'Sign Out of Account' : 'Выйти из аккаунта'}</span>
                 </button>
               </div>
             </div>
@@ -2286,8 +2322,24 @@ export default function App() {
         <AuthModal
           currentUser={currentUser}
           cloudUser={cloudUser}
-          onClose={() => setShowAuthModal(false)}
+          isInitialGate={!isAuthCompleted}
+          onClose={() => {
+            try {
+              localStorage.setItem('kompa_auth_completed', 'true');
+            } catch {
+              // ignore storage errors
+            }
+            setIsAuthCompleted(true);
+            setShowAuthModal(false);
+          }}
+          onLogout={handleLogout}
           onProfileRegistered={updatedProfile => {
+            try {
+              localStorage.setItem('kompa_auth_completed', 'true');
+            } catch {
+              // ignore storage errors
+            }
+            setIsAuthCompleted(true);
             const saved = clientLocalStore.registerOrSwitchCloudUser(updatedProfile);
             setCurrentUser({ ...saved });
             setSeekers(clientLocalStore.getSeekers());

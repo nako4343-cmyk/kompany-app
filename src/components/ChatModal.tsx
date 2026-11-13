@@ -10,7 +10,6 @@ import {
   Pin,
   PinOff,
   MapPin,
-  Sparkles,
   CheckCircle2,
   ChevronRight,
   ExternalLink,
@@ -324,7 +323,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({
               }}
               title={isEn ? 'Create or configure group chat for confirmed participants' : 'Создать или настроить групповой чат подтвержденных участников'}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Users className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">
                 {event?.groupChatInitialized
                   ? isEn
@@ -500,7 +499,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-500" />
+                    <Users className="w-4 h-4 text-emerald-500" />
                     <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                       {isEn
                         ? 'Group Chat for Confirmed Participants'

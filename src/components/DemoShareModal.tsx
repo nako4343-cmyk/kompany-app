@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, QrCode, Copy, Check, Share2, Send, 
-  Smartphone, ShieldCheck, Sparkles, ExternalLink, Download, 
+  Smartphone, ShieldCheck, ExternalLink, Download, 
   Globe, AlertCircle, HelpCircle, Layers
 } from 'lucide-react';
 import QRCode from 'qrcode';
@@ -439,7 +439,7 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
             }}
           >
             <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--accent-text)' }}>
-              <Sparkles className="w-3.5 h-3.5" />
+              <ShieldCheck className="w-3.5 h-3.5" />
               <span>Что показать друзьям в демо:</span>
             </span>
 

@@ -422,7 +422,7 @@ export async function fetchCloudSeekers(): Promise<UserProfile[]> {
         openToInvites: Boolean(data.openToInvites),
         openToInvitesNote: data.openToInvitesNote || '',
         onlineStatus: 'online',
-        lastSeen: 'Онлайн в облаке Kompa',
+        lastSeen: 'Онлайн сейчас',
         reliability: {
           score: Number(data.reliabilityScore) || 5.0,
           eventsAttended: 5,

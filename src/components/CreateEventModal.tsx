@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
-import { 
-  X, Sparkles, ChevronRight, ChevronLeft, 
-  Lock, CheckCircle2, ShieldCheck, AlertCircle,
-  MapPin, Navigation, Search, ExternalLink, Users, Heart
+import React, { useState, useRef } from 'react';
+import {
+  X,
+  ChevronRight,
+  ChevronLeft,
+  Lock,
+  CheckCircle2,
+  ShieldCheck,
+  AlertCircle,
+  MapPin,
+  Navigation,
+  Search,
+  ExternalLink,
+  Users,
+  Heart,
+  Image as ImageIcon,
+  Upload,
+  Link2,
+  RotateCcw,
+  FileText,
 } from 'lucide-react';
 import { EventCategory, EventBudgetTier, EventVibe, UserProfile } from '../types/index.ts';
 import { api } from '../services/api.ts';
@@ -25,7 +40,7 @@ const CATEGORIES: EventCategory[] = [
   'Путешествие',
   'Вечеринка',
   'Квиз / Интеллект',
-  'Другое'
+  'Другое',
 ];
 
 const VIBES: EventVibe[] = [
@@ -33,7 +48,7 @@ const VIBES: EventVibe[] = [
   'Гастро-вечер',
   'Интеллектуальная игра',
   'Активный движ',
-  'Праздничный вайб'
+  'Праздничный вайб',
 ];
 
 const BUDGET_TIERS: EventBudgetTier[] = [
@@ -42,7 +57,65 @@ const BUDGET_TIERS: EventBudgetTier[] = [
   '1 000–3 000 ₽',
   '3 000–5 000 ₽',
   '5 000+ ₽',
-  'Бюджет обсуждается'
+  'Бюджет обсуждается',
+];
+
+interface StandardBackgroundOption {
+  id: string;
+  label: string;
+  categoryHint?: EventCategory;
+  url: string;
+}
+
+const STANDARD_EVENT_BACKGROUNDS: StandardBackgroundOption[] = [
+  {
+    id: 'bg-bar',
+    label: 'Ресторан / Бар',
+    categoryHint: 'Ресторан / Бар',
+    url: './assets/images/hero_community_event_1794332913246.jpg',
+  },
+  {
+    id: 'bg-boardgames',
+    label: 'Настольные игры',
+    categoryHint: 'Настольные игры',
+    url: './assets/images/event_board_games_1794332913325.jpg',
+  },
+  {
+    id: 'bg-concert',
+    label: 'Кино / Концерт',
+    categoryHint: 'Кино / Концерт',
+    url: './assets/images/event_live_concert_1794332915302.jpg',
+  },
+  {
+    id: 'bg-picnic',
+    label: 'Пикник в парке',
+    categoryHint: 'Пикник / Шашлыки',
+    url: './assets/images/event_outdoor_picnic_1794332913731.jpg',
+  },
+  {
+    id: 'bg-wedding',
+    label: 'Свадьба / Банкет',
+    categoryHint: 'Свадьба',
+    url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: 'bg-birthday',
+    label: 'День рождения',
+    categoryHint: 'День рождения',
+    url: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: 'bg-sport',
+    label: 'Спорт / Падел',
+    categoryHint: 'Спорт',
+    url: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80',
+  },
+  {
+    id: 'bg-city',
+    label: 'Вечерняя Москва',
+    categoryHint: 'Прогулка',
+    url: 'https://images.unsplash.com/photo-1513326738677-b964603b136d?auto=format&fit=crop&w=1000&q=80',
+  },
 ];
 
 interface MapPresetLocation {
@@ -135,7 +208,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   const [musicOrMood, setMusicOrMood] = useState('Уютная атмосфера, живое общение без спешки');
   const [icebreakerQuestion, setIcebreakerQuestion] = useState('Какое место в городе ваше самое любимое?');
   const [budget, setBudget] = useState<EventBudgetTier>('1 000–3 000 ₽');
-  
+
+  // Event Background (Standard vs Custom)
+  const [bgMode, setBgMode] = useState<'standard' | 'custom'>('standard');
+  const [selectedStandardBg, setSelectedStandardBg] = useState<string>(STANDARD_EVENT_BACKGROUNDS[0].url);
+  const [customBgUrl, setCustomBgUrl] = useState<string>('');
+  const [customUrlInput, setCustomUrlInput] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Location, Yandex Maps & Privacy
   const [city, setCity] = useState(currentUser.city || 'Москва');
   const [approximateArea, setApproximateArea] = useState('Центральный район, ~2 км');
@@ -148,6 +228,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   const [isSearchingMap, setIsSearchingMap] = useState<boolean>(false);
   const [privateInstructions, setPrivateInstructions] = useState('');
   const [allowPhoneSharing, setAllowPhoneSharing] = useState(true);
+
+  const activeImageUrl =
+    bgMode === 'custom' && customBgUrl.trim() ? customBgUrl.trim() : selectedStandardBg;
 
   const updateSpotsCount = (val: number) => {
     const clamped = Math.max(2, Math.min(500, Math.round(val) || 2));
@@ -181,6 +264,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       else setTitle(`Встреча: ${cat}`);
     }
 
+    // Automatically match standard background if user is in standard mode
+    if (bgMode === 'standard') {
+      const matchedBg = STANDARD_EVENT_BACKGROUNDS.find(b => b.categoryHint === cat);
+      if (matchedBg) {
+        setSelectedStandardBg(matchedBg.url);
+      }
+    }
+
     if (cat === 'Свадьба') {
       setVibe('Праздничный вайб');
       setMusicOrMood('Праздничный банкет, живая музыка, танцы и тёплые тосты');
@@ -192,6 +283,60 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }
   };
 
+  // Handle local image upload with automatic canvas compression
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const rawDataUrl = ev.target?.result as string;
+      if (!rawDataUrl) return;
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxWidth = 1000;
+        const maxHeight = 640;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          setCustomBgUrl(compressed);
+          setBgMode('custom');
+        } else {
+          setCustomBgUrl(rawDataUrl);
+          setBgMode('custom');
+        }
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleApplyCustomUrl = () => {
+    if (!customUrlInput.trim()) return;
+    setCustomBgUrl(customUrlInput.trim());
+    setBgMode('custom');
+  };
+
+  const handleResetToStandardBg = () => {
+    setBgMode('standard');
+    setCustomBgUrl('');
+    setCustomUrlInput('');
+  };
+
   // Search address and update Yandex Maps widget pin
   const handleSearchOnYandexMap = async (customQuery?: string) => {
     const queryToSearch = (customQuery ?? mapSearchQuery) || `${city}, ${exactAddress || exactVenue || approximateArea}`;
@@ -199,7 +344,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
     setIsSearchingMap(true);
     try {
-      // Check preset match first for instant accuracy
       const lower = queryToSearch.toLowerCase();
       const matchedPreset = YANDEX_MAP_PRESETS.find(
         p =>
@@ -240,7 +384,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         }
       }
 
-      // Fallback: generate direct Yandex Maps search URL even if geocoder didn't return lat/lon
       setYandexMapsUrl(
         `https://yandex.ru/maps/?text=${encodeURIComponent(`${city}, ${queryToSearch}`)}`
       );
@@ -285,7 +428,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     );
   };
 
-  // AI Description Generator
+  // Template Description Helper
   const handleAiGenerate = async () => {
     setIsAiLoading(true);
     try {
@@ -304,7 +447,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         }
       }
     } catch (err: any) {
-      console.error('AI error:', err);
+      console.error('Description helper error:', err);
     } finally {
       setIsAiLoading(false);
     }
@@ -374,6 +517,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         vibe,
         musicOrMood,
         icebreakerQuestion,
+        imageUrl: activeImageUrl,
       });
 
       onCreated();
@@ -448,7 +592,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             </div>
           )}
 
-          {/* STEP 1: Category, Title & Quick Guest Count */}
+          {/* STEP 1: Category, Title, Guest Count & Event Background (Standard or Custom) */}
           {step === 1 && (
             <div className="space-y-4">
               <div>
@@ -490,7 +634,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   type="text"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder="Например: Свадебный ужин и вечеринка на веранде"
+                  placeholder="Например: Вечер настольных игр или ужин на веранде"
                   className="w-full p-3 rounded-xl border text-xs focus:outline-none"
                   style={{
                     backgroundColor: 'var(--bg-elevated)',
@@ -500,7 +644,190 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 />
               </div>
 
-              {/* Quick Custom Guest Count Field on Step 1 as well */}
+              {/* Event Cover / Background Selector (Standard or Custom) */}
+              <div
+                className="p-3.5 rounded-2xl border space-y-3"
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  borderColor: 'var(--border-subtle)',
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Фон (обложка) события
+                    </span>
+                  </div>
+
+                  {/* Mode Switcher: Standard vs Custom */}
+                  <div
+                    className="inline-flex p-0.5 rounded-xl border"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setBgMode('standard')}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: bgMode === 'standard' ? 'var(--accent-primary)' : 'transparent',
+                        color: bgMode === 'standard' ? '#ffffff' : 'var(--text-secondary)',
+                      }}
+                    >
+                      Стандартные фоны
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBgMode('custom')}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: bgMode === 'custom' ? 'var(--accent-primary)' : 'transparent',
+                        color: bgMode === 'custom' ? '#ffffff' : 'var(--text-secondary)',
+                      }}
+                    >
+                      Свой фон
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Cover Preview */}
+                <div className="relative h-28 rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <img
+                    src={activeImageUrl}
+                    alt="Фон события"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                  <div className="absolute bottom-2.5 left-3 right-3 flex items-end justify-between gap-2 text-white">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-xs inline-block mb-1">
+                        {category}
+                      </span>
+                      <p className="text-xs font-bold truncate">
+                        {title.trim() || 'Предпросмотр карточки вашего события'}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/55 shrink-0">
+                      {bgMode === 'custom' && customBgUrl ? 'Свой фон' : 'Стандартный'}
+                    </span>
+                  </div>
+                </div>
+
+                {bgMode === 'standard' ? (
+                  <div>
+                    <span className="text-[11px] font-medium block mb-2" style={{ color: 'var(--text-muted)' }}>
+                      Выберите подходящий фон из коллекции Kompa:
+                    </span>
+                    <div className="grid grid-cols-4 gap-2">
+                      {STANDARD_EVENT_BACKGROUNDS.map(bg => {
+                        const isSelected = selectedStandardBg === bg.url;
+                        return (
+                          <button
+                            key={bg.id}
+                            type="button"
+                            onClick={() => setSelectedStandardBg(bg.url)}
+                            className="group relative h-14 rounded-xl overflow-hidden border-2 transition-all cursor-pointer text-left"
+                            style={{
+                              borderColor: isSelected ? 'var(--accent-primary)' : 'transparent',
+                            }}
+                          >
+                            <img
+                              src={bg.url}
+                              alt={bg.label}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 bg-black/35 flex items-end p-1.5">
+                              <span className="text-[9px] font-bold text-white leading-tight line-clamp-1">
+                                {bg.label}
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <div
+                                className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-white"
+                                style={{ backgroundColor: 'var(--accent-primary)' }}
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                        style={{
+                          backgroundColor: 'var(--bg-surface)',
+                          borderColor: 'var(--accent-primary)',
+                          color: 'var(--accent-text)',
+                        }}
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Загрузить фото с устройства</span>
+                      </button>
+
+                      {customBgUrl && (
+                        <button
+                          type="button"
+                          onClick={handleResetToStandardBg}
+                          className="py-2 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Стандартный</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <div className="relative flex-1">
+                        <Link2 className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+                        <input
+                          type="url"
+                          value={customUrlInput}
+                          onChange={e => setCustomUrlInput(e.target.value)}
+                          placeholder="Или вставьте прямую ссылку на картинку (https://...)"
+                          className="w-full pl-8 pr-3 py-2 rounded-xl border text-xs focus:outline-none"
+                          style={{
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-primary)',
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleApplyCustomUrl}
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-white shrink-0 cursor-pointer"
+                        style={{ backgroundColor: 'var(--accent-primary)' }}
+                      >
+                        Применить
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Custom Guest Count Field on Step 1 */}
               <div
                 className="p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 style={{
@@ -736,7 +1063,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             </div>
           )}
 
-          {/* STEP 4: Description + Vibe Check + Gemini AI Helper */}
+          {/* STEP 4: Description + Vibe Check */}
           {step === 4 && (
             <div className="space-y-3.5">
               <div>
@@ -780,8 +1107,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     color: 'var(--accent-text)',
                   }}
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{isAiLoading ? 'Генерируем...' : 'Сгенерировать с AI'}</span>
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isAiLoading ? 'Заполняем...' : 'Подставить шаблон описания'}</span>
                 </button>
               </div>
 
@@ -1216,7 +1543,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               <ChevronLeft className="w-4 h-4" />
               <span>Назад</span>
             </button>
-          ) : <div />}
+          ) : (
+            <div />
+          )}
 
           <button
             type="button"

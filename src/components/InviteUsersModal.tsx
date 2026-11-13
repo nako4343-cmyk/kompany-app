@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   UserPlus,
-  Sparkles,
   SlidersHorizontal,
   Search,
   Star,
@@ -152,10 +151,10 @@ export const InviteUsersModal: React.FC<InviteUsersModalProps> = ({
         >
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/12 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Users className="w-3.5 h-3.5" />
               <span>
                 {lang === 'en'
-                  ? 'Smart Participant Finder · Open to Invites'
+                  ? 'Participant Finder · Open to Invites'
                   : 'Подбор участников из списка · «Жду приглашений»'}
               </span>
             </div>
