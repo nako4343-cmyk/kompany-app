@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   LogIn,
   LogOut,
   CheckCircle2,
-  UserCheck,
   ShieldCheck,
   AlertCircle,
   ArrowRight,
+  ArrowLeft,
   Users,
   MapPin,
   Compass,
+  Utensils,
+  Dice5,
+  Music,
+  PartyPopper,
+  Camera,
+  Check,
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
 import {
@@ -47,6 +53,71 @@ const INTEREST_OPTIONS = [
   'Путешествие',
 ];
 
+const AVATAR_PRESETS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
+];
+
+const OCCUPATION_PRESETS = [
+  'Арт-директор & Дизайн',
+  'IT & Продукт',
+  'Предприниматель',
+  'Маркетинг & PR',
+  'Архитектура',
+  'Финансы & Консалтинг',
+];
+
+const CITY_PRESETS = ['Москва', 'Санкт-Петербург', 'Казань', 'Екатеринбург'];
+
+const VIBE_CARDS = [
+  {
+    id: 'gastro',
+    title: 'Камерный ужин и бар',
+    desc: 'До 6 человек, авторская кухня, спокойная беседа',
+    icon: Utensils,
+    defaultInterests: ['Рестораны / Бары', 'Прогулка'],
+    bioPreset:
+      'Люблю открывать новые гастрономические места, уютные бары и собираться в небольшой приятной компании.',
+  },
+  {
+    id: 'games',
+    title: 'Азарт и настольные игры',
+    desc: 'Стратегии, квизы, вечера настолок в центре',
+    icon: Dice5,
+    defaultInterests: ['Настольные игры', 'Квиз / Интеллект'],
+    bioPreset:
+      'Обожаю стратегические и компанейские настольные игры, интеллектуальные квизы и бодрые вечера с юмором.',
+  },
+  {
+    id: 'culture',
+    title: 'Концерты, кино и культура',
+    desc: 'Живой джаз, премьеры, выставки и театр',
+    icon: Music,
+    defaultInterests: ['Кино / Концерт', 'Рестораны / Бары'],
+    bioPreset:
+      'Ищу компанию на живые концерты, джазовые вечера, кинопремьеры и обсуждение за бокалом после.',
+  },
+  {
+    id: 'party',
+    title: 'Праздники и вылазки',
+    desc: 'Дни рождения, пикники, спорт и загородные сборы',
+    icon: PartyPopper,
+    defaultInterests: ['День рождения', 'Пикник / Шашлыки', 'Спорт'],
+    bioPreset:
+      'За активные выходные, душевные дни рождения, пикники на природе и спонтанные вылазки большой компанией.',
+  },
+];
+
+const INVITE_NOTE_PRESETS = [
+  'Свободен(на) сегодня после 19:00 на ужин или настолки!',
+  'Открыт(а) к приглашениям в бар, на квиз или концерт в центре.',
+  'С радостью присоединюсь к проверенной компании на выходных.',
+];
+
 const SHOWCASE_CARDS = [
   {
     title: 'Вечер настольных игр на Покровке',
@@ -63,11 +134,11 @@ const SHOWCASE_CARDS = [
     image: './assets/images/hero_community_event_1794332913246.jpg',
   },
   {
-    title: 'Камерная свадьба-вечеринка у воды',
-    category: 'Свадьба',
-    spotText: '18 из 24 гостей',
-    area: 'Серебряный Бор · Суббота, 18:30',
-    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    title: 'Джазовый концерт и коктейли',
+    category: 'Кино / Концерт',
+    spotText: '6 из 8 участников',
+    area: 'Кузнецкий Мост · Пятница, 20:30',
+    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
@@ -82,15 +153,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const isEn = lang === 'en';
 
-  const [step, setStep] = useState<'welcome' | 'form'>(isInitialGate ? 'welcome' : 'form');
+  // Step 0 = Welcome showcase; Step 1 = Identity & Avatar; Step 2 = Vibe & Interests; Step 3 = Final Pass & Status
+  const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(isInitialGate ? 0 : 1);
   const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
+  const [selectedVibeId, setSelectedVibeId] = useState<string>('gastro');
 
   const [name, setName] = useState(currentUser.name || '');
   const [age, setAge] = useState<number>(currentUser.age || 27);
   const [gender, setGender] = useState<'female' | 'male'>(currentUser.gender || 'female');
   const [city, setCity] = useState(currentUser.city || 'Москва');
   const [occupation, setOccupation] = useState(currentUser.occupation || '');
-  const [phoneNumber, setPhoneNumber] = useState(currentUser.phoneNumber || '+7 (999) 123-45-67');
+  const [avatarUrl, setAvatarUrl] = useState(
+    currentUser.avatarUrl || AVATAR_PRESETS[0]
+  );
+  const [phoneNumber] = useState(currentUser.phoneNumber || '+7 (999) 123-45-67');
   const [bio, setBio] = useState(currentUser.bio || '');
   const [interests, setInterests] = useState<string[]>(
     currentUser.interests && currentUser.interests.length > 0
@@ -99,8 +175,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   );
   const [openToInvites, setOpenToInvites] = useState<boolean>(currentUser.openToInvites ?? true);
   const [openToInvitesNote, setOpenToInvitesNote] = useState(
-    currentUser.openToInvitesNote ||
-      'Открыт(а) к приглашениям на настольные игры, ужины и интересные вечера в компании!'
+    currentUser.openToInvitesNote || INVITE_NOTE_PRESETS[0]
   );
 
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
@@ -108,28 +183,74 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Lock background page scroll while modal is open so iOS Safari never shifts the viewport
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevPosition = document.body.style.position;
+    const prevWidth = document.body.style.width;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.position = prevPosition;
+      document.body.style.width = prevWidth;
+    };
+  }, []);
+
   useEffect(() => {
     if (cloudUser) {
       setName(prev => prev || cloudUser.displayName || 'Участник Kompa');
+      if (cloudUser.photoURL) {
+        setAvatarUrl(cloudUser.photoURL);
+      }
     }
   }, [cloudUser]);
 
   useEffect(() => {
-    if (step !== 'welcome') return;
+    if (wizardStep !== 0) return;
     const timer = setInterval(() => {
       setActiveShowcaseIdx(prev => (prev + 1) % SHOWCASE_CARDS.length);
     }, 3400);
     return () => clearInterval(timer);
-  }, [step]);
+  }, [wizardStep]);
+
+  // Dynamic match counter for interactive excitement
+  const matchedEventsCount = useMemo(() => {
+    const base = 6;
+    return base + interests.length * 3;
+  }, [interests]);
 
   const toggleInterest = (tag: string) => {
     setInterests(prev => {
       if (prev.includes(tag)) {
-        return prev.filter(x => x !== tag);
+        return prev.length > 1 ? prev.filter(x => x !== tag) : prev;
       }
       if (prev.length >= 10) return prev;
       return [...prev, tag];
     });
+  };
+
+  const handleSelectVibe = (vibe: (typeof VIBE_CARDS)[number]) => {
+    setSelectedVibeId(vibe.id);
+    // Merge vibe's default interests without removing existing ones
+    setInterests(prev => {
+      const combined = Array.from(new Set([...vibe.defaultInterests, ...prev]));
+      return combined.slice(0, 10);
+    });
+    if (!bio.trim() || VIBE_CARDS.some(v => v.bioPreset === bio.trim())) {
+      setBio(vibe.bioPreset);
+    }
+  };
+
+  const handleCustomAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setAvatarUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleGoogleSignIn = async () => {
@@ -158,8 +279,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         avatarUrl:
           existingCloud?.avatarUrl ||
           fbUser.photoURL ||
-          currentUser.avatarUrl ||
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+          avatarUrl ||
+          AVATAR_PRESETS[0],
         bio:
           existingCloud?.bio ||
           bio ||
@@ -184,6 +305,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setGender(mergedProfile.gender || 'female');
       setCity(mergedProfile.city);
       setOccupation(mergedProfile.occupation || '');
+      setAvatarUrl(mergedProfile.avatarUrl);
       setBio(mergedProfile.bio);
       setInterests(mergedProfile.interests);
       setOpenToInvites(Boolean(mergedProfile.openToInvites));
@@ -191,9 +313,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       await syncUserProfileToCloud(mergedProfile);
       onProfileRegistered(mergedProfile);
-      setStep('form');
+      setWizardStep(1);
       setStatusMessage(
-        isEn ? 'Welcome to Kompa! Your profile is active.' : 'Добро пожаловать в Kompa! Ваш профиль активен.'
+        isEn ? 'Google profile connected!' : 'Профиль Google успешно подключен!'
       );
     } catch (err: any) {
       setErrorMessage(
@@ -204,8 +326,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleSaveRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFinishRegistration = async () => {
     setIsSaving(true);
     setErrorMessage('');
     setStatusMessage('');
@@ -222,8 +343,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         gender,
         city: city.trim().slice(0, 60) || 'Москва',
         occupation: occupation.trim().slice(0, 100) || 'Участник Kompa',
+        avatarUrl: avatarUrl || AVATAR_PRESETS[0],
         phoneNumber: phoneNumber.trim().slice(0, 40),
-        bio: bio.trim().slice(0, 600),
+        bio:
+          bio.trim().slice(0, 600) ||
+          'Открыт(а) к интересным встречам, камерным ужинам и настольным играм в хорошей компании.',
         interests: interests.length > 0 ? interests.slice(0, 10) : ['Настольные игры'],
         openToInvites,
         openToInvitesNote: openToInvitesNote.trim().slice(0, 300),
@@ -254,137 +378,194 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (onLogout) {
       onLogout();
     }
-    setStep('welcome');
+    setWizardStep(0);
     setStatusMessage(isEn ? 'You have signed out.' : 'Вы вышли из аккаунта.');
   };
+
+  const stepTitles = [
+    isEn ? 'Welcome' : 'Добро пожаловать',
+    isEn ? 'Step 1 of 3 · Who are you?' : 'Шаг 1 из 3 · Знакомство',
+    isEn ? 'Step 2 of 3 · Evening Vibe' : 'Шаг 2 из 3 · Ваш формат вечера',
+    isEn ? 'Step 3 of 3 · Your Member Pass' : 'Шаг 3 из 3 · Пропуск участника',
+  ];
 
   return (
     <div
       onClick={() => {
         if (!isInitialGate) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 overflow-hidden"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 12 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+      {/* Fixed-height dvh container on mobile so header & footer NEVER shift or clip when scrolling */}
+      <div
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-xl max-h-[94vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden"
+        className="w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] sm:max-w-xl sm:rounded-3xl shadow-2xl border-0 sm:border flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
           color: 'var(--text-primary)',
         }}
       >
-        <AnimatePresence mode="wait">
-          {step === 'welcome' ? (
-            /* STEP 1: HIGH-CONTRAST ANIMATED WELCOME & REGISTRATION GATE */
-            <motion.div
-              key="welcome-stage"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex flex-col justify-between p-5 sm:p-7 overflow-y-auto space-y-5"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              {/* Top Brand Row */}
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    initial={{ rotate: -10 }}
-                    animate={{ rotate: 0 }}
-                    transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-xl shadow-md shrink-0"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
+        {/* FIXED TOP HEADER — Never scrolls out of view */}
+        <div
+          className="px-4 py-3.5 sm:px-6 sm:py-4 border-b shrink-0 flex flex-col gap-2.5"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-lg shadow-sm shrink-0"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              >
+                K
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="font-display font-extrabold text-base sm:text-lg tracking-tight truncate"
+                    style={{ color: 'var(--text-primary)' }}
                   >
-                    K
-                  </motion.div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="font-display font-extrabold text-lg tracking-tight leading-none"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        Kompa
-                      </span>
-                      <span
-                        className="text-[11px] font-bold px-2 py-0.5 rounded-md"
-                        style={{
-                          backgroundColor: 'var(--accent-soft)',
-                          color: 'var(--accent-text)',
-                        }}
-                      >
-                        {isEn ? 'Moscow' : 'Москва'}
-                      </span>
-                    </div>
-                    <span
-                      className="text-xs block mt-0.5 font-medium"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {isEn ? 'Find your company for tonight' : 'Твоя компания на сегодня вечером'}
-                    </span>
-                  </div>
-                </div>
-
-                {!isInitialGate && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                    Kompa
+                  </span>
+                  <span
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0"
                     style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      color: 'var(--text-secondary)',
+                      backgroundColor: 'var(--accent-soft)',
+                      color: 'var(--accent-text)',
                     }}
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+                    {city || 'Москва'}
+                  </span>
+                </div>
+                <p
+                  className="text-xs font-medium truncate"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {stepTitles[wizardStep]}
+                </p>
               </div>
+            </div>
 
-              {/* Center Headline & Animated Live Meetup Showcase */}
-              <div className="space-y-4">
+            <div className="flex items-center gap-2 shrink-0">
+              {!isInitialGate && (
+                <button
+                  type="button"
+                  onClick={handleSignOutClick}
+                  className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-rose-500/10 hover:text-rose-500 transition-colors"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>{isEn ? 'Sign Out' : 'Выйти'}</span>
+                </button>
+              )}
+
+              {!isInitialGate && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Step Progress Bar for Steps 1..3 */}
+          {wizardStep > 0 && (
+            <div className="grid grid-cols-3 gap-2 pt-0.5">
+              {[1, 2, 3].map(idx => {
+                const isDone = wizardStep > idx;
+                const isCurrent = wizardStep === idx;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setWizardStep(idx as 1 | 2 | 3)}
+                    className="h-1.5 rounded-full overflow-hidden transition-all cursor-pointer"
+                    style={{
+                      backgroundColor:
+                        isDone || isCurrent ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                      opacity: isDone ? 0.55 : 1,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* SCROLLABLE BODY AREA — Contained flex-1 min-h-0 so it scrolls smoothly inside the fixed frame */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
+          {statusMessage && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{statusMessage}</span>
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <AnimatePresence mode="wait">
+            {wizardStep === 0 && (
+              /* STEP 0: INTERACTIVE WELCOME SHOWCASE */
+              <motion.div
+                key="step-0"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
-                  <motion.h1
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25 }}
+                  <h1
                     className="text-xl sm:text-2xl font-display font-extrabold leading-snug tracking-tight"
                     style={{ color: 'var(--text-primary)' }}
                   >
                     {isEn
-                      ? 'Meet people through real plans — board games, dinners, concerts & parties'
+                      ? 'Find your company for tonight — no dating, just real plans'
                       : 'Найди с кем пойти сегодня вечером — без дейтинга и неловкости'}
-                  </motion.h1>
-                  <motion.p
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.06, duration: 0.25 }}
-                    className="text-xs sm:text-sm leading-relaxed font-normal"
+                  </h1>
+                  <p
+                    className="text-xs sm:text-sm leading-relaxed"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     {isEn
-                      ? 'Create your profile once. Exact venue addresses and group chats unlock only after the organizer approves your request.'
-                      : 'Заполните анкету один раз при входе: выбирайте компании по интересам или включите метку «Жду приглашений», чтобы организаторы сами звали вас на встречи.'}
-                  </motion.p>
+                      ? 'Set up your pass in 30 seconds. Exact venue addresses and group chats open only after the organizer approves you.'
+                      : 'Соберите свой пропуск участника за 30 секунд: выбирайте проверенные компании по интересам, а точный адрес и чат откроются после одобрения организатором.'}
+                  </p>
                 </div>
 
-                {/* Animated Live Event Card Carousel */}
-                <div className="relative h-44 sm:h-48 rounded-2xl overflow-hidden bg-neutral-900 shadow-lg border" style={{ borderColor: 'var(--border-subtle)' }}>
+                {/* Live Showcase Carousel */}
+                <div
+                  className="relative h-48 sm:h-52 rounded-2xl overflow-hidden bg-neutral-900 shadow-md border"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <AnimatePresence mode="wait">
                     {SHOWCASE_CARDS.map((card, idx) =>
                       idx === activeShowcaseIdx ? (
                         <motion.div
                           key={card.title}
-                          initial={{ opacity: 0, x: 24 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -24 }}
-                          transition={{ duration: 0.32, ease: 'easeOut' }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.28 }}
                           className="absolute inset-0 flex items-end p-4"
                         >
                           <img
@@ -395,7 +576,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15" />
                           <div className="relative z-10 w-full flex items-end justify-between gap-3">
                             <div className="space-y-1 min-w-0">
-                              <span className="inline-block text-[11px] font-bold text-amber-300 bg-black/50 px-2 py-0.5 rounded-md">
+                              <span className="inline-block text-[11px] font-bold text-amber-300 bg-black/60 px-2.5 py-0.5 rounded-md">
                                 {card.category} · {card.spotText}
                               </span>
                               <h3 className="text-sm sm:text-base font-display font-bold text-white truncate">
@@ -407,21 +588,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               </p>
                             </div>
                             <div className="flex -space-x-2 shrink-0">
-                              <img
-                                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"
-                                alt=""
-                                className="w-8 h-8 rounded-full object-cover ring-2 ring-black"
-                              />
-                              <img
-                                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"
-                                alt=""
-                                className="w-8 h-8 rounded-full object-cover ring-2 ring-black"
-                              />
-                              <img
-                                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80"
-                                alt=""
-                                className="w-8 h-8 rounded-full object-cover ring-2 ring-black"
-                              />
+                              {AVATAR_PRESETS.slice(0, 3).map((av, i) => (
+                                <img
+                                  key={i}
+                                  src={av}
+                                  alt=""
+                                  className="w-8 h-8 rounded-full object-cover ring-2 ring-black"
+                                />
+                              ))}
                             </div>
                           </div>
                         </motion.div>
@@ -430,25 +604,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </AnimatePresence>
                 </div>
 
-                {/* Progress indicators & Benefits Row */}
+                {/* Carousel Switcher & Security Promise */}
                 <div
-                  className="p-3 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium"
+                  className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium"
                   style={{
                     backgroundColor: 'var(--bg-elevated)',
                     borderColor: 'var(--border-subtle)',
                     color: 'var(--text-primary)',
                   }}
                 >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{isEn ? 'Private addresses until approved' : 'Точный адрес скрыт до одобрения'}</span>
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      {isEn
+                        ? 'Private venue address until approved'
+                        : 'Точный адрес скрыт до подтверждения заявки'}
                     </span>
-                    <span className="hidden sm:flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      <Users className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-primary)' }} />
-                      <span>{isEn ? 'Verified participants' : 'Проверенные участники'}</span>
-                    </span>
-                  </div>
+                  </span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {SHOWCASE_CARDS.map((_, i) => (
                       <button
@@ -457,7 +629,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onClick={() => setActiveShowcaseIdx(i)}
                         className="h-2 rounded-full transition-all cursor-pointer"
                         style={{
-                          width: i === activeShowcaseIdx ? '22px' : '8px',
+                          width: i === activeShowcaseIdx ? '20px' : '8px',
                           backgroundColor:
                             i === activeShowcaseIdx ? 'var(--accent-primary)' : 'var(--border-subtle)',
                         }}
@@ -465,407 +637,708 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Bottom Animated Action Buttons */}
-              <div className="space-y-2.5 pt-1">
-                <motion.button
-                  type="button"
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={() => setStep('form')}
-                  className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2.5 cursor-pointer"
-                  style={{ backgroundColor: 'var(--accent-primary)' }}
-                >
-                  <span>{isEn ? 'Create Profile & Enter Kompa' : 'Зарегистрироваться и войти'}</span>
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.span>
-                </motion.button>
+                {/* Interactive Preview of 3-step Pass Creation */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  {[
+                    { num: '01', label: 'Ваш образ', sub: 'Фото и сфера' },
+                    { num: '02', label: 'Вайб вечера', sub: 'Темы и интересы' },
+                    { num: '03', label: 'Пропуск', sub: 'Статус на вечер' },
+                  ].map(item => (
+                    <div
+                      key={item.num}
+                      className="p-3 rounded-2xl border"
+                      style={{
+                        backgroundColor: 'var(--bg-elevated)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      <span
+                        className="text-xs font-display font-extrabold block"
+                        style={{ color: 'var(--accent-primary)' }}
+                      >
+                        {item.num}
+                      </span>
+                      <span
+                        className="text-xs font-bold block mt-0.5"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {item.label}
+                      </span>
+                      <span
+                        className="text-[11px] block"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {item.sub}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
-                <button
-                  type="button"
-                  disabled={isLoadingAuth}
-                  onClick={handleGoogleSignIn}
-                  className="w-full py-3 px-5 rounded-2xl text-xs font-bold border flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+            {wizardStep === 1 && (
+              /* STEP 1: IDENTITY & LIVE AVATAR BUILDER */
+              <motion.div
+                key="step-1"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {/* Live Mini Preview Card */}
+                <div
+                  className="p-3.5 rounded-2xl border flex items-center gap-3.5"
                   style={{
                     backgroundColor: 'var(--bg-elevated)',
                     borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
                   }}
                 >
-                  <LogIn className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                  <span>
-                    {isLoadingAuth
-                      ? isEn
-                        ? 'Signing in...'
-                        : 'Вход...'
-                      : isEn
-                      ? 'Continue with Google'
-                      : 'Быстрый вход через Google'}
-                  </span>
-                </button>
-              </div>
-            </motion.div>
-          ) : (
-            /* STEP 2: HIGH-CONTRAST PERSONAL PROFILE & REGISTRATION FORM */
-            <motion.div
-              key="form-stage"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              className="flex flex-col max-h-[92vh]"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              {/* Header */}
-              <div
-                className="p-4 sm:p-5 border-b flex items-center justify-between shrink-0"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-xs"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  >
-                    <UserCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-display font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {isEn ? 'Your Kompa Profile' : 'Регистрация участника Kompa'}
-                    </h2>
-                    <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      {isEn
-                        ? 'Fill in your profile once — stays signed in until you log out'
-                        : 'Заполните анкету один раз — повторный вход только после выхода'}
+                  <img
+                    src={avatarUrl}
+                    alt={name || 'Аватар'}
+                    className="w-14 h-14 rounded-2xl object-cover shrink-0 border"
+                    style={{ borderColor: 'var(--border-subtle)' }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="text-sm font-display font-bold truncate"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {name.trim() || 'Ваше имя'}
+                      </span>
+                      <span
+                        className="text-xs font-bold shrink-0 tabular-nums"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        · {age}
+                      </span>
+                    </div>
+                    <p
+                      className="text-xs truncate font-medium mt-0.5"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {occupation.trim() || 'Выберите вашу сферу ниже'} · {city || 'Москва'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {!isInitialGate && (
-                    <button
-                      type="button"
-                      onClick={handleSignOutClick}
-                      className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-rose-500/10 hover:text-rose-500 transition-colors"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>{isEn ? 'Sign Out' : 'Выйти'}</span>
-                    </button>
-                  )}
-
-                  {!isInitialGate && (
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Form Body */}
-              <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
-                {/* Optional Google Quick Fill Bar */}
+                {/* Quick Google Fill Option */}
                 {!cloudUser && (
-                  <div
-                    className="p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                  <button
+                    type="button"
+                    disabled={isLoadingAuth}
+                    onClick={handleGoogleSignIn}
+                    className="w-full p-3 rounded-2xl border flex items-center justify-between gap-3 cursor-pointer transition-colors"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
                       borderColor: 'var(--border-subtle)',
                     }}
                   >
-                    <div className="space-y-0.5">
-                      <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                        {isEn ? 'Quick sign-in with Google' : 'Заполнить профиль через Google'}
-                      </span>
-                      <span className="text-xs block" style={{ color: 'var(--text-secondary)' }}>
-                        {isEn
-                          ? 'Automatically import your name and avatar'
-                          : 'Имя и фото подтянутся автоматически в один клик'}
-                      </span>
+                    <div className="flex items-center gap-2.5 text-left">
+                      <LogIn className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                      <div>
+                        <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
+                          {isLoadingAuth ? 'Подключение Google...' : 'Заполнить в 1 клик через Google'}
+                        </span>
+                        <span className="text-[11px] block" style={{ color: 'var(--text-secondary)' }}>
+                          Имя и аватар подтянутся автоматически
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      disabled={isLoadingAuth}
-                      onClick={handleGoogleSignIn}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+                    <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
+                  </button>
+                )}
+
+                {/* Avatar Picker */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Выберите фото или загрузите своё
+                    </label>
+                    <label
+                      className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      style={{ color: 'var(--accent-primary)' }}
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Своё фото</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCustomAvatarUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {AVATAR_PRESETS.map((presetUrl, i) => {
+                      const isSelected = avatarUrl === presetUrl;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setAvatarUrl(presetUrl)}
+                          className="relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer"
+                          style={{
+                            borderColor: isSelected ? 'var(--accent-primary)' : 'transparent',
+                          }}
+                        >
+                          <img src={presetUrl} alt="" className="w-full h-full object-cover" />
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                              <Check className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Name Input */}
+                <div>
+                  <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                    Ваше имя и фамилия
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={80}
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Например: Анна Воронова"
+                    className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+
+                {/* Age & Gender Segmented Controls (No native select jump!) */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                      Возраст ({age} лет)
+                    </label>
+                    <div
+                      className="flex items-center justify-between rounded-xl border px-2 py-1.5"
                       style={{
-                        backgroundColor: 'var(--bg-surface)',
+                        backgroundColor: 'var(--bg-elevated)',
                         borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
                       }}
                     >
-                      <LogIn className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                      <span>{isLoadingAuth ? 'Подключение...' : 'Войти через Google'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {statusMessage && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>{statusMessage}</span>
-                  </div>
-                )}
-
-                {errorMessage && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-semibold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveRegistration} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        {isEn ? 'Your Name' : 'Ваше имя и фамилия'}
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={80}
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Например: Анна Смирнова"
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
+                      <button
+                        type="button"
+                        onClick={() => setAge(prev => Math.max(18, prev - 1))}
+                        className="w-8 h-8 rounded-lg font-bold text-base flex items-center justify-center cursor-pointer"
                         style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
+                          backgroundColor: 'var(--bg-surface)',
                           color: 'var(--text-primary)',
                         }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        {isEn ? 'Age (18–99)' : 'Возраст (18–99)'}
-                      </label>
+                      >
+                        −
+                      </button>
                       <input
                         type="number"
                         min={18}
                         max={99}
-                        required
                         value={age}
-                        onChange={e => setAge(Number(e.target.value))}
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none tabular-nums"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
+                        onChange={e => setAge(Math.min(99, Math.max(18, Number(e.target.value) || 18)))}
+                        className="w-12 text-center text-sm font-bold tabular-nums bg-transparent focus:outline-none"
+                        style={{ color: 'var(--text-primary)' }}
                       />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        {isEn ? 'Gender' : 'Пол'}
-                      </label>
-                      <select
-                        value={gender}
-                        onChange={e => setGender(e.target.value as 'female' | 'male')}
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
+                      <button
+                        type="button"
+                        onClick={() => setAge(prev => Math.min(99, prev + 1))}
+                        className="w-8 h-8 rounded-lg font-bold text-base flex items-center justify-center cursor-pointer"
                         style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
+                          backgroundColor: 'var(--bg-surface)',
                           color: 'var(--text-primary)',
                         }}
                       >
-                        <option value="female">{isEn ? 'Female' : 'Женский'}</option>
-                        <option value="male">{isEn ? 'Male' : 'Мужской'}</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        {isEn ? 'City' : 'Город'}
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={60}
-                        value={city}
-                        onChange={e => setCity(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        {isEn ? 'Occupation' : 'Профессия / Сфера'}
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={100}
-                        value={occupation}
-                        onChange={e => setOccupation(e.target.value)}
-                        placeholder={isEn ? 'e.g. Designer' : 'Напр.: Архитектор, IT'}
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
+                        +
+                      </button>
                     </div>
                   </div>
 
                   <div>
                     <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                      {isEn ? 'About You' : 'Коротко о себе и планах на вечер'}
+                      Пол
                     </label>
-                    <textarea
-                      rows={2}
-                      maxLength={600}
-                      value={bio}
-                      onChange={e => setBio(e.target.value)}
-                      placeholder="Люблю камерные ужины, стратегические настолки и живую музыку..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
+                    <div
+                      className="grid grid-cols-2 gap-1 p-1 rounded-xl border"
                       style={{
                         backgroundColor: 'var(--bg-elevated)',
                         borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
                       }}
-                    />
-                  </div>
-
-                  {/* Interests Picker */}
-                  <div>
-                    <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                      {isEn ? 'Your Interests' : 'Выберите интересные темы встреч'}
-                    </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {INTEREST_OPTIONS.map(tag => {
-                        const active = interests.includes(tag);
+                    >
+                      {[
+                        { val: 'female', label: 'Женский' },
+                        { val: 'male', label: 'Мужской' },
+                      ].map(opt => {
+                        const active = gender === opt.val;
                         return (
                           <button
-                            key={tag}
+                            key={opt.val}
                             type="button"
-                            onClick={() => toggleInterest(tag)}
-                            className="px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer"
+                            onClick={() => setGender(opt.val as 'female' | 'male')}
+                            className="py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer"
                             style={{
-                              backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-elevated)',
-                              borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                              backgroundColor: active ? 'var(--accent-primary)' : 'transparent',
                               color: active ? '#ffffff' : 'var(--text-primary)',
                             }}
                           >
-                            {tag}
+                            {opt.label}
                           </button>
                         );
                       })}
                     </div>
                   </div>
+                </div>
 
-                  {/* Open to Invites Badge Toggle */}
-                  <div
-                    className="p-3.5 rounded-2xl border space-y-2"
+                {/* City & Quick Chips */}
+                <div>
+                  <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                    Город
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {CITY_PRESETS.map(c => {
+                      const active = city === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setCity(c)}
+                          className="px-3 py-1 rounded-lg text-xs font-bold border transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                            borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                            color: active ? '#ffffff' : 'var(--text-primary)',
+                          }}
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={60}
+                    value={city}
+                    onChange={e => setCity(e.target.value)}
+                    placeholder="Ваш город"
+                    className="w-full px-3.5 py-2 rounded-xl border text-sm font-medium focus:outline-none"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
                       borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
                     }}
-                  >
-                    <label className="flex items-center justify-between gap-2 cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Compass className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                          {isEn
-                            ? 'Status: "Waiting for event invitations"'
-                            : 'Метка «Жду приглашений на мероприятие»'}
+                  />
+                </div>
+
+                {/* Occupation & 1-Tap Presets */}
+                <div>
+                  <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                    Профессия / Сфера
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {OCCUPATION_PRESETS.map(occ => {
+                      const active = occupation === occ;
+                      return (
+                        <button
+                          key={occ}
+                          type="button"
+                          onClick={() => setOccupation(occ)}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: active ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                            borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                            color: active ? 'var(--accent-text)' : 'var(--text-secondary)',
+                          }}
+                        >
+                          {occ}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={occupation}
+                    onChange={e => setOccupation(e.target.value)}
+                    placeholder="Например: Арт-директор, Архитектор, IT"
+                    className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {wizardStep === 2 && (
+              /* STEP 2: EVENING VIBE CARDS & INTEREST RADAR */
+              <motion.div
+                key="step-2"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="text-xs font-bold block mb-1" style={{ color: 'var(--text-primary)' }}>
+                    Какой формат вечера вам ближе всего?
+                  </label>
+                  <p className="text-xs mb-2.5" style={{ color: 'var(--text-secondary)' }}>
+                    Выберите настроение — мы автоматически настроим ваши интересы и описание
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {VIBE_CARDS.map(vibe => {
+                      const Icon = vibe.icon;
+                      const isSelected = selectedVibeId === vibe.id;
+                      return (
+                        <button
+                          key={vibe.id}
+                          type="button"
+                          onClick={() => handleSelectVibe(vibe)}
+                          className="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3"
+                          style={{
+                            backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                            borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                          }}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                            style={{
+                              backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-surface)',
+                              color: isSelected ? '#ffffff' : 'var(--accent-primary)',
+                            }}
+                          >
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <span
+                              className="text-xs font-bold block"
+                              style={{ color: 'var(--text-primary)' }}
+                            >
+                              {vibe.title}
+                            </span>
+                            <span
+                              className="text-[11px] leading-snug block mt-0.5"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              {vibe.desc}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Interactive Interest Tags */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Интересные темы встреч ({interests.length})
+                    </label>
+                    <span
+                      className="text-xs font-bold"
+                      style={{ color: 'var(--accent-primary)' }}
+                    >
+                      Подходит {matchedEventsCount} встреч сегодня
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {INTEREST_OPTIONS.map(tag => {
+                      const active = interests.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleInterest(tag)}
+                          className="px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                            borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                            color: active ? '#ffffff' : 'var(--text-primary)',
+                          }}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Bio Input with Vibe Presets */}
+                <div>
+                  <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                    Коротко о себе и планах на вечер
+                  </label>
+                  <textarea
+                    rows={3}
+                    maxLength={600}
+                    value={bio}
+                    onChange={e => setBio(e.target.value)}
+                    placeholder="Люблю камерные ужины, стратегические настолки и живую музыку..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {wizardStep === 3 && (
+              /* STEP 3: LIVE MEMBER PASS & OPEN-TO-INVITES RADAR */
+              <motion.div
+                key="step-3"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {/* Live Member Pass Card */}
+                <div
+                  className="p-4 rounded-2xl border space-y-3"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-subtle)',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-md"
+                      style={{
+                        backgroundColor: 'var(--accent-soft)',
+                        color: 'var(--accent-text)',
+                      }}
+                    >
+                      ПРОПУСК УЧАСТНИКА KOMPA
+                    </span>
+                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4" />
+                      Профиль готов
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3.5">
+                    <img
+                      src={avatarUrl}
+                      alt={name}
+                      className="w-16 h-16 rounded-2xl object-cover shrink-0 border"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3
+                        className="text-base font-display font-extrabold truncate"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {name.trim() || 'Участник Kompa'}, {age}
+                      </h3>
+                      <p
+                        className="text-xs font-medium truncate"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {occupation.trim() || 'Участник клуба'} · {city || 'Москва'}
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {interests.slice(0, 3).map(tag => (
+                          <span
+                            key={tag}
+                            className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
+                            style={{
+                              backgroundColor: 'var(--bg-surface)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {bio && (
+                    <p
+                      className="text-xs leading-relaxed pt-2 border-t"
+                      style={{
+                        color: 'var(--text-secondary)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      «{bio}»
+                    </p>
+                  )}
+                </div>
+
+                {/* Open to Invites Toggle & Quick Templates */}
+                <div
+                  className="p-4 rounded-2xl border space-y-3"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-subtle)',
+                  }}
+                >
+                  <label className="flex items-center justify-between gap-3 cursor-pointer">
+                    <div className="flex items-center gap-2.5">
+                      <Compass className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
+                          Метка «Жду приглашений на мероприятие»
+                        </span>
+                        <span className="text-[11px] block" style={{ color: 'var(--text-secondary)' }}>
+                          Организаторы смогут сами приглашать вас в проверенные компании
                         </span>
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={openToInvites}
-                        onChange={e => setOpenToInvites(e.target.checked)}
-                        className="rounded accent-emerald-600 w-4 h-4"
-                      />
-                    </label>
-                    {openToInvites && (
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={openToInvites}
+                      onChange={e => setOpenToInvites(e.target.checked)}
+                      className="rounded accent-emerald-600 w-5 h-5 shrink-0"
+                    />
+                  </label>
+
+                  {openToInvites && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex flex-wrap gap-1.5">
+                        {INVITE_NOTE_PRESETS.map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setOpenToInvitesNote(preset)}
+                            className="text-left text-[11px] font-medium px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer"
+                            style={{
+                              backgroundColor:
+                                openToInvitesNote === preset ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                              borderColor:
+                                openToInvitesNote === preset ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
                       <input
                         type="text"
                         maxLength={300}
                         value={openToInvitesNote}
                         onChange={e => setOpenToInvitesNote(e.target.value)}
-                        placeholder={
-                          isEn
-                            ? 'What kind of events are you open to?'
-                            : 'Пожелание для организаторов (напр.: Свободна в пятницу на настолки)'
-                        }
-                        className="w-full px-3 py-2 rounded-xl border text-xs font-medium focus:outline-none"
+                        placeholder="Ваше пожелание на вечер..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-medium focus:outline-none"
                         style={{
                           backgroundColor: 'var(--bg-surface)',
                           borderColor: 'var(--border-subtle)',
                           color: 'var(--text-primary)',
                         }}
                       />
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-                  <div className="flex items-center justify-between gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setStep('welcome')}
-                      className="px-4 py-2.5 rounded-xl border text-xs font-bold cursor-pointer"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      {isEn ? 'Back' : 'Назад'}
-                    </button>
+        {/* FIXED BOTTOM FOOTER — Always visible, never clipped or scrolled off */}
+        <div
+          className="px-4 py-3.5 sm:px-6 sm:py-4 border-t shrink-0"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          {wizardStep === 0 ? (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setWizardStep(1)}
+                className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              >
+                <span>{isEn ? 'Create My Pass (30 sec)' : 'Собрать свой профиль за 30 секунд'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                disabled={isLoadingAuth}
+                onClick={handleGoogleSignIn}
+                className="w-full py-2.5 px-5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <LogIn className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                <span>
+                  {isLoadingAuth ? 'Вход...' : 'Быстрый вход через Google'}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setWizardStep(prev => (prev - 1) as 0 | 1 | 2)}
+                className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{isEn ? 'Back' : 'Назад'}</span>
+              </button>
 
-                    <button
-                      type="submit"
-                      disabled={isSaving}
-                      className="px-6 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-2 cursor-pointer shadow-md"
-                      style={{ backgroundColor: 'var(--accent-primary)' }}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>
-                        {isSaving
-                          ? isEn
-                            ? 'Saving...'
-                            : 'Сохранение...'
-                          : isEn
-                          ? 'Save & Continue to Kompa'
-                          : 'Сохранить и войти в приложение'}
-                      </span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
+              {wizardStep < 3 ? (
+                <button
+                  type="button"
+                  onClick={() => setWizardStep(prev => (prev + 1) as 2 | 3)}
+                  className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
+                >
+                  <span>
+                    {wizardStep === 1
+                      ? 'Далее: Выбрать вайб вечера'
+                      : 'Далее: Проверить пропуск'}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={handleFinishRegistration}
+                  className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
+                >
+                  <Users className="w-4 h-4" />
+                  <span>
+                    {isSaving ? 'Сохранение...' : 'Открыть радар встреч Kompa'}
+                  </span>
+                </button>
+              )}
+            </div>
           )}
-        </AnimatePresence>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 };
