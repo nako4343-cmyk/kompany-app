@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Users,
   MapPin,
-  Calendar,
   Compass,
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
@@ -83,7 +82,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const isEn = lang === 'en';
 
-  // If opened as the initial entry gate, start on the animated welcome screen before the form
   const [step, setStep] = useState<'welcome' | 'form'>(isInitialGate ? 'welcome' : 'form');
   const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
 
@@ -265,15 +263,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClick={() => {
         if (!isInitialGate) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75"
     >
       <motion.div
-        initial={{ opacity: 0, y: 28, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.96 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 12 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[94vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden"
+        className="w-full max-w-xl max-h-[94vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
@@ -282,58 +280,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       >
         <AnimatePresence mode="wait">
           {step === 'welcome' ? (
-            /* STEP 1: ANIMATED WELCOME & REGISTRATION GATE */
+            /* STEP 1: HIGH-CONTRAST ANIMATED WELCOME & REGISTRATION GATE */
             <motion.div
               key="welcome-stage"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.28 }}
-              className="relative flex flex-col justify-between p-6 sm:p-8 overflow-y-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col justify-between p-5 sm:p-7 overflow-y-auto space-y-5"
               style={{
-                background:
-                  'linear-gradient(145deg, var(--hero-grad-from) 0%, var(--hero-grad-via) 55%, var(--hero-grad-to) 100%)',
-                color: '#FFFFFF',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
               }}
             >
-              {/* Animated Ambient Background Orbs */}
-              <motion.div
-                animate={{
-                  scale: [1, 1.18, 1],
-                  x: [0, 24, 0],
-                  y: [0, -18, 0],
-                }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                className="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-25 blur-3xl"
-                style={{ backgroundColor: 'var(--accent-primary)' }}
-              />
-              <motion.div
-                animate={{
-                  scale: [1, 1.15, 1],
-                  x: [0, -20, 0],
-                  y: [0, 20, 0],
-                }}
-                transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                className="pointer-events-none absolute -bottom-24 -left-16 w-64 h-64 rounded-full bg-amber-500/20 blur-3xl"
-              />
-
               {/* Top Brand Row */}
-              <div className="relative z-10 flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <motion.div
-                    initial={{ rotate: -12, scale: 0.8 }}
-                    animate={{ rotate: 0, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-xl shadow-lg"
+                    initial={{ rotate: -10 }}
+                    animate={{ rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-xl shadow-md shrink-0"
                     style={{ backgroundColor: 'var(--accent-primary)' }}
                   >
                     K
                   </motion.div>
                   <div>
-                    <span className="font-display font-extrabold text-lg tracking-tight block leading-none">
-                      Kompa
-                    </span>
-                    <span className="text-xs text-white/70">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="font-display font-extrabold text-lg tracking-tight leading-none"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        Kompa
+                      </span>
+                      <span
+                        className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                        style={{
+                          backgroundColor: 'var(--accent-soft)',
+                          color: 'var(--accent-text)',
+                        }}
+                      >
+                        {isEn ? 'Moscow' : 'Москва'}
+                      </span>
+                    </div>
+                    <span
+                      className="text-xs block mt-0.5 font-medium"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
                       {isEn ? 'Find your company for tonight' : 'Твоя компания на сегодня вечером'}
                     </span>
                   </div>
@@ -343,7 +336,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      color: 'var(--text-secondary)',
+                    }}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -351,60 +348,62 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               {/* Center Headline & Animated Live Meetup Showcase */}
-              <div className="relative z-10 my-6 sm:my-8 space-y-6">
-                <div className="space-y-2.5 max-w-lg">
+              <div className="space-y-4">
+                <div className="space-y-2">
                   <motion.h1
-                    initial={{ opacity: 0, y: 14 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.08, duration: 0.35 }}
-                    className="text-2xl sm:text-3xl font-display font-extrabold leading-tight tracking-tight"
+                    transition={{ duration: 0.25 }}
+                    className="text-xl sm:text-2xl font-display font-extrabold leading-snug tracking-tight"
+                    style={{ color: 'var(--text-primary)' }}
                   >
                     {isEn
                       ? 'Meet people through real plans — board games, dinners, concerts & parties'
                       : 'Найди с кем пойти сегодня вечером — без дейтинга и неловкости'}
                   </motion.h1>
                   <motion.p
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.16, duration: 0.35 }}
-                    className="text-xs sm:text-sm text-white/80 leading-relaxed"
+                    transition={{ delay: 0.06, duration: 0.25 }}
+                    className="text-xs sm:text-sm leading-relaxed font-normal"
+                    style={{ color: 'var(--text-secondary)' }}
                   >
                     {isEn
                       ? 'Create your profile once. Exact venue addresses and group chats unlock only after the organizer approves your request.'
-                      : 'Заполните анкету один раз при входе: выбирайте компании по интересам или ставьте метку «Жду приглашений», чтобы организаторы сами звали вас на встречи.'}
+                      : 'Заполните анкету один раз при входе: выбирайте компании по интересам или включите метку «Жду приглашений», чтобы организаторы сами звали вас на встречи.'}
                   </motion.p>
                 </div>
 
                 {/* Animated Live Event Card Carousel */}
-                <div className="relative h-40 sm:h-44">
+                <div className="relative h-44 sm:h-48 rounded-2xl overflow-hidden bg-neutral-900 shadow-lg border" style={{ borderColor: 'var(--border-subtle)' }}>
                   <AnimatePresence mode="wait">
                     {SHOWCASE_CARDS.map((card, idx) =>
                       idx === activeShowcaseIdx ? (
                         <motion.div
                           key={card.title}
-                          initial={{ opacity: 0, y: 18, scale: 0.96 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -14, scale: 0.96 }}
-                          transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                          className="absolute inset-0 rounded-2xl overflow-hidden border border-white/15 shadow-xl flex items-end p-4"
+                          initial={{ opacity: 0, x: 24 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -24 }}
+                          transition={{ duration: 0.32, ease: 'easeOut' }}
+                          className="absolute inset-0 flex items-end p-4"
                         >
                           <img
                             src={card.image}
                             alt={card.title}
                             className="absolute inset-0 w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/10" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15" />
                           <div className="relative z-10 w-full flex items-end justify-between gap-3">
-                            <div className="space-y-1">
-                              <span className="text-[11px] font-semibold text-amber-300 block">
+                            <div className="space-y-1 min-w-0">
+                              <span className="inline-block text-[11px] font-bold text-amber-300 bg-black/50 px-2 py-0.5 rounded-md">
                                 {card.category} · {card.spotText}
                               </span>
-                              <h3 className="text-sm sm:text-base font-display font-bold text-white">
+                              <h3 className="text-sm sm:text-base font-display font-bold text-white truncate">
                                 {card.title}
                               </h3>
-                              <p className="text-xs text-white/75 flex items-center gap-1.5">
+                              <p className="text-xs text-white/90 flex items-center gap-1.5 font-medium">
                                 <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                <span>{card.area}</span>
+                                <span className="truncate">{card.area}</span>
                               </p>
                             </div>
                             <div className="flex -space-x-2 shrink-0">
@@ -431,27 +430,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </AnimatePresence>
                 </div>
 
-                {/* Progress indicators for showcase */}
-                <div className="flex items-center justify-between text-xs text-white/70">
-                  <div className="flex items-center gap-4">
+                {/* Progress indicators & Benefits Row */}
+                <div
+                  className="p-3 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <div className="flex flex-wrap items-center gap-3">
                     <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      {isEn ? 'Private addresses until approved' : 'Скрытие точного адреса до одобрения'}
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{isEn ? 'Private addresses until approved' : 'Точный адрес скрыт до одобрения'}</span>
                     </span>
-                    <span className="hidden sm:flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-amber-300" />
-                      {isEn ? 'Verified hosts & guests' : 'Проверенные участники'}
+                    <span className="hidden sm:flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
+                      <Users className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                      <span>{isEn ? 'Verified participants' : 'Проверенные участники'}</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     {SHOWCASE_CARDS.map((_, i) => (
                       <button
                         key={i}
                         type="button"
                         onClick={() => setActiveShowcaseIdx(i)}
-                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                          i === activeShowcaseIdx ? 'w-6 bg-white' : 'w-1.5 bg-white/35'
-                        }`}
+                        className="h-2 rounded-full transition-all cursor-pointer"
+                        style={{
+                          width: i === activeShowcaseIdx ? '22px' : '8px',
+                          backgroundColor:
+                            i === activeShowcaseIdx ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                        }}
                       />
                     ))}
                   </div>
@@ -459,13 +468,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               {/* Bottom Animated Action Buttons */}
-              <div className="relative z-10 space-y-2.5">
+              <div className="space-y-2.5 pt-1">
                 <motion.button
                   type="button"
-                  whileHover={{ scale: 1.015, y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.99 }}
                   onClick={() => setStep('form')}
-                  className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-xl flex items-center justify-center gap-2.5 cursor-pointer"
+                  className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2.5 cursor-pointer"
                   style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
                   <span>{isEn ? 'Create Profile & Enter Kompa' : 'Зарегистрироваться и войти'}</span>
@@ -481,9 +490,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="button"
                   disabled={isLoadingAuth}
                   onClick={handleGoogleSignIn}
-                  className="w-full py-3 px-5 rounded-2xl text-xs font-bold bg-white/12 hover:bg-white/20 text-white border border-white/15 flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                  className="w-full py-3 px-5 rounded-2xl text-xs font-bold border flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   <span>
                     {isLoadingAuth
                       ? isEn
@@ -497,19 +511,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </motion.div>
           ) : (
-            /* STEP 2: PERSONAL PROFILE & REGISTRATION FORM */
+            /* STEP 2: HIGH-CONTRAST PERSONAL PROFILE & REGISTRATION FORM */
             <motion.div
               key="form-stage"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -18 }}
-              transition={{ duration: 0.24 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
               className="flex flex-col max-h-[92vh]"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+              }}
             >
               {/* Header */}
               <div
                 className="p-4 sm:p-5 border-b flex items-center justify-between shrink-0"
-                style={{ borderColor: 'var(--border-subtle)' }}
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderColor: 'var(--border-subtle)',
+                }}
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -522,10 +543,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <h2 className="text-base font-display font-bold" style={{ color: 'var(--text-primary)' }}>
                       {isEn ? 'Your Kompa Profile' : 'Регистрация участника Kompa'}
                     </h2>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
                       {isEn
-                        ? 'Tell hosts and guests a bit about yourself and your interests'
-                        : 'Заполните анкету один раз — повторный вход потребуется только после выхода'}
+                        ? 'Fill in your profile once — stays signed in until you log out'
+                        : 'Заполните анкету один раз — повторный вход только после выхода'}
                     </p>
                   </div>
                 </div>
@@ -539,6 +560,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       style={{
                         backgroundColor: 'var(--bg-elevated)',
                         borderColor: 'var(--border-subtle)',
+                        color: 'var(--text-primary)',
                       }}
                     >
                       <LogOut className="w-3.5 h-3.5" />
@@ -577,7 +599,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
                         {isEn ? 'Quick sign-in with Google' : 'Заполнить профиль через Google'}
                       </span>
-                      <span className="text-[11px] block" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="text-xs block" style={{ color: 'var(--text-secondary)' }}>
                         {isEn
                           ? 'Automatically import your name and avatar'
                           : 'Имя и фото подтянутся автоматически в один клик'}
@@ -601,23 +623,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 )}
 
                 {statusMessage && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>{statusMessage}</span>
                   </div>
                 )}
 
                 {errorMessage && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{errorMessage}</span>
                   </div>
                 )}
 
-                <form onSubmit={handleSaveRegistration} className="space-y-3.5">
+                <form onSubmit={handleSaveRegistration} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2">
-                      <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                         {isEn ? 'Your Name' : 'Ваше имя и фамилия'}
                       </label>
                       <input
@@ -627,7 +649,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         value={name}
                         onChange={e => setName(e.target.value)}
                         placeholder="Например: Анна Смирнова"
-                        className="w-full px-3 py-2.5 rounded-xl border text-xs focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
                           borderColor: 'var(--border-subtle)',
@@ -637,7 +659,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                         {isEn ? 'Age (18–99)' : 'Возраст (18–99)'}
                       </label>
                       <input
@@ -647,7 +669,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         required
                         value={age}
                         onChange={e => setAge(Number(e.target.value))}
-                        className="w-full px-3 py-2.5 rounded-xl border text-xs focus:outline-none tabular-nums"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none tabular-nums"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
                           borderColor: 'var(--border-subtle)',
@@ -659,13 +681,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                         {isEn ? 'Gender' : 'Пол'}
                       </label>
                       <select
                         value={gender}
                         onChange={e => setGender(e.target.value as 'female' | 'male')}
-                        className="w-full px-3 py-2.5 rounded-xl border text-xs focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
                           borderColor: 'var(--border-subtle)',
@@ -678,7 +700,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                         {isEn ? 'City' : 'Город'}
                       </label>
                       <input
@@ -686,7 +708,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         maxLength={60}
                         value={city}
                         onChange={e => setCity(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border text-xs focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
                           borderColor: 'var(--border-subtle)',
@@ -696,7 +718,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                         {isEn ? 'Occupation' : 'Профессия / Сфера'}
                       </label>
                       <input
@@ -705,7 +727,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         value={occupation}
                         onChange={e => setOccupation(e.target.value)}
                         placeholder={isEn ? 'e.g. Designer' : 'Напр.: Архитектор, IT'}
-                        className="w-full px-3 py-2.5 rounded-xl border text-xs focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
                           borderColor: 'var(--border-subtle)',
@@ -716,7 +738,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                    <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                       {isEn ? 'About You' : 'Коротко о себе и планах на вечер'}
                     </label>
                     <textarea
@@ -725,7 +747,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={bio}
                       onChange={e => setBio(e.target.value)}
                       placeholder="Люблю камерные ужины, стратегические настолки и живую музыку..."
-                      className="w-full px-3 py-2 rounded-xl border text-xs focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none"
                       style={{
                         backgroundColor: 'var(--bg-elevated)',
                         borderColor: 'var(--border-subtle)',
@@ -736,7 +758,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   {/* Interests Picker */}
                   <div>
-                    <label className="text-[11px] font-bold block mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+                    <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                       {isEn ? 'Your Interests' : 'Выберите интересные темы встреч'}
                     </label>
                     <div className="flex flex-wrap gap-1.5">
@@ -747,7 +769,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             key={tag}
                             type="button"
                             onClick={() => toggleInterest(tag)}
-                            className="px-2.5 py-1 rounded-xl text-xs font-semibold border transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer"
                             style={{
                               backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-elevated)',
                               borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
@@ -763,7 +785,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   {/* Open to Invites Badge Toggle */}
                   <div
-                    className="p-3 rounded-2xl border space-y-2"
+                    className="p-3.5 rounded-2xl border space-y-2"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
                       borderColor: 'var(--border-subtle)',
@@ -771,7 +793,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   >
                     <label className="flex items-center justify-between gap-2 cursor-pointer">
                       <div className="flex items-center gap-2">
-                        <Compass className="w-4 h-4 text-emerald-500" />
+                        <Compass className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                           {isEn
                             ? 'Status: "Waiting for event invitations"'
@@ -796,7 +818,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             ? 'What kind of events are you open to?'
                             : 'Пожелание для организаторов (напр.: Свободна в пятницу на настолки)'
                         }
-                        className="w-full px-3 py-1.5 rounded-xl border text-xs focus:outline-none"
+                        className="w-full px-3 py-2 rounded-xl border text-xs font-medium focus:outline-none"
                         style={{
                           backgroundColor: 'var(--bg-surface)',
                           borderColor: 'var(--border-subtle)',
@@ -814,7 +836,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       style={{
                         backgroundColor: 'var(--bg-elevated)',
                         borderColor: 'var(--border-subtle)',
-                        color: 'var(--text-secondary)',
+                        color: 'var(--text-primary)',
                       }}
                     >
                       {isEn ? 'Back' : 'Назад'}
