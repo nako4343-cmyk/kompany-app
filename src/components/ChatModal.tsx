@@ -43,6 +43,36 @@ const QUICK_REPLIES_EN: string[] = [
   'Should I bring anything?',
 ];
 
+const stripLeadingEmoji = (line: string): string =>
+  line.replace(/^[\s📍🏠🔑📞📌✨🗺💬•]+/u, '').trim();
+
+const cleanChatText = (raw: string): string =>
+  (raw || '')
+    .split('\n')
+    .map(stripLeadingEmoji)
+    .filter(Boolean)
+    .join('\n');
+
+const parseStructuredLines = (
+  raw: string
+): Array<{ label?: string; value: string }> => {
+  const lines = (raw || '')
+    .split('\n')
+    .map(stripLeadingEmoji)
+    .filter(Boolean);
+
+  return lines.map(line => {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx > 1 && colonIdx < 32) {
+      return {
+        label: line.slice(0, colonIdx).trim(),
+        value: line.slice(colonIdx + 1).trim(),
+      };
+    }
+    return { value: line };
+  });
+};
+
 export const ChatModal: React.FC<ChatModalProps> = ({
   eventId,
   currentUser,
@@ -401,10 +431,10 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                   )}
                 </div>
                 <p
-                  className="text-xs line-clamp-2 whitespace-pre-line mt-0.5 leading-snug"
+                  className="text-xs line-clamp-1 mt-0.5 leading-snug font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {currentPinnedMessage.text}
+                  {cleanChatText(currentPinnedMessage.text).replace(/\n/g, ' · ')}
                 </p>
               </div>
             </div>
@@ -754,11 +784,11 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                     }}
                   >
                     <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold block" style={{ color: 'var(--accent-text)' }}>
-                        📌 {pm.pinnedLabel || 'Важное'} · {pm.senderName}
+                      <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: 'var(--accent-text)' }}>
+                        {pm.pinnedLabel || 'Важное'} · {pm.senderName}
                       </span>
-                      <p className="text-xs whitespace-pre-line line-clamp-2 mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                        {pm.text}
+                      <p className="text-xs line-clamp-2 mt-0.5 leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                        {cleanChatText(pm.text).replace(/\n/g, ' · ')}
                       </p>
                     </div>
                     <button
@@ -844,18 +874,22 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                     ref={el => {
                       messageRefs.current[msg.id] = el;
                     }}
-                    className="p-2.5 my-2 rounded-xl border text-center text-xs relative group"
+                    className="px-3.5 py-2 my-2 rounded-xl border text-center text-xs relative"
                     style={{
-                      backgroundColor: 'var(--accent-soft)',
+                      backgroundColor: 'var(--bg-elevated)',
                       borderColor: 'var(--border-subtle)',
-                      color: 'var(--accent-text)',
+                      color: 'var(--text-secondary)',
                     }}
                   >
-                    <p className="leading-relaxed">{msg.text}</p>
-                    <span className="text-[10px] opacity-75 block mt-0.5 tabular-nums">{msg.timestamp}</span>
+                    <p className="leading-relaxed font-medium">{cleanChatText(msg.text)}</p>
                   </div>
                 );
               }
+
+              const structuredRows = parseStructuredLines(msg.text);
+              const isStructuredCard =
+                structuredRows.length >= 2 &&
+                structuredRows.filter(r => Boolean(r.label)).length >= 2;
 
               return (
                 <motion.div
@@ -866,46 +900,34 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.16 }}
-                  className={`flex items-end gap-2 group ${isMine ? 'justify-end' : 'justify-start'}`}
+                  className={`flex items-end gap-2.5 group ${isMine ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isMine && (
                     <img
                       src={msg.senderAvatar}
                       alt={msg.senderName}
                       referrerPolicy="no-referrer"
-                      className="w-7 h-7 rounded-full object-cover shrink-0 mb-1"
+                      className="w-7 h-7 rounded-full object-cover shrink-0 mb-0.5"
                     />
                   )}
 
-                  {/* Left Pin button for own messages */}
-                  {isMine && (
-                    <button
-                      type="button"
-                      onClick={() => handleTogglePin(msg.id)}
-                      className={`p-1.5 rounded-lg border text-[10px] transition-opacity cursor-pointer mb-1 ${
-                        msg.isPinned ? 'opacity-100 text-amber-500 border-amber-500/30 bg-amber-500/10' : 'opacity-60 sm:opacity-0 group-hover:opacity-100'
-                      }`}
-                      style={
-                        msg.isPinned
-                          ? undefined
-                          : {
-                              backgroundColor: 'var(--bg-surface)',
-                              borderColor: 'var(--border-subtle)',
-                              color: 'var(--text-secondary)',
-                            }
-                      }
-                      title={msg.isPinned ? (isEn ? 'Unpin message' : 'Открепить сообщение') : (isEn ? 'Pin important message' : 'Закрепить важное сообщение')}
-                    >
-                      {msg.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
-
                   <div
-                    className={`max-w-[78%] rounded-2xl p-3 text-xs shadow-xs relative ${
-                      isMine ? 'text-white rounded-br-xs' : 'border rounded-bl-xs'
-                    } ${msg.isPinned ? 'ring-2 ring-amber-400/70' : ''}`}
+                    className={`max-w-[84%] sm:max-w-[76%] rounded-2xl px-3.5 py-2.5 shadow-xs relative transition-all ${
+                      isStructuredCard || msg.isPinned
+                        ? 'border border-l-4'
+                        : isMine
+                        ? 'text-white rounded-br-xs'
+                        : 'border rounded-bl-xs'
+                    }`}
                     style={
-                      isMine
+                      isStructuredCard || msg.isPinned
+                        ? {
+                            backgroundColor: 'var(--bg-surface)',
+                            borderColor: 'var(--border-subtle)',
+                            borderLeftColor: 'var(--accent-primary)',
+                            color: 'var(--text-primary)',
+                          }
+                        : isMine
                         ? { backgroundColor: 'var(--accent-primary)' }
                         : {
                             backgroundColor: 'var(--bg-surface)',
@@ -914,51 +936,113 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                           }
                     }
                   >
-                    {/* Pinned badge inside message bubble */}
-                    {msg.isPinned && (
+                    {/* Header row inside message bubble (Pinned status or Sender Name) */}
+                    {(msg.isPinned || !isMine || isStructuredCard) && (
                       <div
-                        className={`flex items-center gap-1 text-[10px] font-bold mb-1 pb-1 border-b ${
-                          isMine ? 'text-amber-200 border-white/20' : 'text-amber-500 border-amber-500/20'
+                        className={`flex items-center justify-between gap-3 mb-1.5 ${
+                          msg.isPinned || isStructuredCard ? 'pb-1.5 border-b' : ''
                         }`}
+                        style={{
+                          borderColor: 'var(--border-subtle)',
+                        }}
                       >
-                        <Pin className="w-3 h-3 shrink-0 rotate-12" />
-                        <span>{msg.pinnedLabel || (isEn ? 'Pinned' : 'Закреплено')}</span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {msg.isPinned && (
+                            <Pin
+                              className="w-3 h-3 shrink-0"
+                              style={{ color: 'var(--accent-primary)' }}
+                            />
+                          )}
+                          <span
+                            className="text-[11px] font-semibold tracking-tight truncate"
+                            style={{
+                              color:
+                                isMine && !msg.isPinned && !isStructuredCard
+                                  ? 'rgba(255,255,255,0.9)'
+                                  : 'var(--accent-text)',
+                            }}
+                          >
+                            {msg.isPinned
+                              ? msg.pinnedLabel || (isEn ? 'Pinned Details' : 'Закрепленная информация')
+                              : msg.senderName}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePin(msg.id)}
+                          className="p-1 -mr-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+                          style={{ color: 'var(--text-muted)' }}
+                          title={
+                            msg.isPinned
+                              ? isEn
+                                ? 'Unpin message'
+                                : 'Открепить сообщение'
+                              : isEn
+                              ? 'Pin message'
+                              : 'Закрепить сообщение'
+                          }
+                        >
+                          {msg.isPinned ? (
+                            <PinOff className="w-3 h-3 text-rose-500" />
+                          ) : (
+                            <Pin className="w-3 h-3" />
+                          )}
+                        </button>
                       </div>
                     )}
 
-                    {!isMine && (
-                      <span className="text-[10px] font-bold block mb-0.5" style={{ color: 'var(--accent-text)' }}>
-                        {msg.senderName}
-                      </span>
+                    {/* Message Body: Structured Card vs Clean Paragraph */}
+                    {isStructuredCard ? (
+                      <div className="space-y-1.5 text-[13px] leading-[1.4]">
+                        {structuredRows.map((row, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            {row.label && (
+                              <span
+                                className="text-[10px] font-semibold uppercase tracking-wider"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                {row.label}
+                              </span>
+                            )}
+                            <span
+                              className="font-medium"
+                              style={{ color: 'var(--text-primary)' }}
+                            >
+                              {row.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[13.5px] leading-[1.45] tracking-[-0.01em] whitespace-pre-wrap">
+                        {cleanChatText(msg.text)}
+                      </p>
                     )}
-                    <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                    <span className={`text-[9px] block text-right mt-1 tabular-nums ${isMine ? 'text-white/75' : 'opacity-60'}`}>
-                      {msg.timestamp}
-                    </span>
-                  </div>
 
-                  {/* Right Pin button for other participants' messages */}
-                  {!isMine && (
-                    <button
-                      type="button"
-                      onClick={() => handleTogglePin(msg.id)}
-                      className={`p-1.5 rounded-lg border text-[10px] transition-opacity cursor-pointer mb-1 ${
-                        msg.isPinned ? 'opacity-100 text-amber-500 border-amber-500/30 bg-amber-500/10' : 'opacity-60 sm:opacity-0 group-hover:opacity-100'
-                      }`}
-                      style={
-                        msg.isPinned
-                          ? undefined
-                          : {
-                              backgroundColor: 'var(--bg-surface)',
-                              borderColor: 'var(--border-subtle)',
-                              color: 'var(--text-secondary)',
-                            }
-                      }
-                      title={msg.isPinned ? (isEn ? 'Unpin message' : 'Открепить сообщение') : (isEn ? 'Pin important message' : 'Закрепить важное сообщение')}
-                    >
-                      {msg.isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
+                    {/* Bottom meta row: timestamp + inline pin button for regular outgoing messages */}
+                    <div className="flex items-center justify-end gap-2 mt-1">
+                      {isMine && !msg.isPinned && !isStructuredCard && (
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePin(msg.id)}
+                          className="opacity-55 hover:opacity-100 transition-opacity cursor-pointer text-white/80"
+                          title={isEn ? 'Pin message' : 'Закрепить сообщение'}
+                        >
+                          <Pin className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                      <span
+                        className={`text-[10px] font-medium tabular-nums ${
+                          isMine && !msg.isPinned && !isStructuredCard
+                            ? 'text-white/75'
+                            : 'opacity-55'
+                        }`}
+                      >
+                        {msg.timestamp}
+                      </span>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })

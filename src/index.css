@@ -2,8 +2,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Manrope', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'Unbounded', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-display: 'Onest', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
 }
 
 :root,
@@ -70,6 +70,10 @@ body,
 
 body {
   font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   color: var(--text-primary);
   background-color: var(--bg-canvas);
@@ -78,6 +82,7 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  letter-spacing: -0.022em;
 }
 
 /* Custom scrollbar for mobile drawers & horizontal feeds */

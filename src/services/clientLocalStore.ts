@@ -17,7 +17,7 @@ import {
   syncChatMessageToCloud,
 } from '../lib/firebase.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v11';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v12';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -570,10 +570,10 @@ export class ClientLocalStore {
       if (!alreadyHasPinned && secret) {
         const org = this.users.get(ev.organizerId);
         const pinText = [
-          `📍 Место сбора: ${secret.exactVenue || ev.approximateArea}`,
-          secret.exactAddress ? `🏠 Точный адрес: ${secret.exactAddress}` : '',
-          secret.privateInstructions ? `🔑 Как найти / ориентир: ${secret.privateInstructions}` : '',
-          secret.organizerPhone ? `📞 Контакт организатора: ${secret.organizerPhone}` : '',
+          `Место сбора: ${secret.exactVenue || ev.approximateArea}`,
+          secret.exactAddress ? `Точный адрес: ${secret.exactAddress}` : '',
+          secret.privateInstructions ? `Ориентир и вход: ${secret.privateInstructions}` : '',
+          secret.organizerPhone ? `Связь с организатором: ${secret.organizerPhone}` : '',
         ]
           .filter(Boolean)
           .join('\n');
@@ -1068,7 +1068,7 @@ export class ClientLocalStore {
       senderId: 'system',
       senderName: 'Kompa',
       senderAvatar: '',
-      text: `✨ Создан групповой чат «${ev.groupChatTitle}» для всех подтвержденных участников (${uniqueNames.length}): ${uniqueNames.join(', ')}.`,
+      text: `Создан групповой чат «${ev.groupChatTitle}» для подтвержденных участников (${uniqueNames.length}): ${uniqueNames.join(', ')}.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isSystemMessage: true,
     };
@@ -1076,11 +1076,11 @@ export class ClientLocalStore {
 
     if (options?.pinAddress !== false) {
       const addressLine = [
-        `📍 Место сбора: ${secret?.exactVenue || ev.approximateArea}`,
-        secret?.exactAddress ? `🏠 Точный адрес: ${secret.exactAddress}` : '',
-        secret?.privateInstructions ? `🔑 Инструкция для участников: ${secret.privateInstructions}` : '',
-        secret?.organizerPhone ? `📞 Связь с организатором: ${secret.organizerPhone}` : '',
-        options?.welcomeNote ? `💬 Комментарий: ${options.welcomeNote.trim()}` : '',
+        `Место сбора: ${secret?.exactVenue || ev.approximateArea}`,
+        secret?.exactAddress ? `Точный адрес: ${secret.exactAddress}` : '',
+        secret?.privateInstructions ? `Ориентир и вход: ${secret.privateInstructions}` : '',
+        secret?.organizerPhone ? `Связь с организатором: ${secret.organizerPhone}` : '',
+        options?.welcomeNote ? `Комментарий: ${options.welcomeNote.trim()}` : '',
       ]
         .filter(Boolean)
         .join('\n');
@@ -1139,10 +1139,10 @@ export class ClientLocalStore {
     const text = customNote?.trim()
       ? customNote.trim()
       : [
-          `📍 Место встречи: ${secret?.exactVenue || ev.approximateArea}`,
-          secret?.exactAddress ? `🏠 Точный адрес: ${secret.exactAddress}` : `🗺 Локация: ${ev.city}, ${ev.approximateArea}`,
-          secret?.privateInstructions ? `🔑 Ориентир / бронь: ${secret.privateInstructions}` : '',
-          secret?.organizerPhone ? `📞 Телефон организатора: ${secret.organizerPhone}` : '',
+          `Место сбора: ${secret?.exactVenue || ev.approximateArea}`,
+          secret?.exactAddress ? `Точный адрес: ${secret.exactAddress}` : `Локация: ${ev.city}, ${ev.approximateArea}`,
+          secret?.privateInstructions ? `Ориентир и вход: ${secret.privateInstructions}` : '',
+          secret?.organizerPhone ? `Связь с организатором: ${secret.organizerPhone}` : '',
         ]
           .filter(Boolean)
           .join('\n');
