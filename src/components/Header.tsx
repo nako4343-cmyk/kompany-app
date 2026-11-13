@@ -134,33 +134,33 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className="sticky top-0 z-30 border-b backdrop-blur-xl transition-colors duration-200"
+      className="sticky top-0 z-30 w-full max-w-full border-b backdrop-blur-xl transition-colors duration-200"
       style={{
         backgroundColor: 'color-mix(in srgb, var(--bg-surface) 88%, transparent)',
         borderColor: 'var(--border-subtle)',
       }}
     >
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <div className="max-w-6xl w-full mx-auto px-2.5 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-3 min-w-0">
         {/* Left Zone: Brand Identity */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
           <motion.div
             whileHover={{ rotate: -6, scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
-            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-lg shadow-sm"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-sm sm:text-lg shadow-sm shrink-0"
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             K
           </motion.div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <span
-                className="font-display font-extrabold text-base tracking-tight"
+                className="font-display font-extrabold text-sm sm:text-base tracking-tight truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 Kompa
               </span>
               <span
-                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                className="hidden sm:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
                 style={{
                   backgroundColor: 'var(--accent-soft)',
                   color: 'var(--accent-text)',
@@ -170,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <p
-              className="text-[11px] hidden sm:block"
+              className="text-[11px] hidden md:block truncate"
               style={{ color: 'var(--text-muted)' }}
             >
               {t.brandTagline}
@@ -179,26 +179,26 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Zone: Actions, Language Switcher, Single Theme Button, Notifications & Account */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Safety Guide Trigger */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 min-w-0">
+          {/* Safety Guide Trigger (visible on sm+, inside user menu on mobile) */}
           <motion.button
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
             onClick={onOpenSafetyGuide}
             title={t.safetyBtnTitle}
-            className="p-2 rounded-xl transition-colors cursor-pointer hover:opacity-80"
+            className="hidden sm:flex p-2 rounded-xl transition-colors cursor-pointer hover:opacity-80 shrink-0"
             style={{ color: 'var(--text-secondary)' }}
           >
             <ShieldCheck className="w-5 h-5 text-emerald-500" />
           </motion.button>
 
-          {/* Share Link Button */}
+          {/* Share Link Button (visible on sm+, inside user menu on mobile) */}
           <motion.button
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
             onClick={onOpenDemoShare}
             title={t.shareBtnTitle}
-            className="p-2 rounded-xl transition-colors cursor-pointer hover:opacity-80"
+            className="hidden sm:flex p-2 rounded-xl transition-colors cursor-pointer hover:opacity-80 shrink-0"
             style={{ color: 'var(--text-secondary)' }}
           >
             <Share2 className="w-4 h-4" />
@@ -211,7 +211,7 @@ export const Header: React.FC<HeaderProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={onOpenAdmin || onOpenAdminPanel}
               title={t.adminBtnTitle}
-              className="p-2 rounded-xl transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer shrink-0"
               style={{
                 backgroundColor: 'var(--accent-soft)',
                 color: 'var(--accent-text)',
@@ -222,16 +222,16 @@ export const Header: React.FC<HeaderProps> = ({
             </motion.button>
           )}
 
-          {/* Language Selector Button (RU / ES) */}
+          {/* Language Selector Button (RU / EN) */}
           {onChangeLang && (
-            <div className="relative" ref={langRef}>
+            <div className="relative shrink-0" ref={langRef}>
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowLangMenu((prev) => !prev)}
                 title={t.langBtnTitle}
-                className="px-2.5 py-2 rounded-xl border transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl border transition-colors cursor-pointer flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold"
                 style={{
                   backgroundColor: 'var(--bg-elevated)',
                   borderColor: 'var(--border-subtle)',
@@ -239,12 +239,12 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 <Globe
-                  className="w-3.5 h-3.5"
+                  className="w-3.5 h-3.5 shrink-0"
                   style={{ color: 'var(--accent-primary)' }}
                 />
                 <span>{activeLangObj.shortLabel}</span>
                 <ChevronDown
-                  className={`w-3 h-3 transition-transform duration-200 ${
+                  className={`w-3 h-3 shrink-0 transition-transform duration-200 ${
                     showLangMenu ? 'rotate-180' : ''
                   }`}
                   style={{ color: 'var(--text-muted)' }}
@@ -313,14 +313,14 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Unified Single Theme Selector Button on the Right */}
-          <div className="relative" ref={paletteRef}>
+          <div className="relative shrink-0" ref={paletteRef}>
             <motion.button
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowPaletteMenu((prev) => !prev)}
               title={t.themeBtnTitle}
-              className="px-2.5 py-2 rounded-xl border transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              className="px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl border transition-colors cursor-pointer flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold"
               style={{
                 backgroundColor: 'var(--bg-elevated)',
                 borderColor: 'var(--border-subtle)',
@@ -328,11 +328,11 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               <Palette
-                className="w-3.5 h-3.5"
+                className="w-3.5 h-3.5 shrink-0"
                 style={{ color: 'var(--accent-primary)' }}
               />
               <span
-                className="w-3 h-3 rounded-full border shrink-0"
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border shrink-0"
                 style={{
                   backgroundColor: activePaletteObj.swatchAccent,
                   borderColor: 'rgba(125,125,125,0.35)',
@@ -342,7 +342,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {activePaletteObj.name}
               </span>
               <ChevronDown
-                className={`w-3 h-3 transition-transform duration-200 ${
+                className={`w-3 h-3 shrink-0 transition-transform duration-200 ${
                   showPaletteMenu ? 'rotate-180' : ''
                 }`}
                 style={{ color: 'var(--text-muted)' }}
@@ -356,7 +356,7 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="absolute right-0 mt-2 w-60 rounded-2xl shadow-xl border p-1.5 z-50"
+                  className="absolute right-0 mt-2 w-[min(15rem,calc(100vw-1.5rem))] sm:w-60 rounded-2xl shadow-xl border p-1.5 z-50"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
@@ -415,13 +415,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Notifications Dropdown */}
-          <div className="relative" ref={notifRef}>
+          <div className="relative shrink-0" ref={notifRef}>
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.92 }}
               onClick={() => setShowNotifications((prev) => !prev)}
-              className="relative p-2 rounded-xl border transition-colors cursor-pointer"
+              className="relative p-1.5 sm:p-2 rounded-xl border transition-colors cursor-pointer"
               style={{
                 backgroundColor: 'var(--bg-elevated)',
                 borderColor: 'var(--border-subtle)',
@@ -433,7 +433,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs"
+                  className="absolute -top-1 -right-1 min-w-[16px] h-[16px] sm:min-w-[18px] sm:h-[18px] px-1 text-white text-[9px] sm:text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs"
                   style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
                   {unreadCount}
@@ -448,7 +448,7 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="absolute right-0 mt-2 w-80 sm:w-96 rounded-3xl shadow-2xl border overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-1.5rem))] sm:w-96 rounded-3xl shadow-2xl border overflow-hidden z-50"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
@@ -548,14 +548,14 @@ export const Header: React.FC<HeaderProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* Registration / Profile Button */}
+          {/* Registration / Profile Button (visible on sm+, inside user menu on mobile) */}
           {onOpenAuth && (
             <motion.button
               type="button"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
               onClick={onOpenAuth}
-              className="px-2.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="hidden sm:flex px-2.5 py-2 rounded-xl border text-xs font-bold items-center gap-1.5 cursor-pointer transition-colors shrink-0"
               style={{
                 backgroundColor: isCloudConnected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
                 borderColor: 'var(--border-subtle)',
@@ -581,13 +581,13 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {/* Demo User Switcher */}
-          <div className="relative" ref={switcherRef}>
+          <div className="relative shrink-0" ref={switcherRef}>
             <motion.button
               type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowUserSwitcher((prev) => !prev)}
-              className="flex items-center gap-2.5 py-1 pl-1.5 pr-3 rounded-full border transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2.5 py-1 pl-1 pr-2 sm:pl-1.5 sm:pr-3 rounded-full border transition-colors cursor-pointer"
               style={{
                 backgroundColor: 'var(--bg-elevated)',
                 borderColor: 'var(--border-subtle)',
@@ -598,10 +598,10 @@ export const Header: React.FC<HeaderProps> = ({
                   src={currentUser.avatarUrl}
                   alt={currentUser.name}
                   referrerPolicy="no-referrer"
-                  className="w-8 h-8 rounded-full object-cover block"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover block"
                 />
                 <span
-                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--bg-elevated)] ${
+                  className={`absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ring-2 ring-[var(--bg-elevated)] ${
                     currentUser.onlineStatus === 'offline'
                       ? 'bg-slate-400'
                       : currentUser.onlineStatus === 'recent'
@@ -625,7 +625,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <ChevronDown
-                className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                className={`w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 transition-transform duration-200 ${
                   showUserSwitcher ? 'rotate-180' : ''
                 }`}
                 style={{ color: 'var(--text-muted)' }}
@@ -639,7 +639,7 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="absolute right-0 mt-2 w-76 rounded-3xl shadow-2xl border overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] sm:w-76 rounded-3xl shadow-2xl border overflow-hidden z-50"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
@@ -665,6 +665,41 @@ export const Header: React.FC<HeaderProps> = ({
                           </span>
                         </button>
                       )}
+                      {/* Mobile-only quick buttons for Safety & Share */}
+                      <div className="grid grid-cols-2 gap-1.5 sm:hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserSwitcher(false);
+                            onOpenSafetyGuide();
+                          }}
+                          className="py-1.5 px-2.5 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-elevated)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span className="truncate">{lang === 'en' ? 'Safety' : 'Безопасность'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserSwitcher(false);
+                            onOpenDemoShare();
+                          }}
+                          className="py-1.5 px-2.5 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-elevated)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          <Share2 className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                          <span className="truncate">{lang === 'en' ? 'Share QR' : 'Поделиться'}</span>
+                        </button>
+                      </div>
                       {onLogout && (
                         <button
                           type="button"

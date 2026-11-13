@@ -61,6 +61,13 @@
   --badge-glow: rgba(255, 94, 58, 0.35);
 }
 
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;

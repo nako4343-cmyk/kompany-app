@@ -505,7 +505,7 @@ export default function App() {
   return (
     <div
       id="top"
-      className="min-h-screen pb-28 font-sans antialiased transition-colors duration-250"
+      className="min-h-screen w-full max-w-full overflow-x-hidden pb-28 font-sans antialiased transition-colors duration-250"
       style={{
         backgroundColor: 'var(--bg-canvas)',
         color: 'var(--text-primary)',
@@ -514,23 +514,23 @@ export default function App() {
       {/* 1. COMPACT ROLE SWITCHER BAR FOR TESTING */}
       <aside
         aria-label="Панель переключения ролей"
-        className="text-white text-[11px] py-2 px-4 border-b border-white/10"
+        className="w-full max-w-full overflow-hidden text-white text-[11px] py-2 px-3 sm:px-4 border-b border-white/10"
         style={{ backgroundColor: 'var(--hero-grad-from)' }}
       >
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-white/80">
-            <span className="font-bold text-white">Тест ролей и приватности:</span>
-            <span className="hidden sm:inline text-white/60">
+        <div className="max-w-6xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 min-w-0">
+          <div className="flex items-center gap-2 text-white/80 min-w-0">
+            <span className="font-bold text-white truncate">Тест ролей и приватности:</span>
+            <span className="hidden sm:inline text-white/60 truncate">
               Переключайте аккаунт, чтобы проверить скрытие адреса до одобрения заявки
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+          <div className="w-full sm:w-auto max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
             {availableUsers.map(u => (
               <button
                 key={u.id}
                 onClick={() => handleSwitchUser(u.id)}
-                className="px-3 py-1 rounded-xl text-xs transition-all shrink-0 cursor-pointer whitespace-nowrap"
+                className="px-2.5 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs transition-all shrink-0 cursor-pointer whitespace-nowrap"
                 style={{
                   backgroundColor: u.id === currentUser.id ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)',
                   color: '#FFFFFF',
@@ -545,10 +545,10 @@ export default function App() {
 
             <button
               onClick={() => setShowDemoShareModal(true)}
-              className="px-2.5 py-1 rounded-xl text-xs font-bold text-white bg-white/20 hover:bg-white/30 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ml-1 shadow-xs active:scale-95"
+              className="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-white bg-white/20 hover:bg-white/30 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ml-1 shadow-xs active:scale-95 whitespace-nowrap"
               title="Поделиться демо с друзьями"
             >
-              <QrCode className="w-3.5 h-3.5 text-amber-300" />
+              <QrCode className="w-3.5 h-3.5 text-amber-300 shrink-0" />
               <span>Показать друзьям (QR)</span>
             </button>
           </div>
