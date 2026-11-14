@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   X,
   LogIn,
@@ -133,19 +133,52 @@ const SHOWCASE_CARDS = [
   },
 ];
 
-const slideVariants = {
+const slideVariants: Variants = {
   enter: (direction: number) => ({
     x: direction > 0 ? '100%' : '-100%',
     opacity: 0,
+    scale: 0.97,
   }),
   center: {
     x: 0,
     opacity: 1,
+    scale: 1,
   },
   exit: (direction: number) => ({
     x: direction > 0 ? '-100%' : '100%',
     opacity: 0,
+    scale: 0.97,
   }),
+};
+
+const staggerContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const fadeScaleItemVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    y: 10,
+  },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 340,
+      damping: 28,
+      mass: 0.8,
+    },
+  },
 };
 
 /**
@@ -484,14 +517,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   ];
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22 }}
       onClick={() => {
         if (!isInitialGate) onClose();
       }}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 overflow-hidden"
     >
-      {/* Fixed-height dvh container on mobile so header & footer NEVER shift or clip when scrolling */}
-      <div
+      {/* Fixed-height dvh container on mobile with premium fade-in + subtle scale entrance */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ type: 'spring', stiffness: 330, damping: 28, mass: 0.85 }}
         onClick={e => e.stopPropagation()}
         className="w-full h-[100dvh] sm:h-[660px] sm:max-h-[90dvh] sm:max-w-xl sm:rounded-3xl shadow-2xl border-0 sm:border flex flex-col overflow-hidden"
         style={{
@@ -510,12 +551,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 360, damping: 22 }}
                 className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-lg shadow-sm shrink-0"
                 style={{ backgroundColor: 'var(--accent-primary)' }}
               >
                 K
-              </div>
+              </motion.div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span
@@ -612,29 +656,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               exit="exit"
               transition={{
                 x: { type: 'spring', stiffness: 320, damping: 34, mass: 0.85 },
-                opacity: { duration: 0.18 },
+                opacity: { duration: 0.2 },
+                scale: { duration: 0.22 },
               }}
               className="h-full w-full overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5"
               style={{ backgroundColor: 'var(--bg-surface)' }}
             >
               {statusMessage && (
-                <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2"
+                >
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>{statusMessage}</span>
-                </div>
+                </motion.div>
               )}
 
               {errorMessage && (
-                <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-semibold flex items-center gap-2">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-semibold flex items-center gap-2"
+                >
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
-                </div>
+                </motion.div>
               )}
 
               {wizardStep === 0 && (
-                /* STEP 0: INTERACTIVE WELCOME SHOWCASE */
-                <div className="space-y-4">
-                  <div className="space-y-2">
+                /* STEP 0: INTERACTIVE WELCOME SHOWCASE WITH STAGGERED FADE-IN + SCALE */
+                <motion.div
+                  variants={staggerContainerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-4"
+                >
+                  <motion.div variants={fadeScaleItemVariants} className="space-y-2">
                     <h1
                       className="text-xl sm:text-2xl font-display font-extrabold leading-snug tracking-tight"
                       style={{ color: 'var(--text-primary)' }}
@@ -651,10 +709,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         ? 'Set up your pass in 30 seconds. Exact venue addresses and group chats open only after the organizer approves you.'
                         : 'Соберите свой пропуск участника за 30 секунд: выбирайте проверенные компании по интересам, а точный адрес и чат откроются после одобрения организатором.'}
                     </p>
-                  </div>
+                  </motion.div>
 
                   {/* Live Showcase Carousel */}
-                  <div
+                  <motion.div
+                    variants={fadeScaleItemVariants}
                     className="relative h-48 sm:h-52 rounded-2xl overflow-hidden bg-neutral-900 shadow-md border"
                     style={{ borderColor: 'var(--border-subtle)' }}
                   >
@@ -663,9 +722,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         idx === activeShowcaseIdx ? (
                           <motion.div
                             key={card.title}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, scale: 0.96, x: 18 }}
+                            animate={{ opacity: 1, scale: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, x: -18 }}
                             transition={{ duration: 0.28 }}
                             className="absolute inset-0 flex items-end p-4"
                           >
@@ -693,10 +752,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         ) : null
                       )}
                     </AnimatePresence>
-                  </div>
+                  </motion.div>
 
                   {/* Carousel Switcher & Security Promise */}
-                  <div
+                  <motion.div
+                    variants={fadeScaleItemVariants}
                     className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
@@ -727,18 +787,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         />
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Interactive Preview of 3-step Pass Creation */}
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-3 gap-2.5">
                     {[
                       { num: '01', label: 'Личное фото', sub: 'Имя и сфера' },
                       { num: '02', label: 'Вайб вечера', sub: 'Темы и интересы' },
                       { num: '03', label: 'Пропуск', sub: 'Статус на вечер' },
                     ].map(item => (
-                      <div
+                      <motion.div
                         key={item.num}
-                        className="p-3 rounded-2xl border"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigateToStep(Number(item.num) as 1 | 2 | 3)}
+                        className="p-3 rounded-2xl border cursor-pointer"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
                           borderColor: 'var(--border-subtle)',
@@ -762,17 +825,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         >
                           {item.sub}
                         </span>
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
 
               {wizardStep === 1 && (
-                /* STEP 1: PERSONAL PHOTO ONLY & IDENTITY */
-                <div className="space-y-4">
+                /* STEP 1: PERSONAL PHOTO ONLY & IDENTITY WITH STAGGERED FADE-IN + SCALE */
+                <motion.div
+                  variants={staggerContainerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-4"
+                >
                   {/* Personal Photo Upload Card (No preset stock avatars) */}
-                  <div
+                  <motion.div
+                    variants={fadeScaleItemVariants}
                     className="p-4 rounded-2xl border flex items-center justify-between gap-4"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
@@ -781,19 +850,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       {avatarUrl ? (
-                        <img
+                        <motion.img
+                          key={avatarUrl}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
                           src={avatarUrl}
                           alt={name || 'Ваше фото'}
                           className="w-16 h-16 rounded-2xl object-cover shrink-0 border-2"
                           style={{ borderColor: 'var(--accent-primary)' }}
                         />
                       ) : (
-                        <div
+                        <motion.div
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
                           className="w-16 h-16 rounded-2xl flex items-center justify-center font-display font-extrabold text-xl text-white shrink-0 shadow-xs"
                           style={{ backgroundColor: 'var(--accent-primary)' }}
                         >
                           {userInitials}
-                        </div>
+                        </motion.div>
                       )}
                       <div className="min-w-0">
                         <span
@@ -811,8 +885,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </div>
                     </div>
 
-                    <label
-                      className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs transition-transform active:scale-95"
+                    <motion.label
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.96 }}
+                      className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
                       style={{ backgroundColor: 'var(--accent-primary)' }}
                     >
                       {isUploadingPhoto ? (
@@ -829,12 +905,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onChange={handleCustomAvatarUpload}
                         className="hidden"
                       />
-                    </label>
-                  </div>
+                    </motion.label>
+                  </motion.div>
 
                   {/* Quick Google Fill Option */}
                   {!cloudUser && (
-                    <button
+                    <motion.button
+                      variants={fadeScaleItemVariants}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
                       type="button"
                       disabled={isLoadingAuth}
                       onClick={handleGoogleSignIn}
@@ -856,11 +935,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         </div>
                       </div>
                       <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
-                    </button>
+                    </motion.button>
                   )}
 
                   {/* Name Input */}
-                  <div>
+                  <motion.div variants={fadeScaleItemVariants}>
                     <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                       Ваше имя и фамилия
                     </label>
@@ -878,10 +957,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         color: 'var(--text-primary)',
                       }}
                     />
-                  </div>
+                  </motion.div>
 
                   {/* Age & Gender Segmented Controls */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                         Возраст ({age} лет)
@@ -893,7 +972,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           borderColor: 'var(--border-subtle)',
                         }}
                       >
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
                           type="button"
                           onClick={() => setAge(prev => Math.max(18, prev - 1))}
                           className="w-8 h-8 rounded-lg font-bold text-base flex items-center justify-center cursor-pointer"
@@ -903,7 +983,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           }}
                         >
                           −
-                        </button>
+                        </motion.button>
                         <input
                           type="number"
                           min={18}
@@ -913,7 +993,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           className="w-12 text-center text-sm font-bold tabular-nums bg-transparent focus:outline-none"
                           style={{ color: 'var(--text-primary)' }}
                         />
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
                           type="button"
                           onClick={() => setAge(prev => Math.min(99, prev + 1))}
                           className="w-8 h-8 rounded-lg font-bold text-base flex items-center justify-center cursor-pointer"
@@ -923,7 +1004,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           }}
                         >
                           +
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
 
@@ -944,7 +1025,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         ].map(opt => {
                           const active = gender === opt.val;
                           return (
-                            <button
+                            <motion.button
+                              whileTap={{ scale: 0.96 }}
                               key={opt.val}
                               type="button"
                               onClick={() => setGender(opt.val as 'female' | 'male')}
@@ -955,15 +1037,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               }}
                             >
                               {opt.label}
-                            </button>
+                            </motion.button>
                           );
                         })}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* City & Quick Chips */}
-                  <div>
+                  <motion.div variants={fadeScaleItemVariants}>
                     <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                       Город
                     </label>
@@ -971,7 +1053,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       {CITY_PRESETS.map(c => {
                         const active = city === c;
                         return (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
                             key={c}
                             type="button"
                             onClick={() => setCity(c)}
@@ -983,7 +1067,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             }}
                           >
                             {c}
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>
@@ -1000,10 +1084,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         color: 'var(--text-primary)',
                       }}
                     />
-                  </div>
+                  </motion.div>
 
                   {/* Occupation & 1-Tap Presets */}
-                  <div>
+                  <motion.div variants={fadeScaleItemVariants}>
                     <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                       Профессия / Сфера
                     </label>
@@ -1011,7 +1095,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       {OCCUPATION_PRESETS.map(occ => {
                         const active = occupation === occ;
                         return (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
                             key={occ}
                             type="button"
                             onClick={() => setOccupation(occ)}
@@ -1023,7 +1109,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             }}
                           >
                             {occ}
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>
@@ -1040,14 +1126,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         color: 'var(--text-primary)',
                       }}
                     />
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
 
               {wizardStep === 2 && (
-                /* STEP 2: EVENING VIBE CARDS & INTEREST RADAR */
-                <div className="space-y-4">
-                  <div>
+                /* STEP 2: EVENING VIBE CARDS & INTEREST RADAR WITH STAGGERED FADE-IN + SCALE */
+                <motion.div
+                  variants={staggerContainerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-4"
+                >
+                  <motion.div variants={fadeScaleItemVariants}>
                     <label className="text-xs font-bold block mb-1" style={{ color: 'var(--text-primary)' }}>
                       Какой формат вечера вам ближе всего?
                     </label>
@@ -1059,11 +1150,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         const Icon = vibe.icon;
                         const isSelected = selectedVibeId === vibe.id;
                         return (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.97 }}
                             key={vibe.id}
                             type="button"
                             onClick={() => handleSelectVibe(vibe)}
-                            className="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3"
+                            className="p-3.5 rounded-2xl border text-left transition-colors cursor-pointer flex items-start gap-3"
                             style={{
                               backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
                               borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
@@ -1092,14 +1185,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 {vibe.desc}
                               </span>
                             </div>
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Interactive Interest Tags */}
-                  <div>
+                  <motion.div variants={fadeScaleItemVariants}>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                         Интересные темы встреч ({interests.length})
@@ -1115,7 +1208,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       {INTEREST_OPTIONS.map(tag => {
                         const active = interests.includes(tag);
                         return (
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
                             key={tag}
                             type="button"
                             onClick={() => toggleInterest(tag)}
@@ -1127,14 +1222,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             }}
                           >
                             {tag}
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Bio Input with Vibe Presets */}
-                  <div>
+                  <motion.div variants={fadeScaleItemVariants}>
                     <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
                       Коротко о себе и планах на вечер
                     </label>
@@ -1151,15 +1246,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         color: 'var(--text-primary)',
                       }}
                     />
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
 
               {wizardStep === 3 && (
-                /* STEP 3: LIVE MEMBER PASS & OPEN-TO-INVITES RADAR */
-                <div className="space-y-4">
+                /* STEP 3: LIVE MEMBER PASS & OPEN-TO-INVITES RADAR WITH STAGGERED FADE-IN + SCALE */
+                <motion.div
+                  variants={staggerContainerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-4"
+                >
                   {/* Live Member Pass Card */}
-                  <div
+                  <motion.div
+                    variants={fadeScaleItemVariants}
                     className="p-4 rounded-2xl border space-y-3"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
@@ -1240,10 +1341,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         «{bio}»
                       </p>
                     )}
-                  </div>
+                  </motion.div>
 
                   {/* Open to Invites Toggle & Quick Templates */}
-                  <div
+                  <motion.div
+                    variants={fadeScaleItemVariants}
                     className="p-4 rounded-2xl border space-y-3"
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
@@ -1274,7 +1376,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <div className="space-y-2 pt-1">
                         <div className="flex flex-wrap gap-1.5">
                           {INVITE_NOTE_PRESETS.map((preset, idx) => (
-                            <button
+                            <motion.button
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.98 }}
                               key={idx}
                               type="button"
                               onClick={() => setOpenToInvitesNote(preset)}
@@ -1288,7 +1392,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               }}
                             >
                               {preset}
-                            </button>
+                            </motion.button>
                           ))}
                         </div>
                         <input
@@ -1306,8 +1410,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         />
                       </div>
                     )}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
             </motion.div>
           </AnimatePresence>
@@ -1323,7 +1427,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         >
           {wizardStep === 0 ? (
             <div className="space-y-2">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => navigateToStep(1)}
                 className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
@@ -1331,8 +1437,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 <span>{isEn ? 'Create My Pass (30 sec)' : 'Собрать свой профиль за 30 секунд'}</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 disabled={isLoadingAuth}
                 onClick={handleGoogleSignIn}
@@ -1347,11 +1455,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <span>
                   {isLoadingAuth ? 'Вход...' : 'Быстрый вход через Google'}
                 </span>
-              </button>
+              </motion.button>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
                 type="button"
                 onClick={() => navigateToStep((wizardStep - 1) as 0 | 1 | 2)}
                 className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
@@ -1363,10 +1473,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>{isEn ? 'Back' : 'Назад'}</span>
-              </button>
+              </motion.button>
 
               {wizardStep < 3 ? (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => navigateToStep((wizardStep + 1) as 2 | 3)}
                   className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer"
@@ -1378,9 +1490,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'Далее: Проверить пропуск'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </motion.button>
               ) : (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.98 }}
                   type="button"
                   disabled={isSaving}
                   onClick={handleFinishRegistration}
@@ -1391,12 +1505,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <span>
                     {isSaving ? 'Сохранение...' : 'Открыть радар встреч Kompa'}
                   </span>
-                </button>
+                </motion.button>
               )}
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
