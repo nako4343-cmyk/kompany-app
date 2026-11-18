@@ -125,6 +125,283 @@ const fadeScaleItemVariants: Variants = {
   },
 };
 
+/**
+ * Pure Geometric Kinetic Logo Intro (Modeled directly on Tilda 02.gif reference:
+ * pure #000000 background, zero words, zero progress bar, three -45° vermilion capsules
+ * with negative-space intersection cutouts and high-velocity white/orange diagonal laser slices).
+ */
+const KineticGeometricLogoSplash: React.FC = () => {
+  return (
+    <div className="relative w-80 h-64 sm:w-96 sm:h-72 flex items-center justify-center select-none pointer-events-none">
+      <svg
+        viewBox="0 0 420 300"
+        className="w-full h-full overflow-visible"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          {/* Capsule 1 (-45 deg around 130, 150) */}
+          <clipPath id="cap1-clip">
+            <rect
+              x="92"
+              y="55"
+              width="76"
+              height="190"
+              rx="38"
+              transform="rotate(45 130 150)"
+            />
+          </clipPath>
+          {/* Capsule 2 (-45 deg around 210, 150) */}
+          <clipPath id="cap2-clip">
+            <rect
+              x="172"
+              y="55"
+              width="76"
+              height="190"
+              rx="38"
+              transform="rotate(45 210 150)"
+            />
+          </clipPath>
+          {/* Capsule 3 (-45 deg around 290, 150) */}
+          <clipPath id="cap3-clip">
+            <rect
+              x="252"
+              y="55"
+              width="76"
+              height="190"
+              rx="38"
+              transform="rotate(45 290 150)"
+            />
+          </clipPath>
+        </defs>
+
+        {/* 1. INITIAL SPARK DIAMONDS ( matches frame 1-2 of 02.gif ) */}
+        <motion.rect
+          x="74"
+          y="196"
+          width="9"
+          height="9"
+          fill="#FFFFFF"
+          transform="rotate(45 78.5 200.5)"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{
+            opacity: [0, 1, 1, 0],
+            scale: [0, 1.3, 1, 0],
+            x: [0, 8, 22, 45],
+            y: [0, -8, -22, -45],
+          }}
+          transition={{ duration: 0.75, times: [0, 0.25, 0.7, 1], ease: 'easeOut' }}
+        />
+
+        <motion.rect
+          x="336"
+          y="86"
+          width="16"
+          height="4.5"
+          fill="#FF3B00"
+          transform="rotate(-45 344 88)"
+          initial={{ opacity: 0, x: -40, y: 40 }}
+          animate={{
+            opacity: [0, 1, 1, 0],
+            x: [-40, 0, 18, 34],
+            y: [40, 0, -18, -34],
+          }}
+          transition={{ duration: 1.15, delay: 0.35, ease: 'easeOut' }}
+        />
+
+        {/* 2. CAPSULE 1 (LEFT) */}
+        <g clipPath="url(#cap1-clip)">
+          <motion.rect
+            x="30"
+            y="10"
+            width="200"
+            height="280"
+            fill="#FF3B00"
+            transform="rotate(45 130 150)"
+            initial={{ y: 210 }}
+            animate={{ y: [210, 0, 0] }}
+            transition={{
+              duration: 1.8,
+              times: [0, 0.36, 1],
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          />
+          {/* Kinetic White & Black Diagonal Slices Inside Capsule 1 */}
+          <motion.rect
+            x="104"
+            y="30"
+            width="6"
+            height="90"
+            fill="#FFFFFF"
+            transform="rotate(45 130 150)"
+            initial={{ y: 150, opacity: 0 }}
+            animate={{ y: [150, -120], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.9, delay: 0.22, ease: 'easeInOut' }}
+          />
+          <motion.rect
+            x="126"
+            y="45"
+            width="4.5"
+            height="110"
+            fill="#000000"
+            transform="rotate(45 130 150)"
+            initial={{ y: 140, opacity: 0 }}
+            animate={{ y: [140, -140], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.95, delay: 0.28, ease: 'easeInOut' }}
+          />
+        </g>
+
+        {/* 3. CAPSULE 2 (CENTER) */}
+        <g clipPath="url(#cap2-clip)">
+          <motion.rect
+            x="110"
+            y="10"
+            width="200"
+            height="280"
+            fill="#FF3B00"
+            transform="rotate(45 210 150)"
+            initial={{ y: -210 }}
+            animate={{ y: [-210, 0, 0] }}
+            transition={{
+              duration: 1.8,
+              delay: 0.1,
+              times: [0, 0.4, 1],
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          />
+          {/* Negative-space lens cutout between Capsule 1 and Capsule 2 */}
+          <motion.rect
+            x="92"
+            y="55"
+            width="76"
+            height="190"
+            rx="38"
+            fill="#000000"
+            transform="rotate(45 130 150)"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 1] }}
+            transition={{ duration: 0.5, delay: 0.32 }}
+          />
+          {/* Kinetic White & Black Slices Inside Capsule 2 */}
+          <motion.rect
+            x="186"
+            y="40"
+            width="7"
+            height="120"
+            fill="#000000"
+            transform="rotate(45 210 150)"
+            initial={{ y: -150, opacity: 0 }}
+            animate={{ y: [-150, 150], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.95, delay: 0.32, ease: 'easeInOut' }}
+          />
+          <motion.rect
+            x="216"
+            y="60"
+            width="5"
+            height="85"
+            fill="#FFFFFF"
+            transform="rotate(45 210 150)"
+            initial={{ y: 150, opacity: 0 }}
+            animate={{ y: [150, -150], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.9, delay: 0.38, ease: 'easeInOut' }}
+          />
+        </g>
+
+        {/* 4. CAPSULE 3 (RIGHT) */}
+        <g clipPath="url(#cap3-clip)">
+          <motion.rect
+            x="190"
+            y="10"
+            width="200"
+            height="280"
+            fill="#FF3B00"
+            transform="rotate(45 290 150)"
+            initial={{ y: 220 }}
+            animate={{ y: [220, 0, 0] }}
+            transition={{
+              duration: 1.8,
+              delay: 0.2,
+              times: [0, 0.44, 1],
+              ease: [0.16, 1, 0.3, 1],
+            }}
+          />
+          {/* Negative-space lens cutout between Capsule 2 and Capsule 3 */}
+          <motion.rect
+            x="172"
+            y="55"
+            width="76"
+            height="190"
+            rx="38"
+            fill="#000000"
+            transform="rotate(45 210 150)"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 1] }}
+            transition={{ duration: 0.5, delay: 0.42 }}
+          />
+          {/* High-contrast kinetic laser slices matching frame 2 & 8 of 02.gif */}
+          <motion.rect
+            x="268"
+            y="40"
+            width="6"
+            height="95"
+            fill="#FFFFFF"
+            transform="rotate(45 290 150)"
+            initial={{ y: 160, opacity: 0 }}
+            animate={{ y: [160, -150], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.95, delay: 0.42, ease: 'easeInOut' }}
+          />
+          <motion.rect
+            x="284"
+            y="50"
+            width="4.5"
+            height="115"
+            fill="#000000"
+            transform="rotate(45 290 150)"
+            initial={{ y: 150, opacity: 0 }}
+            animate={{ y: [150, -160], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 1.0, delay: 0.48, ease: 'easeInOut' }}
+          />
+          <motion.rect
+            x="306"
+            y="35"
+            width="10"
+            height="42"
+            fill="#000000"
+            transform="rotate(45 290 150)"
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: [120, -130], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.85, delay: 0.52, ease: 'easeInOut' }}
+          />
+          <motion.rect
+            x="314"
+            y="42"
+            width="5"
+            height="28"
+            fill="#FFFFFF"
+            transform="rotate(45 290 150)"
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: [120, -130], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.85, delay: 0.56, ease: 'easeInOut' }}
+          />
+        </g>
+
+        {/* Tiny White Diamond Spark at Bottom Center */}
+        <motion.rect
+          x="176"
+          y="196"
+          width="6"
+          height="6"
+          fill="#FFFFFF"
+          transform="rotate(45 179 199)"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: [0, 1.2, 1, 0] }}
+          transition={{ duration: 0.7, delay: 0.65 }}
+        />
+      </svg>
+    </div>
+  );
+};
+
 function compressImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -191,21 +468,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Animated Logo Splash Screen at App Entry (2.9s choreographed logo trajectory)
+  // Pure Kinetic Geometric Logo Splash (No words, no loading bar, 2.2s)
   const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLogoSplash(false);
-    }, 2900);
+    }, 2250);
     return () => clearTimeout(timer);
   }, []);
 
-  // Unified 4-step registration in the reference card format styled in Kompa's palette:
-  // Step 1: Photo + Name + Phone + Email + Remember Me ("РЕГИСТРАЦИЯ")
-  // Step 2: SMS Code Verification ("ПОДТВЕРЖДЕНИЕ СМС")
-  // Step 3: Profile Details & Interests ("АНКЕТА И ИНТЕРЕСЫ")
-  // Step 4: Final Summary & Manual "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" button
+  // Auth Flow Mode:
+  // 'login' = Login + Password screen with "ВОЙТИ" at the bottom and "РЕГИСТРАЦИЯ" on the right
+  // 'register' = 4-step registration inside the exact same card format
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>([1, 1]);
 
   const navigateToStep = (nextStep: 1 | 2 | 3 | 4) => {
@@ -214,6 +490,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setStepState(([prevStep]) => [nextStep, nextStep >= prevStep ? 1 : -1]);
   };
 
+  // Login Form State
+  const [loginIdentifier, setLoginIdentifier] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
+
+  // Registration Form State
   const [name, setName] = useState<string>(() => {
     if (isInitialGate && currentUser.name === 'Анна Воронова') {
       return '';
@@ -235,6 +516,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return currentUser.phoneNumber || '';
   });
 
+  const [registerPassword, setRegisterPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -318,29 +600,60 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return 5 + interests.length * 3;
   }, [interests]);
 
+  const handleLoginSubmit = async () => {
+    const cleanLogin = loginIdentifier.trim();
+    const cleanPass = loginPassword.trim();
+    if (!cleanLogin) {
+      setErrorMessage('Введите логин (номер телефона или электронную почту)');
+      triggerHaptic([12, 30, 12]);
+      return;
+    }
+    if (cleanPass.length < 4) {
+      setErrorMessage('Введите пароль (не менее 4 символов)');
+      triggerHaptic([12, 30, 12]);
+      return;
+    }
+
+    setErrorMessage('');
+    triggerHaptic([12, 30, 15]);
+
+    const isEmail = cleanLogin.includes('@');
+    const resolvedName =
+      name.trim() ||
+      currentUser.name ||
+      (isEmail ? cleanLogin.split('@')[0] : 'Участник Kompa');
+
+    const updatedProfile: UserProfile = {
+      ...currentUser,
+      name: resolvedName,
+      email: isEmail ? cleanLogin : currentUser.email || 'user@kompa.app',
+      phoneNumber: !isEmail ? cleanLogin : currentUser.phoneNumber || '+7 (999) 000-00-00',
+      avatarUrl: avatarUrl || currentUser.avatarUrl || createInitialsAvatarDataUrl(resolvedName),
+      onlineStatus: 'online',
+      lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
+    };
+
+    onProfileRegistered(updatedProfile);
+    onClose();
+  };
+
   const validateStep1Fields = (): boolean => {
     if (name.trim().length < 2) {
-      setErrorMessage(
-        isEn ? 'Please enter your name' : 'Укажите ваше имя и фамилию (минимум 2 символа)'
-      );
+      setErrorMessage('Укажите ваше имя и фамилию (минимум 2 символа)');
       return false;
     }
     const digitsOnly = phoneNumber.replace(/\D/g, '');
     if (digitsOnly.length < 10) {
-      setErrorMessage(
-        isEn
-          ? 'Please enter a valid phone number'
-          : 'Укажите корректный номер телефона (минимум 10 цифр)'
-      );
+      setErrorMessage('Укажите корректный номер телефона (минимум 10 цифр)');
       return false;
     }
     const cleanEmail = email.trim();
     if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setErrorMessage(
-        isEn
-          ? 'Please enter a valid email address'
-          : 'Укажите корректную электронную почту (Email)'
-      );
+      setErrorMessage('Укажите корректную электронную почту (Email)');
+      return false;
+    }
+    if (registerPassword.trim().length < 4) {
+      setErrorMessage('Придумайте пароль (не менее 4 символов)');
       return false;
     }
     return true;
@@ -519,6 +832,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onLogout();
     }
     setIsSmsVerified(false);
+    setAuthMode('login');
     navigateToStep(1);
     setStatusMessage(isEn ? 'You have signed out.' : 'Вы вышли из аккаунта.');
   };
@@ -538,48 +852,52 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto pt-safe pb-safe select-none"
       style={{
-        background:
-          'radial-gradient(circle at 50% 35%, #2b1812 0%, #170e0b 48%, #0a0706 100%)',
+        background: showLogoSplash
+          ? '#000000'
+          : 'radial-gradient(circle at 50% 35%, #2b1812 0%, #170e0b 48%, #0a0706 100%)',
+        transition: 'background 0.45s ease',
       }}
     >
       {/* Hidden Recaptcha container for Firebase Phone Auth */}
       <div ref={recaptchaContainerRef} className="hidden" />
 
-      {/* CONTINUOUSLY MOVING AMBIENT LIGHT ORBS ON THE SCREEN BACKDROP */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-        <motion.div
-          animate={{
-            x: [-80, 90, -50, -80],
-            y: [-70, 50, 95, -70],
-            scale: [1, 1.22, 0.92, 1],
-          }}
-          transition={{
-            duration: 11,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute top-1/4 left-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-35"
-          style={{
-            background: 'radial-gradient(circle, #DE482B 0%, rgba(222, 72, 43, 0) 70%)',
-          }}
-        />
-        <motion.div
-          animate={{
-            x: [90, -85, 45, 90],
-            y: [80, -60, -90, 80],
-            scale: [1.1, 0.88, 1.18, 1.1],
-          }}
-          transition={{
-            duration: 13,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute bottom-1/4 right-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-25"
-          style={{
-            background: 'radial-gradient(circle, #F59E0B 0%, rgba(245, 158, 11, 0) 70%)',
-          }}
-        />
-      </div>
+      {/* CONTINUOUSLY MOVING AMBIENT LIGHT ORBS ON THE SCREEN BACKDROP (After Splash) */}
+      {!showLogoSplash && (
+        <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+          <motion.div
+            animate={{
+              x: [-80, 90, -50, -80],
+              y: [-70, 50, 95, -70],
+              scale: [1, 1.22, 0.92, 1],
+            }}
+            transition={{
+              duration: 11,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="absolute top-1/4 left-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-35"
+            style={{
+              background: 'radial-gradient(circle, #DE482B 0%, rgba(222, 72, 43, 0) 70%)',
+            }}
+          />
+          <motion.div
+            animate={{
+              x: [90, -85, 45, 90],
+              y: [80, -60, -90, 80],
+              scale: [1.1, 0.88, 1.18, 1.1],
+            }}
+            transition={{
+              duration: 13,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="absolute bottom-1/4 right-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-25"
+            style={{
+              background: 'radial-gradient(circle, #F59E0B 0%, rgba(245, 158, 11, 0) 70%)',
+            }}
+          />
+        </div>
+      )}
 
       {/* Interactive iOS-Style Push / SMS Code Banner at Top */}
       <AnimatePresence>
@@ -627,217 +945,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showLogoSplash ? (
-          /* STAGE 0: CHOREOGRAPHED MOVING KOMPA LOGO SPLASH SCREEN */
+          /* STAGE 0: PURE KINETIC GEOMETRIC LOGO ANIMATION (02.gif Reference — No Text, No Loading Bar) */
           <motion.div
-            key="kompa-logo-splash"
-            initial={{ opacity: 0 }}
+            key="kompa-kinetic-splash"
+            initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-12"
+            exit={{ opacity: 0, scale: 0.94 }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10 flex items-center justify-center"
           >
-            {/* Stage Arena for the Moving Logo & Comet Trails */}
-            <div className="relative flex items-center justify-center w-52 h-48">
-              {/* Expanding Radar Pulse Waves */}
-              {[0, 1, 2].map(idx => (
-                <motion.div
-                  key={idx}
-                  initial={{ scale: 0.65, opacity: 0.6 }}
-                  animate={{ scale: [0.7, 2.05], opacity: [0.5, 0] }}
-                  transition={{
-                    duration: 2.3,
-                    repeat: Infinity,
-                    delay: idx * 0.68,
-                    ease: 'easeOut',
-                  }}
-                  className="absolute w-28 h-28 rounded-[34px] border"
-                  style={{ borderColor: 'rgba(222, 72, 43, 0.5)' }}
-                />
-              ))}
-
-              {/* Rotating Geometric Orbit Rings (Counter-Rotating Pair) */}
-              <motion.svg
-                viewBox="0 0 160 160"
-                className="absolute inset-0 w-full h-full pointer-events-none"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 9, repeat: Infinity, ease: 'linear' }}
-              >
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="68"
-                  fill="none"
-                  stroke="rgba(255, 138, 108, 0.35)"
-                  strokeWidth="1.4"
-                  strokeDasharray="12 9"
-                />
-                <circle cx="80" cy="12" r="4" fill="#FF8A6C" />
-                <circle cx="148" cy="80" r="3" fill="#F59E0B" />
-                <circle cx="80" cy="148" r="3.5" fill="#DE482B" />
-              </motion.svg>
-
-              <motion.svg
-                viewBox="0 0 160 160"
-                className="absolute inset-3 w-[calc(100%-1.5rem)] h-[calc(100%-1.5rem)] pointer-events-none"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 13, repeat: Infinity, ease: 'linear' }}
-              >
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="52"
-                  fill="none"
-                  stroke="rgba(251, 191, 36, 0.25)"
-                  strokeWidth="1.2"
-                  strokeDasharray="6 10"
-                />
-                <circle cx="28" cy="80" r="3" fill="#FBBF24" />
-              </motion.svg>
-
-              {/* Comet Afterglow Trail #2 (Farthest ghost following the logo trajectory) */}
-              <motion.div
-                aria-hidden="true"
-                animate={{
-                  x: [0, 42, -38, 28, -20, 0],
-                  y: [34, -28, -10, -34, 14, 0],
-                  rotate: [-22, 16, -14, 10, -6, 0],
-                  scale: [0.48, 0.98, 0.84, 0.94, 0.88, 0.9],
-                }}
-                transition={{
-                  duration: 2.6,
-                  delay: 0.14,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute w-24 h-24 rounded-[30px] blur-md opacity-30 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(145deg, #F59E0B 0%, #DE482B 100%)',
-                }}
-              />
-
-              {/* Comet Afterglow Trail #1 (Closer ghost following the logo trajectory) */}
-              <motion.div
-                aria-hidden="true"
-                animate={{
-                  x: [0, 42, -38, 28, -20, 0],
-                  y: [34, -28, -10, -34, 14, 0],
-                  rotate: [-22, 16, -14, 10, -6, 0],
-                  scale: [0.52, 1.05, 0.9, 1.02, 0.94, 0.96],
-                }}
-                transition={{
-                  duration: 2.6,
-                  delay: 0.07,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="absolute w-24 h-24 rounded-[30px] blur-[3px] opacity-45 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(145deg, #FF8A6C 0%, #DE482B 100%)',
-                }}
-              />
-
-              {/* Main Choreographed Moving Kompa Emblem */}
-              <motion.div
-                layoutId="kompa-flying-logo"
-                animate={{
-                  x: [0, 42, -38, 28, -20, 0],
-                  y: [34, -28, -10, -34, 14, 0],
-                  rotate: [-22, 16, -14, 10, -6, 0],
-                  scale: [0.58, 1.14, 0.94, 1.1, 0.97, 1.04],
-                }}
-                transition={{
-                  duration: 2.6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="relative w-24 h-24 rounded-[30px] flex items-center justify-center overflow-hidden shadow-2xl"
-                style={{
-                  background: 'linear-gradient(145deg, #F05637 0%, #DE482B 55%, #A92D16 100%)',
-                  border: '1.5px solid rgba(255, 195, 175, 0.65)',
-                  boxShadow:
-                    '0 22px 55px -8px rgba(222, 72, 43, 0.78), inset 0 2px 3px rgba(255, 255, 255, 0.48)',
-                }}
-              >
-                {/* Moving Shimmer Sweep Across Logo */}
-                <motion.div
-                  animate={{ x: ['-150%', '170%'] }}
-                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-y-0 w-12 -skew-x-12 pointer-events-none"
-                  style={{
-                    background:
-                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)',
-                  }}
-                />
-                {/* Parallax Bouncing 'K' Monogram */}
-                <motion.span
-                  animate={{
-                    y: [0, -4, 3, -3, 0],
-                    rotate: [0, -8, 7, -4, 0],
-                    scale: [0.9, 1.1, 0.96, 1.06, 1],
-                  }}
-                  transition={{
-                    duration: 2.6,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  className="relative z-10 font-display font-extrabold text-5xl text-white tracking-tight"
-                >
-                  K
-                </motion.span>
-              </motion.div>
-            </div>
-
-            {/* Animated Wave Wordmark & Subtitle */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12, duration: 0.35 }}
-              className="mt-3 space-y-1.5"
-            >
-              <motion.div
-                layoutId="kompa-flying-wordmark"
-                className="inline-flex items-center justify-center font-display font-extrabold text-3xl tracking-tight text-white"
-              >
-                {['K', 'o', 'm', 'p', 'a'].map((char, i) => (
-                  <motion.span
-                    key={i}
-                    animate={{
-                      y: [0, -6, 0],
-                    }}
-                    transition={{
-                      duration: 1.4,
-                      repeat: Infinity,
-                      delay: i * 0.1,
-                      ease: 'easeInOut',
-                    }}
-                    className="inline-block"
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.div>
-              <p className="text-xs sm:text-sm font-medium text-[#ffbfa9]/85">
-                Живые компании и вечерние встречи в твоём городе
-              </p>
-            </motion.div>
-
-            {/* Animated Loading Progress Bar */}
-            <div className="mt-7 w-48 h-1.5 rounded-full bg-white/10 overflow-hidden p-0.5">
-              <motion.div
-                initial={{ width: '6%' }}
-                animate={{ width: '100%' }}
-                transition={{ duration: 2.7, ease: 'easeInOut' }}
-                className="h-full rounded-full"
-                style={{
-                  background: 'linear-gradient(90deg, #DE482B 0%, #FF8A6C 50%, #F59E0B 100%)',
-                }}
-              />
-            </div>
+            <KineticGeometricLogoSplash />
           </motion.div>
         ) : (
-          /* STAGE 1: REFERENCE-STYLE PORTRAIT REGISTRATION CARD WITH MOVING LOGO & GLOW */
+          /* STAGE 1: PORTRAIT CARD WITH MOVING GLOW — LOGIN FIRST, REGISTRATION ON RIGHT */
           <motion.div
             key="kompa-auth-card"
             initial={{ opacity: 0, scale: 0.94, y: 16 }}
@@ -847,51 +969,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={e => e.stopPropagation()}
             className="relative z-10 w-full max-w-[395px] my-auto flex flex-col items-center"
           >
-            {/* Compact Living Brand Header Above Card (Receives Flying Logo via layoutId) */}
-            <motion.div className="flex items-center gap-2.5 mb-3.5">
-              <motion.div
-                layoutId="kompa-flying-logo"
-                animate={{
-                  x: [0, 5, -5, 3, 0],
-                  y: [0, -4, 1, -3, 0],
-                  rotate: [0, 6, -6, 3, 0],
-                }}
-                transition={{
-                  layout: { type: 'spring', stiffness: 260, damping: 26 },
-                  duration: 4.2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="relative w-9 h-9 rounded-xl flex items-center justify-center text-white font-display font-extrabold text-base shadow-lg overflow-hidden"
-                style={{
-                  background: 'linear-gradient(145deg, #F05637 0%, #DE482B 100%)',
-                  border: '1px solid rgba(255, 180, 160, 0.55)',
-                  boxShadow: '0 8px 20px -4px rgba(222, 72, 43, 0.6)',
-                }}
-              >
-                <motion.div
-                  animate={{ x: ['-150%', '180%'] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-y-0 w-5 -skew-x-12 pointer-events-none"
-                  style={{
-                    background:
-                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                  }}
-                />
-                <span className="relative z-10">K</span>
-              </motion.div>
-              <motion.span
-                layoutId="kompa-flying-wordmark"
-                transition={{ layout: { type: 'spring', stiffness: 260, damping: 26 } }}
-                className="font-display font-extrabold text-lg text-white tracking-tight"
-              >
-                Kompa
-              </motion.span>
-              <span className="text-xs text-[#ffbfa9]/70 font-medium">
-                · {city || 'Москва'}
-              </span>
-            </motion.div>
-
             {/* Portrait Card Wrapper with Continuously Moving Edge Glows */}
             <div
               className="relative w-full rounded-[36px] p-6 sm:p-7 flex flex-col justify-between overflow-hidden"
@@ -985,7 +1062,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               )}
 
-              {/* TOP CIRCULAR CAMERA / PERSONAL PHOTO EMBLEM (Reference Layout in App Palette) */}
+              {/* TOP CIRCULAR CAMERA / PERSONAL PHOTO EMBLEM */}
               <div className="flex flex-col items-center pt-1 pb-4 z-10">
                 <input
                   ref={fileInputRef}
@@ -996,7 +1073,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 />
 
                 <div className="relative flex items-center justify-center">
-                  {/* Rotating Halo Ring Around Camera Circle */}
                   <motion.svg
                     viewBox="0 0 112 112"
                     className="absolute -inset-2 w-28 h-28 pointer-events-none"
@@ -1045,39 +1121,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </motion.button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-2.5 text-[11px] font-semibold text-[#ffcab8]/85 hover:text-white transition-colors cursor-pointer"
-                >
-                  {isUploadingPhoto
-                    ? 'Обработка фото...'
-                    : avatarUrl
-                    ? 'Личное фото загружено · Изменить'
-                    : 'Нажмите на камеру, чтобы добавить ваше фото'}
-                </button>
+                {authMode === 'register' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-2.5 text-[11px] font-semibold text-[#ffcab8]/85 hover:text-white transition-colors cursor-pointer"
+                    >
+                      {isUploadingPhoto
+                        ? 'Обработка фото...'
+                        : avatarUrl
+                        ? 'Личное фото загружено · Изменить'
+                        : 'Нажмите на камеру, чтобы добавить ваше фото'}
+                    </button>
 
-                {/* Minimal Step Progress Pills */}
-                <div className="flex items-center gap-1.5 mt-3">
-                  {[1, 2, 3, 4].map(stepNum => {
-                    const active = wizardStep === stepNum;
-                    const done = wizardStep > stepNum;
-                    return (
-                      <div
-                        key={stepNum}
-                        className="h-1.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: active ? '26px' : '8px',
-                          backgroundColor: active
-                            ? '#ff7c5c'
-                            : done
-                            ? 'rgba(255, 138, 108, 0.55)'
-                            : 'rgba(22, 13, 10, 0.75)',
-                        }}
-                      />
-                    );
-                  })}
-                </div>
+                    {/* Minimal Step Progress Pills in Register Mode */}
+                    <div className="flex items-center gap-1.5 mt-2.5">
+                      {[1, 2, 3, 4].map(stepNum => {
+                        const active = wizardStep === stepNum;
+                        const done = wizardStep > stepNum;
+                        return (
+                          <div
+                            key={stepNum}
+                            className="h-1.5 rounded-full transition-all duration-300"
+                            style={{
+                              width: active ? '26px' : '8px',
+                              backgroundColor: active
+                                ? '#ff7c5c'
+                                : done
+                                ? 'rgba(255, 138, 108, 0.55)'
+                                : 'rgba(22, 13, 10, 0.75)',
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Status / Error Feedback */}
@@ -1108,562 +1188,705 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 )}
               </AnimatePresence>
 
-              {/* STEP CONTENT AREA IN UNIFIED CARD FORMAT */}
+              {/* MAIN CONTENT AREA: LOGIN SCREEN FIRST OR 4-STEP REGISTRATION */}
               <div className="relative overflow-hidden z-10">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                  <motion.div
-                    key={wizardStep}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{
-                      x: { type: 'spring', stiffness: 320, damping: 32, mass: 0.85 },
-                      opacity: { duration: 0.2 },
-                      scale: { duration: 0.2 },
-                    }}
-                    className="w-full"
-                  >
-                    {wizardStep === 1 && (
-                      /* STEP 1: ENTRY & CONTACTS (Reference Image Layout, No Inner Focus Rectangle) */
+                  {authMode === 'login' ? (
+                    /* INITIAL LOGIN SCREEN: LOGIN + PASSWORD + BOTTOM "ВОЙТИ" & RIGHT "РЕГИСТРАЦИЯ" */
+                    <motion.div
+                      key="login-view"
+                      variants={staggerContainerVariants}
+                      initial="hidden"
+                      animate="show"
+                      exit={{ opacity: 0, x: -60 }}
+                      className="space-y-3.5"
+                    >
+                      {/* Login Input Bar */}
                       <motion.div
-                        variants={staggerContainerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-3"
+                        variants={fadeScaleItemVariants}
+                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
+                        style={{
+                          backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                          border:
+                            focusedField === 'loginId'
+                              ? '1px solid rgba(255, 138, 108, 0.85)'
+                              : '1px solid rgba(255, 138, 108, 0.22)',
+                        }}
                       >
-                        {/* Name Input Bar */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                          style={{
-                            backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                            border:
-                              focusedField === 'name'
-                                ? '1px solid rgba(255, 138, 108, 0.85)'
-                                : '1px solid rgba(255, 138, 108, 0.22)',
-                          }}
-                        >
-                          <User className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                          <input
-                            type="text"
-                            required
-                            maxLength={80}
-                            value={name}
-                            onFocus={() => setFocusedField('name')}
-                            onBlur={() => setFocusedField(null)}
-                            onChange={e => setName(e.target.value)}
-                            placeholder="Ваше имя и фамилия *"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                          />
-                        </motion.div>
-
-                        {/* Phone Input Bar */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                          style={{
-                            backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                            border:
-                              focusedField === 'phone'
-                                ? '1px solid rgba(255, 138, 108, 0.85)'
-                                : '1px solid rgba(255, 138, 108, 0.22)',
-                          }}
-                        >
-                          <Phone className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                          <input
-                            type="tel"
-                            inputMode="tel"
-                            required
-                            maxLength={30}
-                            value={phoneNumber}
-                            onFocus={() => setFocusedField('phone')}
-                            onBlur={() => setFocusedField(null)}
-                            onChange={e => setPhoneNumber(e.target.value)}
-                            placeholder="Номер телефона (+7 999 123-45-67) *"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                          />
-                        </motion.div>
-
-                        {/* Email Input Bar */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                          style={{
-                            backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                            border:
-                              focusedField === 'email'
-                                ? '1px solid rgba(255, 138, 108, 0.85)'
-                                : '1px solid rgba(255, 138, 108, 0.22)',
-                          }}
-                        >
-                          <Mail className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                          <input
-                            type="email"
-                            inputMode="email"
-                            required
-                            maxLength={120}
-                            value={email}
-                            onFocus={() => setFocusedField('email')}
-                            onBlur={() => setFocusedField(null)}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="Электронная почта (Email) *"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                          />
-                        </motion.div>
-
-                        {/* Remember Me & SMS Info Row */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center justify-between pt-1 px-1 text-xs"
-                        >
-                          <label className="flex items-center gap-2 text-[#ffdfd4]/85 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={rememberMe}
-                              onChange={e => setRememberMe(e.target.checked)}
-                              className="w-4 h-4 rounded accent-[#DE482B] cursor-pointer"
-                            />
-                            <span>Запомнить меня</span>
-                          </label>
-                          <span className="text-[#ffbfa9]/75 italic text-[11px]">
-                            Подтверждение по СМС
-                          </span>
-                        </motion.div>
-
-                        {/* Primary Action Button */}
-                        <motion.div variants={fadeScaleItemVariants} className="pt-2">
-                          <motion.button
-                            whileHover={{ scale: 1.015 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="button"
-                            disabled={isSendingSms}
-                            onClick={handleRequestSmsCode}
-                            className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-                            style={{
-                              background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                              border: '1px solid rgba(255, 165, 140, 0.45)',
-                              boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
-                            }}
-                          >
-                            <span>{isSendingSms ? 'ОТПРАВКА СМС...' : 'РЕГИСТРАЦИЯ'}</span>
-                            <ArrowRight className="w-4 h-4 text-amber-200" />
-                          </motion.button>
-                        </motion.div>
+                        <User className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                        <input
+                          type="text"
+                          value={loginIdentifier}
+                          onFocus={() => setFocusedField('loginId')}
+                          onBlur={() => setFocusedField(null)}
+                          onChange={e => setLoginIdentifier(e.target.value)}
+                          placeholder="Логин (телефон или почта)"
+                          className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                        />
                       </motion.div>
-                    )}
 
-                    {wizardStep === 2 && (
-                      /* STEP 2: SMS CODE VERIFICATION IN SAME CARD FORMAT */
+                      {/* Password Input Bar */}
                       <motion.div
-                        variants={staggerContainerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-3.5"
+                        variants={fadeScaleItemVariants}
+                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
+                        style={{
+                          backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                          border:
+                            focusedField === 'loginPass'
+                              ? '1px solid rgba(255, 138, 108, 0.85)'
+                              : '1px solid rgba(255, 138, 108, 0.22)',
+                        }}
                       >
-                        <motion.div variants={fadeScaleItemVariants} className="text-center space-y-1">
-                          <h2 className="text-base font-display font-bold text-white">
-                            Подтверждение номера по СМС
-                          </h2>
-                          <p className="text-xs text-[#ffdfd4]/80">
-                            Мы отправили 4-значный код на номер{' '}
-                            <span className="font-mono-num font-semibold text-[#ff9d82]">
-                              {phoneNumber}
-                            </span>
-                          </p>
-                        </motion.div>
+                        <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                        <input
+                          type="password"
+                          value={loginPassword}
+                          onFocus={() => setFocusedField('loginPass')}
+                          onBlur={() => setFocusedField(null)}
+                          onChange={e => setLoginPassword(e.target.value)}
+                          placeholder="Пароль"
+                          className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                        />
+                      </motion.div>
 
-                        {/* Lock / SMS Code Bar */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
+                      {/* Remember Me Row */}
+                      <motion.div
+                        variants={fadeScaleItemVariants}
+                        className="flex items-center justify-between pt-0.5 px-1 text-xs"
+                      >
+                        <label className="flex items-center gap-2 text-[#ffdfd4]/85 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={e => setRememberMe(e.target.checked)}
+                            className="w-4 h-4 rounded accent-[#DE482B] cursor-pointer"
+                          />
+                          <span>Запомнить меня</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(8);
+                            setErrorMessage('');
+                            setAuthMode('register');
+                            setStepState([1, 1]);
+                          }}
+                          className="text-[#ffbfa9] hover:text-white italic text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Регистрация
+                        </button>
+                      </motion.div>
+
+                      {/* Bottom Row: Left/Main "ВОЙТИ" and Right "РЕГИСТРАЦИЯ" */}
+                      <motion.div
+                        variants={fadeScaleItemVariants}
+                        className="grid grid-cols-2 gap-2.5 pt-2"
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.015 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={handleLoginSubmit}
+                          className="py-3.5 px-4 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                           style={{
-                            backgroundColor: 'rgba(18, 11, 9, 0.86)',
-                            border:
-                              focusedField === 'sms'
-                                ? '1px solid rgba(255, 138, 108, 0.9)'
-                                : '1px solid rgba(255, 138, 108, 0.38)',
+                            background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
+                            border: '1px solid rgba(255, 165, 140, 0.5)',
+                            boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
                           }}
                         >
-                          <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={6}
-                            value={smsCodeInput}
-                            onFocus={() => setFocusedField('sms')}
-                            onBlur={() => setFocusedField(null)}
-                            onChange={e => setSmsCodeInput(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Код из СМС (4 цифры)"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[16px] font-mono-num tracking-[0.25em] text-white placeholder:tracking-normal placeholder:text-[#ffcab8]/45 font-bold appearance-none"
-                          />
-                          {generatedSmsCode && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                triggerHaptic(8);
-                                setSmsCodeInput(generatedSmsCode);
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-[#DE482B]/25 border border-[#ff8a6c]/40 text-[11px] font-bold text-[#ffcab8] shrink-0 cursor-pointer"
-                            >
-                              Код: {generatedSmsCode}
-                            </button>
-                          )}
-                        </motion.div>
+                          <span>ВОЙТИ</span>
+                        </motion.button>
 
-                        {/* Change Number / Resend Row */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center justify-between px-1 text-xs"
+                        <motion.button
+                          whileHover={{ scale: 1.015 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(8);
+                            setErrorMessage('');
+                            setAuthMode('register');
+                            setStepState([1, 1]);
+                          }}
+                          className="py-3.5 px-4 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-[#ffdfd4] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                          style={{
+                            backgroundColor: 'rgba(18, 11, 9, 0.85)',
+                            border: '1px solid rgba(255, 138, 108, 0.45)',
+                          }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => navigateToStep(1)}
-                            className="text-[#ffcab8]/80 hover:text-white flex items-center gap-1 cursor-pointer"
-                          >
-                            <ArrowLeft className="w-3.5 h-3.5" />
-                            <span>Изменить номер</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={resendCooldown > 0}
-                            onClick={handleRequestSmsCode}
-                            className="text-[#ffcab8]/85 hover:text-white italic flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            <span>
-                              {resendCooldown > 0
-                                ? `Повторить через ${resendCooldown}с`
-                                : 'Отправить код ещё раз'}
-                            </span>
-                          </button>
-                        </motion.div>
-
-                        <motion.div variants={fadeScaleItemVariants} className="pt-2">
-                          <motion.button
-                            whileHover={{ scale: 1.015 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="button"
-                            onClick={handleVerifySmsCode}
-                            className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                            style={{
-                              background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                              border: '1px solid rgba(255, 165, 140, 0.45)',
-                              boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
-                            }}
-                          >
-                            <span>ПОДТВЕРДИТЬ СМС-КОД</span>
-                            <ArrowRight className="w-4 h-4 text-amber-200" />
-                          </motion.button>
-                        </motion.div>
+                          <span>РЕГИСТРАЦИЯ</span>
+                        </motion.button>
                       </motion.div>
-                    )}
-
-                    {wizardStep === 3 && (
-                      /* STEP 3: PROFILE DETAILS & INTERESTS IN SAME CARD FORMAT */
-                      <motion.div
-                        variants={staggerContainerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-3"
-                      >
-                        {/* Age & Gender Row */}
-                        <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-2.5">
-                          <div
-                            className="flex items-center justify-between px-3 py-2 rounded-xl border border-[#ff8a6c]/22"
-                            style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => setAge(prev => Math.max(18, prev - 1))}
-                              className="w-7 h-7 rounded-lg bg-[#DE482B]/20 text-white font-bold cursor-pointer"
-                            >
-                              −
-                            </button>
-                            <div className="text-center">
-                              <span className="text-xs font-mono-num font-bold text-white block">
-                                {age} лет
-                              </span>
-                              <span className="text-[10px] text-[#ffcab8]/65 block">Возраст</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setAge(prev => Math.min(99, prev + 1))}
-                              className="w-7 h-7 rounded-lg bg-[#DE482B]/20 text-white font-bold cursor-pointer"
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          <div
-                            className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-[#ff8a6c]/22"
-                            style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
-                          >
-                            {[
-                              { val: 'female', label: 'Жен' },
-                              { val: 'male', label: 'Муж' },
-                            ].map(opt => {
-                              const active = gender === opt.val;
-                              return (
-                                <button
-                                  key={opt.val}
-                                  type="button"
-                                  onClick={() => setGender(opt.val as 'female' | 'male')}
-                                  className="rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                                  style={{
-                                    backgroundColor: active ? '#DE482B' : 'transparent',
-                                    color: active ? '#ffffff' : 'rgba(255, 202, 184, 0.75)',
-                                  }}
-                                >
-                                  {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-
-                        {/* City Input Bar with Quick Presets */}
-                        <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
-                          <div
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all"
+                    </motion.div>
+                  ) : (
+                    /* REGISTRATION WIZARD STEPS IN THE EXACT SAME CARD FORMAT */
+                    <motion.div
+                      key={`register-step-${wizardStep}`}
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{
+                        x: { type: 'spring', stiffness: 320, damping: 32, mass: 0.85 },
+                        opacity: { duration: 0.2 },
+                        scale: { duration: 0.2 },
+                      }}
+                      className="w-full"
+                    >
+                      {wizardStep === 1 && (
+                        /* STEP 1: REGISTRATION CONTACTS & PASSWORD */
+                        <motion.div
+                          variants={staggerContainerVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="space-y-2.5"
+                        >
+                          {/* Name Input Bar */}
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
                             style={{
                               backgroundColor: 'rgba(18, 11, 9, 0.82)',
                               border:
-                                focusedField === 'city'
+                                focusedField === 'name'
                                   ? '1px solid rgba(255, 138, 108, 0.85)'
                                   : '1px solid rgba(255, 138, 108, 0.22)',
                             }}
                           >
-                            <MapPin className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <User className="w-4 h-4 text-[#ff9d82] shrink-0" />
                             <input
                               type="text"
-                              maxLength={60}
-                              value={city}
-                              onFocus={() => setFocusedField('city')}
+                              required
+                              maxLength={80}
+                              value={name}
+                              onFocus={() => setFocusedField('name')}
                               onBlur={() => setFocusedField(null)}
-                              onChange={e => setCity(e.target.value)}
-                              placeholder="Ваш город"
+                              onChange={e => setName(e.target.value)}
+                              placeholder="Ваше имя и фамилия *"
                               className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
                             />
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {CITY_PRESETS.map(c => (
-                              <button
-                                key={c}
-                                type="button"
-                                onClick={() => setCity(c)}
-                                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer"
-                                style={{
-                                  backgroundColor:
-                                    city === c
-                                      ? 'rgba(222, 72, 43, 0.35)'
-                                      : 'rgba(18, 11, 9, 0.65)',
-                                  borderColor:
-                                    city === c
-                                      ? 'rgba(255, 138, 108, 0.75)'
-                                      : 'rgba(255, 138, 108, 0.2)',
-                                  color: '#ffdfd4',
-                                }}
-                              >
-                                {c}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
+                          </motion.div>
 
-                        {/* Occupation Input Bar */}
+                          {/* Phone Input Bar */}
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
+                            style={{
+                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                              border:
+                                focusedField === 'phone'
+                                  ? '1px solid rgba(255, 138, 108, 0.85)'
+                                  : '1px solid rgba(255, 138, 108, 0.22)',
+                            }}
+                          >
+                            <Phone className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <input
+                              type="tel"
+                              inputMode="tel"
+                              required
+                              maxLength={30}
+                              value={phoneNumber}
+                              onFocus={() => setFocusedField('phone')}
+                              onBlur={() => setFocusedField(null)}
+                              onChange={e => setPhoneNumber(e.target.value)}
+                              placeholder="Номер телефона (+7 999 123-45-67) *"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                            />
+                          </motion.div>
+
+                          {/* Email Input Bar */}
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
+                            style={{
+                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                              border:
+                                focusedField === 'email'
+                                  ? '1px solid rgba(255, 138, 108, 0.85)'
+                                  : '1px solid rgba(255, 138, 108, 0.22)',
+                            }}
+                          >
+                            <Mail className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <input
+                              type="email"
+                              inputMode="email"
+                              required
+                              maxLength={120}
+                              value={email}
+                              onFocus={() => setFocusedField('email')}
+                              onBlur={() => setFocusedField(null)}
+                              onChange={e => setEmail(e.target.value)}
+                              placeholder="Электронная почта (Email) *"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                            />
+                          </motion.div>
+
+                          {/* Password Input Bar */}
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
+                            style={{
+                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                              border:
+                                focusedField === 'regPass'
+                                  ? '1px solid rgba(255, 138, 108, 0.85)'
+                                  : '1px solid rgba(255, 138, 108, 0.22)',
+                            }}
+                          >
+                            <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <input
+                              type="password"
+                              required
+                              maxLength={60}
+                              value={registerPassword}
+                              onFocus={() => setFocusedField('regPass')}
+                              onBlur={() => setFocusedField(null)}
+                              onChange={e => setRegisterPassword(e.target.value)}
+                              placeholder="Придумайте пароль *"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                            />
+                          </motion.div>
+
+                          {/* Action Buttons */}
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-2.5 pt-2"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic(8);
+                                setErrorMessage('');
+                                setAuthMode('login');
+                              }}
+                              className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-4 h-4" />
+                              <span>Вход</span>
+                            </button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.015 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              disabled={isSendingSms}
+                              onClick={handleRequestSmsCode}
+                              className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                              style={{
+                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
+                                border: '1px solid rgba(255, 165, 140, 0.45)',
+                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                              }}
+                            >
+                              <span>{isSendingSms ? 'ОТПРАВКА СМС...' : 'ДАЛЕЕ · КОД СМС'}</span>
+                              <ArrowRight className="w-4 h-4 text-amber-200" />
+                            </motion.button>
+                          </motion.div>
+                        </motion.div>
+                      )}
+
+                      {wizardStep === 2 && (
+                        /* STEP 2: SMS CODE VERIFICATION */
                         <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all"
-                          style={{
-                            backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                            border:
-                              focusedField === 'occupation'
-                                ? '1px solid rgba(255, 138, 108, 0.85)'
-                                : '1px solid rgba(255, 138, 108, 0.22)',
-                          }}
+                          variants={staggerContainerVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="space-y-3.5"
                         >
-                          <Briefcase className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                          <input
-                            type="text"
-                            maxLength={100}
-                            value={occupation}
-                            onFocus={() => setFocusedField('occupation')}
-                            onBlur={() => setFocusedField(null)}
-                            onChange={e => setOccupation(e.target.value)}
-                            placeholder="Сфера / Профессия (например: Дизайн, IT)"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                          />
-                        </motion.div>
+                          <motion.div variants={fadeScaleItemVariants} className="text-center space-y-1">
+                            <h2 className="text-base font-display font-bold text-white">
+                              Подтверждение номера по СМС
+                            </h2>
+                            <p className="text-xs text-[#ffdfd4]/80">
+                              Мы отправили 4-значный код на номер{' '}
+                              <span className="font-mono-num font-semibold text-[#ff9d82]">
+                                {phoneNumber}
+                              </span>
+                            </p>
+                          </motion.div>
 
-                        {/* Compact Interest Selector */}
-                        <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs px-0.5">
-                            <span className="font-semibold text-[#ffdfd4]">
-                              Выберите интересы ({interests.length})
-                            </span>
-                            <span className="text-[11px] text-[#ff9d82] font-mono-num">
-                              {matchedEventsCount} встреч рядом
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
-                            {INTEREST_CATALOG.map(item => {
-                              const Icon = item.icon;
-                              const active = interests.includes(item.tag);
-                              return (
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
+                            style={{
+                              backgroundColor: 'rgba(18, 11, 9, 0.86)',
+                              border:
+                                focusedField === 'sms'
+                                  ? '1px solid rgba(255, 138, 108, 0.9)'
+                                  : '1px solid rgba(255, 138, 108, 0.38)',
+                            }}
+                          >
+                            <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={smsCodeInput}
+                              onFocus={() => setFocusedField('sms')}
+                              onBlur={() => setFocusedField(null)}
+                              onChange={e => setSmsCodeInput(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Код из СМС (4 цифры)"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[16px] font-mono-num tracking-[0.25em] text-white placeholder:tracking-normal placeholder:text-[#ffcab8]/45 font-bold appearance-none"
+                            />
+                            {generatedSmsCode && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic(8);
+                                  setSmsCodeInput(generatedSmsCode);
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-[#DE482B]/25 border border-[#ff8a6c]/40 text-[11px] font-bold text-[#ffcab8] shrink-0 cursor-pointer"
+                              >
+                                Код: {generatedSmsCode}
+                              </button>
+                            )}
+                          </motion.div>
+
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center justify-between px-1 text-xs"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => navigateToStep(1)}
+                              className="text-[#ffcab8]/80 hover:text-white flex items-center gap-1 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-3.5 h-3.5" />
+                              <span>Изменить номер</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={resendCooldown > 0}
+                              onClick={handleRequestSmsCode}
+                              className="text-[#ffcab8]/85 hover:text-white italic flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>
+                                {resendCooldown > 0
+                                  ? `Повторить через ${resendCooldown}с`
+                                  : 'Отправить код ещё раз'}
+                              </span>
+                            </button>
+                          </motion.div>
+
+                          <motion.div variants={fadeScaleItemVariants} className="pt-2">
+                            <motion.button
+                              whileHover={{ scale: 1.015 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              onClick={handleVerifySmsCode}
+                              className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                              style={{
+                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
+                                border: '1px solid rgba(255, 165, 140, 0.45)',
+                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                              }}
+                            >
+                              <span>ПОДТВЕРДИТЬ СМС-КОД</span>
+                              <ArrowRight className="w-4 h-4 text-amber-200" />
+                            </motion.button>
+                          </motion.div>
+                        </motion.div>
+                      )}
+
+                      {wizardStep === 3 && (
+                        /* STEP 3: PROFILE DETAILS & INTERESTS */
+                        <motion.div
+                          variants={staggerContainerVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="space-y-3"
+                        >
+                          <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-2.5">
+                            <div
+                              className="flex items-center justify-between px-3 py-2 rounded-xl border border-[#ff8a6c]/22"
+                              style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setAge(prev => Math.max(18, prev - 1))}
+                                className="w-7 h-7 rounded-lg bg-[#DE482B]/20 text-white font-bold cursor-pointer"
+                              >
+                                −
+                              </button>
+                              <div className="text-center">
+                                <span className="text-xs font-mono-num font-bold text-white block">
+                                  {age} лет
+                                </span>
+                                <span className="text-[10px] text-[#ffcab8]/65 block">Возраст</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setAge(prev => Math.min(99, prev + 1))}
+                                className="w-7 h-7 rounded-lg bg-[#DE482B]/20 text-white font-bold cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <div
+                              className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-[#ff8a6c]/22"
+                              style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
+                            >
+                              {[
+                                { val: 'female', label: 'Жен' },
+                                { val: 'male', label: 'Муж' },
+                              ].map(opt => {
+                                const active = gender === opt.val;
+                                return (
+                                  <button
+                                    key={opt.val}
+                                    type="button"
+                                    onClick={() => setGender(opt.val as 'female' | 'male')}
+                                    className="rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                                    style={{
+                                      backgroundColor: active ? '#DE482B' : 'transparent',
+                                      color: active ? '#ffffff' : 'rgba(255, 202, 184, 0.75)',
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+
+                          <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
+                            <div
+                              className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all"
+                              style={{
+                                backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                                border:
+                                  focusedField === 'city'
+                                    ? '1px solid rgba(255, 138, 108, 0.85)'
+                                    : '1px solid rgba(255, 138, 108, 0.22)',
+                              }}
+                            >
+                              <MapPin className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                              <input
+                                type="text"
+                                maxLength={60}
+                                value={city}
+                                onFocus={() => setFocusedField('city')}
+                                onBlur={() => setFocusedField(null)}
+                                onChange={e => setCity(e.target.value)}
+                                placeholder="Ваш город"
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                              />
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {CITY_PRESETS.map(c => (
                                 <button
-                                  key={item.tag}
+                                  key={c}
                                   type="button"
-                                  onClick={() => toggleInterest(item.tag)}
-                                  className="px-2.5 py-2 rounded-xl text-[11px] font-semibold border flex items-center justify-between gap-1.5 text-left transition-all cursor-pointer"
+                                  onClick={() => setCity(c)}
+                                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer"
                                   style={{
-                                    backgroundColor: active
-                                      ? 'rgba(222, 72, 43, 0.82)'
-                                      : 'rgba(18, 11, 9, 0.75)',
-                                    borderColor: active
-                                      ? 'rgba(255, 165, 140, 0.8)'
-                                      : 'rgba(255, 138, 108, 0.2)',
-                                    color: '#ffffff',
+                                    backgroundColor:
+                                      city === c
+                                        ? 'rgba(222, 72, 43, 0.35)'
+                                        : 'rgba(18, 11, 9, 0.65)',
+                                    borderColor:
+                                      city === c
+                                        ? 'rgba(255, 138, 108, 0.75)'
+                                        : 'rgba(255, 138, 108, 0.2)',
+                                    color: '#ffdfd4',
                                   }}
                                 >
-                                  <span className="flex items-center gap-1.5 truncate">
-                                    <Icon className="w-3.5 h-3.5 text-[#ffb49e] shrink-0" />
-                                    <span className="truncate">{item.tag}</span>
-                                  </span>
-                                  {active && <Check className="w-3 h-3 text-white shrink-0" />}
+                                  {c}
                                 </button>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
 
-                        {/* Navigation Buttons */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-2.5 pt-2"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => navigateToStep(2)}
-                            className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
-                          >
-                            <ArrowLeft className="w-4 h-4" />
-                            <span>Назад</span>
-                          </button>
-                          <motion.button
-                            whileHover={{ scale: 1.015 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="button"
-                            disabled={isSaving}
-                            onClick={handleSaveAndProceedToFinal}
-                            className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all"
                             style={{
-                              background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                              border: '1px solid rgba(255, 165, 140, 0.45)',
-                              boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                              border:
+                                focusedField === 'occupation'
+                                  ? '1px solid rgba(255, 138, 108, 0.85)'
+                                  : '1px solid rgba(255, 138, 108, 0.22)',
                             }}
                           >
-                            <span>{isSaving ? 'СОХРАНЕНИЕ...' : 'ДАЛЕЕ'}</span>
-                            <ArrowRight className="w-4 h-4 text-amber-200" />
-                          </motion.button>
-                        </motion.div>
-                      </motion.div>
-                    )}
+                            <Briefcase className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <input
+                              type="text"
+                              maxLength={100}
+                              value={occupation}
+                              onFocus={() => setFocusedField('occupation')}
+                              onBlur={() => setFocusedField(null)}
+                              onChange={e => setOccupation(e.target.value)}
+                              placeholder="Сфера / Профессия (например: Дизайн, IT)"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                            />
+                          </motion.div>
 
-                    {wizardStep === 4 && (
-                      /* STEP 4: SUMMARY & EXPLICIT MANUAL "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" BUTTON */
-                      <motion.div
-                        variants={staggerContainerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="space-y-3"
-                      >
+                          <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs px-0.5">
+                              <span className="font-semibold text-[#ffdfd4]">
+                                Выберите интересы ({interests.length})
+                              </span>
+                              <span className="text-[11px] text-[#ff9d82] font-mono-num">
+                                {matchedEventsCount} встреч рядом
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+                              {INTEREST_CATALOG.map(item => {
+                                const Icon = item.icon;
+                                const active = interests.includes(item.tag);
+                                return (
+                                  <button
+                                    key={item.tag}
+                                    type="button"
+                                    onClick={() => toggleInterest(item.tag)}
+                                    className="px-2.5 py-2 rounded-xl text-[11px] font-semibold border flex items-center justify-between gap-1.5 text-left transition-all cursor-pointer"
+                                    style={{
+                                      backgroundColor: active
+                                        ? 'rgba(222, 72, 43, 0.82)'
+                                        : 'rgba(18, 11, 9, 0.75)',
+                                      borderColor: active
+                                        ? 'rgba(255, 165, 140, 0.8)'
+                                        : 'rgba(255, 138, 108, 0.2)',
+                                      color: '#ffffff',
+                                    }}
+                                  >
+                                    <span className="flex items-center gap-1.5 truncate">
+                                      <Icon className="w-3.5 h-3.5 text-[#ffb49e] shrink-0" />
+                                      <span className="truncate">{item.tag}</span>
+                                    </span>
+                                    {active && <Check className="w-3 h-3 text-white shrink-0" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-2.5 pt-2"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => navigateToStep(2)}
+                              className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-4 h-4" />
+                              <span>Назад</span>
+                            </button>
+                            <motion.button
+                              whileHover={{ scale: 1.015 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              disabled={isSaving}
+                              onClick={handleSaveAndProceedToFinal}
+                              className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                              style={{
+                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
+                                border: '1px solid rgba(255, 165, 140, 0.45)',
+                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                              }}
+                            >
+                              <span>{isSaving ? 'СОХРАНЕНИЕ...' : 'ДАЛЕЕ'}</span>
+                              <ArrowRight className="w-4 h-4 text-amber-200" />
+                            </motion.button>
+                          </motion.div>
+                        </motion.div>
+                      )}
+
+                      {wizardStep === 4 && (
+                        /* STEP 4: SUMMARY & EXPLICIT MANUAL "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" BUTTON */
                         <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="p-3.5 rounded-2xl border border-[#ff8a6c]/35 space-y-2.5"
-                          style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
+                          variants={staggerContainerVariants}
+                          initial="hidden"
+                          animate="show"
+                          className="space-y-3"
                         >
-                          <div className="flex items-center justify-between border-b border-[#ff8a6c]/20 pb-2">
-                            <span className="text-[11px] font-mono-num font-bold uppercase tracking-wider text-[#ff9d82]">
-                              АНКЕТА ПОДТВЕРЖДЕНА
-                            </span>
-                            <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              СМС проверено
-                            </span>
-                          </div>
-
-                          <div className="space-y-1 text-left">
-                            <div className="text-sm font-display font-bold text-white">
-                              {name.trim()}, {age} · {city}
-                            </div>
-                            <div className="text-xs text-[#ffdfd4]/85 flex items-center gap-2">
-                              <Phone className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
-                              <span className="font-mono-num">{phoneNumber}</span>
-                            </div>
-                            <div className="text-xs text-[#ffdfd4]/85 flex items-center gap-2">
-                              <Mail className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
-                              <span className="truncate">{email}</span>
-                            </div>
-                            <div className="text-[11px] text-[#ffb49e] pt-1">
-                              {interests.slice(0, 4).join(' · ')}
-                            </div>
-                          </div>
-                        </motion.div>
-
-                        {/* Open to Invites Checkbox Row */}
-                        <motion.label
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#ff8a6c]/22 cursor-pointer text-xs text-[#ffdfd4]"
-                          style={{ backgroundColor: 'rgba(18, 11, 9, 0.72)' }}
-                        >
-                          <span>Открыт(а) к приглашениям на вечер</span>
-                          <input
-                            type="checkbox"
-                            checked={openToInvites}
-                            onChange={e => setOpenToInvites(e.target.checked)}
-                            className="w-4 h-4 rounded accent-[#DE482B]"
-                          />
-                        </motion.label>
-
-                        {/* Manual "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" Button — Window stays open until clicked */}
-                        <motion.div
-                          variants={fadeScaleItemVariants}
-                          className="flex items-center gap-2.5 pt-2"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => navigateToStep(3)}
-                            className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="p-3.5 rounded-2xl border border-[#ff8a6c]/35 space-y-2.5"
+                            style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
                           >
-                            <ArrowLeft className="w-4 h-4" />
-                            <span>Назад</span>
-                          </button>
+                            <div className="flex items-center justify-between border-b border-[#ff8a6c]/20 pb-2">
+                              <span className="text-[11px] font-mono-num font-bold uppercase tracking-wider text-[#ff9d82]">
+                                АНКЕТА ПОДТВЕРЖДЕНА
+                              </span>
+                              <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                СМС проверено
+                              </span>
+                            </div>
 
-                          <motion.button
-                            whileHover={{ scale: 1.015 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic([15, 35, 15]);
-                              onClose();
-                            }}
-                            className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                            style={{
-                              background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                              border: '1px solid rgba(255, 165, 140, 0.5)',
-                              boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.8)',
-                            }}
+                            <div className="space-y-1 text-left">
+                              <div className="text-sm font-display font-bold text-white">
+                                {name.trim()}, {age} · {city}
+                              </div>
+                              <div className="text-xs text-[#ffdfd4]/85 flex items-center gap-2">
+                                <Phone className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
+                                <span className="font-mono-num">{phoneNumber}</span>
+                              </div>
+                              <div className="text-xs text-[#ffdfd4]/85 flex items-center gap-2">
+                                <Mail className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
+                                <span className="truncate">{email}</span>
+                              </div>
+                              <div className="text-[11px] text-[#ffb49e] pt-1">
+                                {interests.slice(0, 4).join(' · ')}
+                              </div>
+                            </div>
+                          </motion.div>
+
+                          <motion.label
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#ff8a6c]/22 cursor-pointer text-xs text-[#ffdfd4]"
+                            style={{ backgroundColor: 'rgba(18, 11, 9, 0.72)' }}
                           >
-                            <CheckCircle2 className="w-4 h-4 text-amber-200" />
-                            <span>ЗАВЕРШИТЬ РЕГИСТРАЦИЮ</span>
-                          </motion.button>
+                            <span>Открыт(а) к приглашениям на вечер</span>
+                            <input
+                              type="checkbox"
+                              checked={openToInvites}
+                              onChange={e => setOpenToInvites(e.target.checked)}
+                              className="w-4 h-4 rounded accent-[#DE482B]"
+                            />
+                          </motion.label>
+
+                          <motion.div
+                            variants={fadeScaleItemVariants}
+                            className="flex items-center gap-2.5 pt-2"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => navigateToStep(3)}
+                              className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-4 h-4" />
+                              <span>Назад</span>
+                            </button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.015 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic([15, 35, 15]);
+                                onClose();
+                              }}
+                              className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                              style={{
+                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
+                                border: '1px solid rgba(255, 165, 140, 0.5)',
+                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.8)',
+                              }}
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-amber-200" />
+                              <span>ЗАВЕРШИТЬ РЕГИСТРАЦИЮ</span>
+                            </motion.button>
+                          </motion.div>
                         </motion.div>
-                      </motion.div>
-                    )}
-                  </motion.div>
+                      )}
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </div>
             </div>
