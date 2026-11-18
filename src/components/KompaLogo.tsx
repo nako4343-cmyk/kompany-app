@@ -377,3 +377,49 @@ export const KompaLogoMark: React.FC<KompaLogoMarkProps> = ({
     </div>
   );
 };
+
+export interface KompaWordmarkProps {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+/**
+ * Official Kompa Wordmark Badge:
+ * - Black rectangle with rounded corners (#111318)
+ * - Capital letter "K" in theme carrot-coral (#F0593B)
+ * - Remaining letters "ompa" in pure white (#FFFFFF)
+ */
+export const KompaWordmark: React.FC<KompaWordmarkProps> = ({
+  size = 'md',
+  className = '',
+}) => {
+  const sizeStyles = {
+    sm: {
+      container: 'px-2.5 py-1 rounded-[10px]',
+      text: 'text-[16px]',
+    },
+    md: {
+      container: 'px-4 py-1.5 rounded-[14px]',
+      text: 'text-[27px]',
+    },
+    lg: {
+      container: 'px-5 py-2 rounded-[18px]',
+      text: 'text-[36px]',
+    },
+  }[size];
+
+  return (
+    <span
+      className={`inline-flex items-baseline justify-center font-display font-extrabold leading-none tracking-[-0.035em] select-none ${sizeStyles.container} ${sizeStyles.text} ${className}`}
+      style={{
+        backgroundColor: '#111318',
+        boxShadow:
+          '0 8px 20px -6px rgba(17, 19, 24, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+      }}
+    >
+      <span style={{ color: '#F0593B' }}>K</span>
+      <span style={{ color: '#FFFFFF' }}>ompa</span>
+    </span>
+  );
+};
+

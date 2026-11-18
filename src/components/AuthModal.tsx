@@ -39,7 +39,7 @@ import {
   FirebaseUser,
   sanitizeValidId,
 } from '../lib/firebase.ts';
-import { KompaLogoMark } from './KompaLogo.tsx';
+import { KompaLogoMark, KompaWordmark } from './KompaLogo.tsx';
 
 interface AuthModalProps {
   currentUser: UserProfile;
@@ -726,12 +726,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 }}
                 className="mt-3.5 flex flex-col items-center"
               >
-                <span
-                  className="font-display font-extrabold text-[42px] leading-none tracking-[-0.035em]"
-                  style={{ color: PALETTE.textNavy }}
-                >
-                  Kompa
-                </span>
+                <KompaWordmark size="lg" />
 
                 <motion.p
                   initial={{ opacity: 0, y: 6 }}
@@ -827,13 +822,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       />
                     </button>
 
-                    <div className="mt-1.5 flex items-baseline">
-                      <span
-                        className="font-display font-extrabold text-[30px] leading-none tracking-[-0.035em]"
-                        style={{ color: PALETTE.textNavy }}
-                      >
-                        Kompa
-                      </span>
+                    <div className="mt-2 flex items-baseline">
+                      <KompaWordmark size="md" />
                     </div>
 
                     <p

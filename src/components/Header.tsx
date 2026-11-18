@@ -16,7 +16,7 @@ import {
 import { UserProfile, AppNotification } from '../types/index.ts';
 import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
 import { AppLanguage, LANGUAGE_OPTIONS, UI_TEXT } from '../i18n/translations.ts';
-import { KompaLogoMark } from './KompaLogo.tsx';
+import { KompaLogoMark, KompaWordmark } from './KompaLogo.tsx';
 
 export type ColorPaletteId = 'sunset' | 'cobalt' | 'midnight';
 
@@ -147,12 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
           <KompaLogoMark size={38} variant="badge" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span
-                className="font-display font-extrabold text-base sm:text-lg tracking-[-0.03em] truncate"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                Kompa
-              </span>
+              <KompaWordmark size="sm" />
               <span
                 className="hidden sm:inline-block text-xs font-medium shrink-0"
                 style={{ color: 'var(--text-muted)' }}
