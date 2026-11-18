@@ -29,6 +29,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  Play,
+  Palette,
 } from 'lucide-react';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { UserProfile } from '../types/index.ts';
@@ -39,7 +41,13 @@ import {
   FirebaseUser,
   sanitizeValidId,
 } from '../lib/firebase.ts';
-import { KompaLogoMark } from './KompaLogo.tsx';
+import {
+  KompaLogoMark,
+  KompaLogoConceptId,
+  LOGO_CONCEPT_OPTIONS,
+  BRAND_PALETTE_THEMES,
+  BrandPaletteTheme,
+} from './KompaLogo.tsx';
 
 interface AuthModalProps {
   currentUser: UserProfile;
@@ -66,7 +74,7 @@ const triggerHaptic = (pattern: number | number[] = 8) => {
 const INTEREST_CATALOG: Array<{
   tag: string;
   labelEn: string;
-  icon: React.FC<{ className?: string }>;
+  icon: React.FC<{ className?: string; style?: React.CSSProperties }>;
 }> = [
   { tag: 'Настольные игры', labelEn: 'Board Games', icon: Dice5 },
   { tag: 'Рестораны / Бары', labelEn: 'Dining & Bars', icon: Utensils },
@@ -162,7 +170,7 @@ function compressImageFile(file: File): Promise<string> {
   });
 }
 
-function createInitialsAvatarDataUrl(fullName: string): string {
+function createInitialsAvatarDataUrl(fullName: string, bgHex = '#5E3AEF'): string {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
   const initials =
     parts.length >= 2
@@ -170,7 +178,7 @@ function createInitialsAvatarDataUrl(fullName: string): string {
       : (parts[0]?.slice(0, 2) || 'КМ').toUpperCase();
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-    <rect width="240" height="240" rx="120" fill="#5E3AEF"/>
+    <rect width="240" height="240" rx="120" fill="${bgHex}"/>
     <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" fill="#FFFFFF" font-family="Onest, Manrope, sans-serif" font-weight="800" font-size="84">${initials}</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -188,6 +196,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const isEn = lang === 'en';
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Selected Logo Concept (1 of 5) & Selected Color Palette (1 of 5)
+  const [selectedLogoConcept, setSelectedLogoConcept] = useState<KompaLogoConceptId>(() => {
+    try {
+      const saved = localStorage.getItem('kompa_brand_logo_concept') as KompaLogoConceptId;
+      return saved && LOGO_CONCEPT_OPTIONS.some(o => o.id === saved) ? saved : 'knot';
+    } catch {
+      return 'knot';
+    }
+  });
+
+  const [selectedPaletteId, setSelectedPaletteId] = useState<BrandPaletteTheme['id']>(() => {
+    try {
+      const saved = localStorage.getItem('kompa_brand_palette_id') as BrandPaletteTheme['id'];
+      return saved && BRAND_PALETTE_THEMES.some(p => p.id === saved) ? saved : 'iris';
+    } catch {
+      return 'iris';
+    }
+  });
+
+  const activePalette = useMemo(
+    () => BRAND_PALETTE_THEMES.find(p => p.id === selectedPaletteId) || BRAND_PALETTE_THEMES[0],
+    [selectedPaletteId]
+  );
+
+  const activeConceptObj = useMemo(
+    () => LOGO_CONCEPT_OPTIONS.find(c => c.id === selectedLogoConcept) || LOGO_CONCEPT_OPTIONS[0],
+    [selectedLogoConcept]
+  );
+
+  const handleSelectLogoConcept = (conceptId: KompaLogoConceptId, replaySplash = false) => {
+    triggerHaptic(8);
+    setSelectedLogoConcept(conceptId);
+    try {
+      localStorage.setItem('kompa_brand_logo_concept', conceptId);
+      window.dispatchEvent(new Event('kompa-brand-updated'));
+    } catch {
+      // ignore
+    }
+    if (replaySplash) {
+      setShowLogoSplash(true);
+    }
+  };
+
+  const handleSelectPalette = (paletteId: BrandPaletteTheme['id']) => {
+    triggerHaptic(8);
+    setSelectedPaletteId(paletteId);
+    try {
+      localStorage.setItem('kompa_brand_palette_id', paletteId);
+    } catch {
+      // ignore
+    }
+  };
 
   // Flagship iOS Launch Splash Screen (2.05s duration -> smooth transition to Auth screen)
   const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
@@ -352,7 +413,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       name: resolvedName,
       email: isEmail ? cleanLogin : currentUser.email || 'user@kompa.app',
       phoneNumber: !isEmail ? cleanLogin : currentUser.phoneNumber || '+7 (999) 000-00-00',
-      avatarUrl: avatarUrl || currentUser.avatarUrl || createInitialsAvatarDataUrl(resolvedName),
+      avatarUrl:
+        avatarUrl ||
+        currentUser.avatarUrl ||
+        createInitialsAvatarDataUrl(resolvedName, activePalette.accentPrimary),
       onlineStatus: 'online',
       lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
     };
@@ -506,7 +570,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const activeFbUser = auth.currentUser;
       const uid = activeFbUser ? sanitizeValidId(activeFbUser.uid) : currentUser.id;
       const cleanName = name.trim().slice(0, 80) || 'Участник Kompa';
-      const finalAvatar = avatarUrl || createInitialsAvatarDataUrl(cleanName);
+      const finalAvatar =
+        avatarUrl || createInitialsAvatarDataUrl(cleanName, activePalette.accentPrimary);
 
       const updatedProfile: UserProfile = {
         ...currentUser,
@@ -564,10 +629,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const getFieldStyle = (fieldId: string): React.CSSProperties => {
     const isFocused = focusedField === fieldId;
     return {
-      backgroundColor: isFocused ? '#FFFFFF' : '#F6F5FB',
-      border: isFocused ? '1.5px solid #5E3AEF' : '1.5px solid #E5E1F2',
+      backgroundColor: isFocused ? activePalette.fieldFocusBg : activePalette.fieldBg,
+      border: isFocused
+        ? `1.5px solid ${activePalette.accentPrimary}`
+        : `1.5px solid ${activePalette.fieldBorder}`,
       boxShadow: isFocused
-        ? '0 0 0 4px rgba(94, 58, 239, 0.10)'
+        ? `0 0 0 4px ${activePalette.accentPrimary}1C`
         : '0 1px 2px rgba(20, 16, 38, 0.02)',
     };
   };
@@ -585,11 +652,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
         if (!isInitialGate) onClose();
       }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto pt-safe pb-safe select-none"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-3.5 sm:p-6 overflow-y-auto pt-safe pb-safe select-none transition-colors duration-300"
       style={{
-        backgroundColor: '#F7F6FB',
-        backgroundImage:
-          'radial-gradient(circle at 50% 18%, rgba(108, 71, 255, 0.09) 0%, rgba(157, 123, 255, 0.04) 38%, rgba(247, 246, 251, 0) 72%)',
+        backgroundColor: activePalette.canvasBg,
+        backgroundImage: activePalette.canvasAura,
       }}
     >
       {/* Hidden Recaptcha container for Firebase Phone Auth */}
@@ -617,28 +683,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               triggerHaptic(10);
               setSmsCodeInput(generatedSmsCode);
             }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-60 w-[calc(100%-2rem)] max-w-[400px] p-3.5 rounded-2xl bg-white/95 border border-[#DDD6FE] shadow-xl cursor-pointer flex items-center justify-between gap-3 backdrop-blur-xl"
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-60 w-[calc(100%-2rem)] max-w-[408px] p-3.5 rounded-2xl shadow-xl cursor-pointer flex items-center justify-between gap-3 backdrop-blur-xl"
+            style={{
+              backgroundColor: activePalette.cardBg,
+              border: `1px solid ${activePalette.accentSoftBorder}`,
+            }}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-[#F2EEFF] border border-[#DDD6FE] flex items-center justify-center text-[#5E3AEF] shrink-0">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                  backgroundColor: activePalette.accentSoftBg,
+                  color: activePalette.accentPrimary,
+                }}
+              >
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div className="min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#5E3AEF]">
+                  <span
+                    className="text-[11px] font-bold uppercase tracking-wider"
+                    style={{ color: activePalette.accentPrimary }}
+                  >
                     СМС · KOMPA
                   </span>
-                  <span className="text-[11px] text-[#8A84A3]">сейчас</span>
+                  <span className="text-[11px]" style={{ color: activePalette.textMuted }}>
+                    сейчас
+                  </span>
                 </div>
-                <p className="text-xs text-[#141026] font-medium truncate mt-0.5">
+                <p
+                  className="text-xs font-medium truncate mt-0.5"
+                  style={{ color: activePalette.textPrimary }}
+                >
                   Код подтверждения:{' '}
-                  <strong className="font-mono-num text-sm text-[#5E3AEF] tracking-wider">
+                  <strong
+                    className="font-mono-num text-sm tracking-wider"
+                    style={{ color: activePalette.accentPrimary }}
+                  >
                     {generatedSmsCode}
                   </strong>
                 </p>
               </div>
             </div>
-            <span className="px-3 py-1.5 rounded-xl bg-[#F2EEFF] text-xs font-bold text-[#5E3AEF] shrink-0">
+            <span
+              className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0"
+              style={{
+                backgroundColor: activePalette.accentSoftBg,
+                color: activePalette.accentPrimary,
+              }}
+            >
               Вставить
             </span>
           </motion.div>
@@ -649,14 +742,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {showLogoSplash ? (
           /* =====================================================================
              STAGE 0: FLAGSHIP iOS LAUNCH ANIMATION (SPLASH SCREEN — 2.05s)
-             1. Clean porcelain-lavender canvas (#F7F6FB)
-             2. Graphic symbol smoothly forms via 3 converging ribbon paths
-             3. Brand wordmark "kompa." emerges below with balanced typography
-             4. Subtle celebration accent dot completes the mark
-             5. Seamless layout transition into the Authorization Screen
              ===================================================================== */
           <motion.div
-            key="kompa-flagship-splash"
+            key={`kompa-flagship-splash-${selectedLogoConcept}-${selectedPaletteId}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -670,22 +758,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             >
               {/* Graphic Symbol with Vector Formation Choreography */}
               <div className="relative flex items-center justify-center">
-                {/* Soft natural accent pulse on completion */}
                 <motion.div
                   initial={{ scale: 0.85, opacity: 0 }}
                   animate={{
                     scale: [0.85, 1.16, 1.24],
-                    opacity: [0, 0.28, 0],
+                    opacity: [0, 0.25, 0],
                   }}
                   transition={{
                     duration: 1.1,
-                    delay: 0.68,
+                    delay: 0.65,
                     ease: STUDIO_EASE,
                   }}
                   className="pointer-events-none absolute inset-0 rounded-[24px]"
-                  style={{ backgroundColor: '#6C47FF' }}
+                  style={{ backgroundColor: activePalette.accentPrimary }}
                 />
-                <KompaLogoMark size={84} variant="brand" animated={true} />
+                <KompaLogoMark
+                  size={84}
+                  concept={selectedLogoConcept}
+                  palette={activePalette}
+                  variant="brand"
+                  animated={true}
+                />
               </div>
 
               {/* Wordmark & Tagline Emergence */}
@@ -694,13 +787,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: 0.55,
-                  delay: 0.48,
+                  delay: 0.45,
                   ease: STUDIO_EASE,
                 }}
                 className="mt-5 flex flex-col items-center"
               >
                 <div className="flex items-baseline">
-                  <span className="font-display font-extrabold text-[34px] leading-none tracking-[-0.04em] text-[#141026]">
+                  <span
+                    className="font-display font-extrabold text-[34px] leading-none tracking-[-0.04em]"
+                    style={{ color: activePalette.textPrimary }}
+                  >
                     kompa
                   </span>
                   <motion.span
@@ -708,10 +804,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     animate={{ scale: [0, 1.25, 1], opacity: 1 }}
                     transition={{
                       duration: 0.45,
-                      delay: 0.82,
+                      delay: 0.78,
                       ease: STUDIO_EASE,
                     }}
-                    className="inline-block w-2 h-2 rounded-full ml-0.5 mb-0.5 bg-[#6C47FF]"
+                    className="inline-block w-2 h-2 rounded-full ml-0.5 mb-0.5"
+                    style={{ backgroundColor: activePalette.accentPrimary }}
                   />
                 </div>
 
@@ -720,10 +817,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
                     duration: 0.48,
-                    delay: 0.72,
+                    delay: 0.68,
                     ease: STUDIO_EASE,
                   }}
-                  className="mt-2 text-[13px] font-medium tracking-[-0.01em] text-[#6E6888]"
+                  className="mt-2 text-[13px] font-medium tracking-[-0.01em]"
+                  style={{ color: activePalette.textMuted }}
                 >
                   Живые события и компания рядом
                 </motion.p>
@@ -732,9 +830,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </motion.div>
         ) : (
           /* =====================================================================
-             STAGE 1: FLAGSHIP AUTHORIZATION & REGISTRATION CARD
-             Clean light surface, balanced whitespace, refined violet accents,
-             ergonomic iPhone touch targets.
+             STAGE 1: FLAGSHIP AUTHORIZATION CARD + LIVE STUDIO LOGO/PALETTE SHOWCASE
              ===================================================================== */
           <motion.div
             key="kompa-flagship-auth-card"
@@ -742,23 +838,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.48, ease: STUDIO_EASE }}
             onClick={e => e.stopPropagation()}
-            className="relative z-10 w-full max-w-[408px] my-auto"
+            className="relative z-10 w-full max-w-[412px] my-auto space-y-3"
           >
+            {/* MAIN LOGIN / REGISTRATION CARD */}
             <div
-              className="relative w-full rounded-[32px] bg-white p-6 sm:p-8 flex flex-col justify-between overflow-hidden"
+              className="relative w-full rounded-[32px] p-6 sm:p-7 flex flex-col justify-between overflow-hidden transition-colors duration-300"
               style={{
-                border: '1px solid #EAE6F5',
-                boxShadow:
-                  '0 24px 60px -16px rgba(24, 16, 54, 0.08), 0 4px 16px -2px rgba(24, 16, 54, 0.04)',
+                backgroundColor: activePalette.cardBg,
+                border: `1px solid ${activePalette.cardBorder}`,
+                boxShadow: activePalette.isDark
+                  ? '0 26px 64px -14px rgba(0, 0, 0, 0.65)'
+                  : '0 24px 60px -16px rgba(24, 16, 54, 0.08), 0 4px 16px -2px rgba(24, 16, 54, 0.04)',
               }}
             >
-              {/* Top Close / SignOut Row (only when opened manually from inside the app) */}
+              {/* Top Close / SignOut Row (when opened from inside the app) */}
               {!isInitialGate && (
                 <div className="flex items-center justify-between mb-3">
                   <button
                     type="button"
                     onClick={handleSignOutClick}
-                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#F6F5FB] hover:bg-rose-50 text-xs font-semibold text-[#56516E] hover:text-rose-600 flex items-center gap-1.5 cursor-pointer transition-colors"
+                    className="min-h-[36px] px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: activePalette.fieldBg,
+                      color: activePalette.textSecondary,
+                    }}
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Выйти</span>
@@ -766,7 +869,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-9 h-9 rounded-full bg-[#F6F5FB] hover:bg-[#ECE9F8] flex items-center justify-center text-[#56516E] cursor-pointer transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: activePalette.fieldBg,
+                      color: activePalette.textSecondary,
+                    }}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -776,7 +883,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {/* HEADER AREA:
                   - In LOGIN mode: Full Brand Identity Lockup (Graphic Symbol + kompa. wordmark)
                   - In REGISTER mode: Personal Photo Upload Button + Step Progress */}
-              <div className="flex flex-col items-center text-center pb-6">
+              <div className="flex flex-col items-center text-center pb-5">
                 {authMode === 'login' ? (
                   <motion.div
                     layoutId="kompa-brand-identity-lockup"
@@ -789,25 +896,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         triggerHaptic(6);
                         setShowLogoSplash(true);
                       }}
-                      title="Воспроизвести анимацию логотипа"
+                      title="Нажмите, чтобы воспроизвести стартовую анимацию"
                       className="group cursor-pointer focus:outline-none"
                     >
                       <KompaLogoMark
                         size={64}
+                        concept={selectedLogoConcept}
+                        palette={activePalette}
                         variant="brand"
                         animated={false}
-                        className="transition-transform duration-200 group-hover:scale-[1.03] group-active:scale-[0.97]"
+                        className="transition-transform duration-200 group-hover:scale-[1.04] group-active:scale-[0.96]"
                       />
                     </button>
 
-                    <div className="mt-3.5 flex items-baseline">
-                      <span className="font-display font-extrabold text-[26px] leading-none tracking-[-0.035em] text-[#141026]">
+                    <div className="mt-3 flex items-baseline">
+                      <span
+                        className="font-display font-extrabold text-[26px] leading-none tracking-[-0.035em]"
+                        style={{ color: activePalette.textPrimary }}
+                      >
                         kompa
                       </span>
-                      <span className="inline-block w-1.5 h-1.5 rounded-full ml-0.5 mb-0.5 bg-[#6C47FF]" />
+                      <span
+                        className="inline-block w-1.5 h-1.5 rounded-full ml-0.5 mb-0.5"
+                        style={{ backgroundColor: activePalette.accentPrimary }}
+                      />
                     </div>
 
-                    <p className="mt-1.5 text-[13px] text-[#6E6888] font-medium max-w-[270px] leading-snug">
+                    <p
+                      className="mt-1.5 text-xs font-medium max-w-[270px] leading-snug"
+                      style={{ color: activePalette.textMuted }}
+                    >
                       Находите компанию для праздников, событий и совместного отдыха
                     </p>
                   </motion.div>
@@ -826,7 +944,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             setAuthMode('login');
                           }
                         }}
-                        className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#F6F5FB] hover:bg-[#EDEAF8] text-xs font-semibold text-[#4E4868] flex items-center gap-1.5 cursor-pointer transition-colors"
+                        className="min-h-[36px] px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                        style={{
+                          backgroundColor: activePalette.fieldBg,
+                          color: activePalette.textSecondary,
+                        }}
                       >
                         <ArrowLeft className="w-3.5 h-3.5" />
                         <span>{wizardStep > 1 ? 'Назад' : 'Ко входу'}</span>
@@ -844,10 +966,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               style={{
                                 width: active ? '24px' : '7px',
                                 backgroundColor: active
-                                  ? '#5E3AEF'
+                                  ? activePalette.accentPrimary
                                   : done
-                                  ? '#C4B5FD'
-                                  : '#E6E2F2',
+                                  ? activePalette.accentSecondary
+                                  : activePalette.fieldBorder,
                               }}
                             />
                           );
@@ -864,9 +986,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       title="Загрузить личную фотографию"
                       className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer transition-all group"
                       style={{
-                        backgroundColor: '#F3F0FF',
-                        border: '2px solid #D8CEFF',
-                        boxShadow: '0 8px 20px -6px rgba(94, 58, 239, 0.16)',
+                        backgroundColor: activePalette.accentSoftBg,
+                        border: `2px solid ${activePalette.accentSoftBorder}`,
+                        boxShadow: `0 8px 20px -6px ${activePalette.accentShadow}`,
                       }}
                     >
                       {avatarUrl ? (
@@ -876,12 +998,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             alt={name || 'Ваше фото'}
                             className="w-full h-full rounded-full object-cover"
                           />
-                          <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#5E3AEF] text-white border-2 border-white flex items-center justify-center shadow-sm">
+                          <div
+                            className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full text-white border-2 border-white flex items-center justify-center shadow-sm"
+                            style={{ backgroundColor: activePalette.accentPrimary }}
+                          >
                             <Camera className="w-3.5 h-3.5" />
                           </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-[#5E3AEF]">
+                        <div
+                          className="flex flex-col items-center justify-center"
+                          style={{ color: activePalette.accentPrimary }}
+                        >
                           <Camera className="w-7 h-7 stroke-[1.8] group-hover:scale-105 transition-transform" />
                         </div>
                       )}
@@ -890,7 +1018,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="mt-2 text-xs font-semibold text-[#5E3AEF] hover:text-[#4C29DC] transition-colors cursor-pointer"
+                      className="mt-2 text-xs font-semibold transition-colors cursor-pointer"
+                      style={{ color: activePalette.accentPrimary }}
                     >
                       {isUploadingPhoto
                         ? 'Обработка фотографии...'
@@ -910,9 +1039,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="mb-4 px-3.5 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2"
+                    className="mb-3.5 px-3.5 py-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-200 text-xs font-medium flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     <span>{statusMessage}</span>
                   </motion.div>
                 )}
@@ -922,9 +1051,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="mb-4 px-3.5 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-medium flex items-center gap-2"
+                    className="mb-3.5 px-3.5 py-2.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-200 text-xs font-medium flex items-center gap-2"
                   >
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
                     <span>{errorMessage}</span>
                   </motion.div>
                 )}
@@ -934,31 +1063,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="relative overflow-hidden">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   {authMode === 'login' ? (
-                    /* =========================================================
-                       LOGIN VIEW:
-                       - Login input (Phone or Email)
-                       - Password input
-                       - Remember me checkbox (no italic "Регистрация" word)
-                       - Bottom row: Left "Войти" & Right "Регистрация"
-                       ========================================================= */
                     <motion.div
                       key="login-view"
                       variants={staggerContainerVariants}
                       initial="hidden"
                       animate="show"
                       exit={{ opacity: 0, x: -32 }}
-                      className="space-y-3.5"
+                      className="space-y-3"
                     >
                       {/* Field 1: Login */}
-                      <motion.div variants={fadeItemVariants} className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-[#4E4868] px-1">
+                      <motion.div variants={fadeItemVariants} className="space-y-1">
+                        <label
+                          className="block text-xs font-semibold px-1"
+                          style={{ color: activePalette.textSecondary }}
+                        >
                           Логин
                         </label>
                         <div
-                          className="flex items-center gap-3 px-4 min-h-[50px] rounded-2xl transition-all duration-150"
+                          className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
                           style={getFieldStyle('loginId')}
                         >
-                          <User className="w-4 h-4 text-[#7C7599] shrink-0" />
+                          <User
+                            className="w-4 h-4 shrink-0"
+                            style={{ color: activePalette.textMuted }}
+                          />
                           <input
                             type="text"
                             value={loginIdentifier}
@@ -966,21 +1094,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             onBlur={() => setFocusedField(null)}
                             onChange={e => setLoginIdentifier(e.target.value)}
                             placeholder="Телефон или электронная почта"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                            style={{ color: activePalette.textPrimary }}
+                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:opacity-60 font-medium appearance-none"
                           />
                         </div>
                       </motion.div>
 
                       {/* Field 2: Password */}
-                      <motion.div variants={fadeItemVariants} className="space-y-1.5">
-                        <label className="block text-xs font-semibold text-[#4E4868] px-1">
+                      <motion.div variants={fadeItemVariants} className="space-y-1">
+                        <label
+                          className="block text-xs font-semibold px-1"
+                          style={{ color: activePalette.textSecondary }}
+                        >
                           Пароль
                         </label>
                         <div
-                          className="flex items-center gap-3 px-4 min-h-[50px] rounded-2xl transition-all duration-150"
+                          className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
                           style={getFieldStyle('loginPass')}
                         >
-                          <Lock className="w-4 h-4 text-[#7C7599] shrink-0" />
+                          <Lock
+                            className="w-4 h-4 shrink-0"
+                            style={{ color: activePalette.textMuted }}
+                          />
                           <input
                             type={showLoginPassword ? 'text' : 'password'}
                             value={loginPassword}
@@ -988,13 +1123,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             onBlur={() => setFocusedField(null)}
                             onChange={e => setLoginPassword(e.target.value)}
                             placeholder="Введите ваш пароль"
-                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                            style={{ color: activePalette.textPrimary }}
+                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:opacity-60 font-medium appearance-none"
                           />
                           <button
                             type="button"
                             onClick={() => setShowLoginPassword(prev => !prev)}
-                            className="p-1 text-[#8A84A3] hover:text-[#4E4868] transition-colors cursor-pointer shrink-0"
-                            title={showLoginPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                            className="p-1 transition-colors cursor-pointer shrink-0"
+                            style={{ color: activePalette.textMuted }}
                           >
                             {showLoginPassword ? (
                               <EyeOff className="w-4 h-4" />
@@ -1005,17 +1141,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         </div>
                       </motion.div>
 
-                      {/* Remember Me Checkbox (Clean single item, no italic "Регистрация") */}
+                      {/* Remember Me Checkbox */}
                       <motion.div
                         variants={fadeItemVariants}
                         className="flex items-center justify-start pt-0.5 px-1"
                       >
-                        <label className="inline-flex items-center gap-2.5 text-xs font-medium text-[#56516E] cursor-pointer">
+                        <label
+                          className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer"
+                          style={{ color: activePalette.textSecondary }}
+                        >
                           <input
                             type="checkbox"
                             checked={rememberMe}
                             onChange={e => setRememberMe(e.target.checked)}
-                            className="w-4 h-4 rounded accent-[#5E3AEF] cursor-pointer"
+                            style={{ accentColor: activePalette.accentPrimary }}
+                            className="w-4 h-4 rounded cursor-pointer"
                           />
                           <span>Запомнить меня</span>
                         </label>
@@ -1024,18 +1164,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       {/* Bottom Action Row: Left "Войти" & Right "Регистрация" */}
                       <motion.div
                         variants={fadeItemVariants}
-                        className="grid grid-cols-2 gap-3 pt-2"
+                        className="grid grid-cols-2 gap-2.5 pt-1.5"
                       >
                         <motion.button
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.985 }}
                           type="button"
                           onClick={handleLoginSubmit}
-                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all"
+                          className="min-h-[48px] px-4 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all"
                           style={{
-                            background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
-                            boxShadow:
-                              '0 10px 24px -6px rgba(84, 48, 230, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+                            background: `linear-gradient(180deg, ${activePalette.accentGradFrom} 0%, ${activePalette.accentGradVia} 100%)`,
+                            boxShadow: `0 10px 24px -6px ${activePalette.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                           }}
                         >
                           <span>Войти</span>
@@ -1051,7 +1190,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             setAuthMode('register');
                             setStepState([1, 1]);
                           }}
-                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold text-[#522EE5] bg-[#F3F0FF] hover:bg-[#EAE4FF] border border-[#DDD4FF] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                          className="min-h-[48px] px-4 rounded-2xl text-sm font-display font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                          style={{
+                            backgroundColor: activePalette.accentSoftBg,
+                            color: activePalette.accentSoftText,
+                            border: `1px solid ${activePalette.accentSoftBorder}`,
+                          }}
                         >
                           <span>Регистрация</span>
                         </motion.button>
@@ -1072,20 +1216,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="w-full"
                     >
                       {wizardStep === 1 && (
-                        /* STEP 1: CONTACTS & PASSWORD */
                         <motion.div
                           variants={staggerContainerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-3"
+                          className="space-y-2.5"
                         >
-                          {/* Name Input */}
                           <motion.div
                             variants={fadeItemVariants}
-                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            className="flex items-center gap-3 px-4 min-h-[46px] rounded-2xl transition-all duration-150"
                             style={getFieldStyle('name')}
                           >
-                            <User className="w-4 h-4 text-[#7C7599] shrink-0" />
+                            <User
+                              className="w-4 h-4 shrink-0"
+                              style={{ color: activePalette.textMuted }}
+                            />
                             <input
                               type="text"
                               required
@@ -1095,17 +1240,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setName(e.target.value)}
                               placeholder="Имя и фамилия *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                              style={{ color: activePalette.textPrimary }}
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:opacity-60 font-medium appearance-none"
                             />
                           </motion.div>
 
-                          {/* Phone Input */}
                           <motion.div
                             variants={fadeItemVariants}
-                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            className="flex items-center gap-3 px-4 min-h-[46px] rounded-2xl transition-all duration-150"
                             style={getFieldStyle('phone')}
                           >
-                            <Phone className="w-4 h-4 text-[#7C7599] shrink-0" />
+                            <Phone
+                              className="w-4 h-4 shrink-0"
+                              style={{ color: activePalette.textMuted }}
+                            />
                             <input
                               type="tel"
                               inputMode="tel"
@@ -1116,17 +1264,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setPhoneNumber(e.target.value)}
                               placeholder="Номер телефона (+7 999 123-45-67) *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                              style={{ color: activePalette.textPrimary }}
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:opacity-60 font-medium appearance-none"
                             />
                           </motion.div>
 
-                          {/* Email Input */}
                           <motion.div
                             variants={fadeItemVariants}
-                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            className="flex items-center gap-3 px-4 min-h-[46px] rounded-2xl transition-all duration-150"
                             style={getFieldStyle('email')}
                           >
-                            <Mail className="w-4 h-4 text-[#7C7599] shrink-0" />
+                            <Mail
+                              className="w-4 h-4 shrink-0"
+                              style={{ color: activePalette.textMuted }}
+                            />
                             <input
                               type="email"
                               inputMode="email"
@@ -1137,17 +1288,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setEmail(e.target.value)}
                               placeholder="Электронная почта (Email) *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                              style={{ color: activePalette.textPrimary }}
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:opacity-60 font-medium appearance-none"
                             />
                           </motion.div>
 
-                          {/* Password Input */}
                           <motion.div
                             variants={fadeItemVariants}
-                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            className="flex items-center gap-3 px-4 min-h-[46px] rounded-2xl transition-all duration-150"
                             style={getFieldStyle('regPass')}
                           >
-                            <Lock className="w-4 h-4 text-[#7C7599] shrink-0" />
+                            <Lock
+                              className="w-4 h-4 shrink-0"
+                              style={{ color: activePalette.textMuted }}
+                            />
                             <input
                               type={showRegisterPassword ? 'text' : 'password'}
                               required
@@ -1157,12 +1311,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setRegisterPassword(e.target.value)}
                               placeholder="Придумайте пароль *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                              style={{ color: activePalette.textPrimary }}
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:opacity-60 font-medium appearance-none"
                             />
                             <button
                               type="button"
                               onClick={() => setShowRegisterPassword(prev => !prev)}
-                              className="p-1 text-[#8A84A3] hover:text-[#4E4868] transition-colors cursor-pointer shrink-0"
+                              className="p-1 transition-colors cursor-pointer shrink-0"
+                              style={{ color: activePalette.textMuted }}
                             >
                               {showRegisterPassword ? (
                                 <EyeOff className="w-4 h-4" />
@@ -1172,19 +1328,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </button>
                           </motion.div>
 
-                          {/* Step 1 Primary CTA */}
-                          <motion.div variants={fadeItemVariants} className="pt-2">
+                          <motion.div variants={fadeItemVariants} className="pt-1.5">
                             <motion.button
                               whileHover={{ scale: 1.01 }}
                               whileTap={{ scale: 0.985 }}
                               type="button"
                               disabled={isSendingSms}
                               onClick={handleRequestSmsCode}
-                              className="w-full min-h-[50px] px-5 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                              className="w-full min-h-[48px] px-5 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                               style={{
-                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
-                                boxShadow:
-                                  '0 10px 24px -6px rgba(84, 48, 230, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+                                background: `linear-gradient(180deg, ${activePalette.accentGradFrom} 0%, ${activePalette.accentGradVia} 100%)`,
+                                boxShadow: `0 10px 24px -6px ${activePalette.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                               }}
                             >
                               <span>
@@ -1197,7 +1351,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
 
                       {wizardStep === 2 && (
-                        /* STEP 2: SMS CODE VERIFICATION */
                         <motion.div
                           variants={staggerContainerVariants}
                           initial="hidden"
@@ -1205,12 +1358,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           className="space-y-4"
                         >
                           <motion.div variants={fadeItemVariants} className="text-center space-y-1">
-                            <h2 className="text-base font-display font-bold text-[#141026]">
+                            <h2
+                              className="text-base font-display font-bold"
+                              style={{ color: activePalette.textPrimary }}
+                            >
                               Подтверждение номера
                             </h2>
-                            <p className="text-xs text-[#6E6888]">
+                            <p className="text-xs" style={{ color: activePalette.textMuted }}>
                               Отправили 4-значный СМС-код на{' '}
-                              <span className="font-mono-num font-semibold text-[#5E3AEF]">
+                              <span
+                                className="font-mono-num font-semibold"
+                                style={{ color: activePalette.accentPrimary }}
+                              >
                                 {phoneNumber}
                               </span>
                             </p>
@@ -1218,10 +1377,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                           <motion.div
                             variants={fadeItemVariants}
-                            className="flex items-center gap-3 px-4 min-h-[52px] rounded-2xl transition-all duration-150"
+                            className="flex items-center gap-3 px-4 min-h-[50px] rounded-2xl transition-all duration-150"
                             style={getFieldStyle('sms')}
                           >
-                            <Lock className="w-4 h-4 text-[#7C7599] shrink-0" />
+                            <Lock
+                              className="w-4 h-4 shrink-0"
+                              style={{ color: activePalette.textMuted }}
+                            />
                             <input
                               type="text"
                               inputMode="numeric"
@@ -1231,7 +1393,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setSmsCodeInput(e.target.value.replace(/\D/g, ''))}
                               placeholder="Код из СМС (4 цифры)"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-base font-mono-num tracking-[0.22em] text-[#141026] placeholder:tracking-normal placeholder:text-[#9892B0] font-bold appearance-none"
+                              style={{ color: activePalette.textPrimary }}
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-base font-mono-num tracking-[0.22em] placeholder:tracking-normal placeholder:opacity-60 font-bold appearance-none"
                             />
                             {generatedSmsCode && (
                               <button
@@ -1240,7 +1403,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   triggerHaptic(8);
                                   setSmsCodeInput(generatedSmsCode);
                                 }}
-                                className="px-2.5 py-1 rounded-xl bg-[#F2EEFF] text-xs font-bold text-[#5E3AEF] shrink-0 cursor-pointer"
+                                className="px-2.5 py-1 rounded-xl text-xs font-bold shrink-0 cursor-pointer"
+                                style={{
+                                  backgroundColor: activePalette.accentSoftBg,
+                                  color: activePalette.accentPrimary,
+                                }}
                               >
                                 Код: {generatedSmsCode}
                               </button>
@@ -1254,7 +1421,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             <button
                               type="button"
                               onClick={() => navigateToStep(1)}
-                              className="text-[#6E6888] hover:text-[#141026] font-medium flex items-center gap-1 cursor-pointer"
+                              className="font-medium flex items-center gap-1 cursor-pointer"
+                              style={{ color: activePalette.textMuted }}
                             >
                               <ArrowLeft className="w-3.5 h-3.5" />
                               <span>Изменить номер</span>
@@ -1264,7 +1432,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               type="button"
                               disabled={resendCooldown > 0}
                               onClick={handleRequestSmsCode}
-                              className="text-[#5E3AEF] hover:text-[#4C29DC] font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              style={{ color: activePalette.accentPrimary }}
                             >
                               <RefreshCw className="w-3 h-3" />
                               <span>
@@ -1281,11 +1450,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               whileTap={{ scale: 0.985 }}
                               type="button"
                               onClick={handleVerifySmsCode}
-                              className="w-full min-h-[50px] px-6 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full min-h-[48px] px-6 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
                               style={{
-                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
-                                boxShadow:
-                                  '0 10px 24px -6px rgba(84, 48, 230, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+                                background: `linear-gradient(180deg, ${activePalette.accentGradFrom} 0%, ${activePalette.accentGradVia} 100%)`,
+                                boxShadow: `0 10px 24px -6px ${activePalette.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                               }}
                             >
                               <span>Подтвердить код</span>
@@ -1296,20 +1464,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
 
                       {wizardStep === 3 && (
-                        /* STEP 3: PROFILE DETAILS & INTERESTS */
                         <motion.div
                           variants={staggerContainerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-3.5"
+                          className="space-y-3"
                         >
-                          {/* Age & Gender Row */}
-                          <motion.div variants={fadeItemVariants} className="grid grid-cols-12 gap-2.5">
+                          <motion.div variants={fadeItemVariants} className="grid grid-cols-12 gap-2">
                             <div
-                              className="col-span-5 flex items-center justify-between px-3 min-h-[46px] rounded-2xl"
+                              className="col-span-5 flex items-center justify-between px-3 min-h-[44px] rounded-2xl"
                               style={{
-                                backgroundColor: '#F6F5FB',
-                                border: '1.5px solid #E5E1F2',
+                                backgroundColor: activePalette.fieldBg,
+                                border: `1.5px solid ${activePalette.fieldBorder}`,
                               }}
                             >
                               <button
@@ -1318,15 +1484,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   triggerHaptic(5);
                                   setAge(prev => Math.max(18, prev - 1));
                                 }}
-                                className="w-7 h-7 rounded-xl bg-white text-[#141026] border border-[#E5E1F2] font-bold flex items-center justify-center cursor-pointer"
+                                className="w-7 h-7 rounded-xl font-bold flex items-center justify-center cursor-pointer"
+                                style={{
+                                  backgroundColor: activePalette.cardBg,
+                                  color: activePalette.textPrimary,
+                                  border: `1px solid ${activePalette.fieldBorder}`,
+                                }}
                               >
                                 −
                               </button>
                               <div className="text-center">
-                                <span className="text-sm font-mono-num font-extrabold text-[#141026] block leading-none">
+                                <span
+                                  className="text-sm font-mono-num font-extrabold block leading-none"
+                                  style={{ color: activePalette.textPrimary }}
+                                >
                                   {age}
                                 </span>
-                                <span className="text-[10px] text-[#7C7599]">лет</span>
+                                <span
+                                  className="text-[10px]"
+                                  style={{ color: activePalette.textMuted }}
+                                >
+                                  лет
+                                </span>
                               </div>
                               <button
                                 type="button"
@@ -1334,7 +1513,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   triggerHaptic(5);
                                   setAge(prev => Math.min(90, prev + 1));
                                 }}
-                                className="w-7 h-7 rounded-xl bg-white text-[#141026] border border-[#E5E1F2] font-bold flex items-center justify-center cursor-pointer"
+                                className="w-7 h-7 rounded-xl font-bold flex items-center justify-center cursor-pointer"
+                                style={{
+                                  backgroundColor: activePalette.cardBg,
+                                  color: activePalette.textPrimary,
+                                  border: `1px solid ${activePalette.fieldBorder}`,
+                                }}
                               >
                                 +
                               </button>
@@ -1351,13 +1535,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                       triggerHaptic(6);
                                       setGender(g);
                                     }}
-                                    className="px-3 min-h-[46px] rounded-2xl text-xs font-bold transition-all cursor-pointer"
+                                    className="px-3 min-h-[44px] rounded-2xl text-xs font-bold transition-all cursor-pointer"
                                     style={{
-                                      backgroundColor: active ? '#F2EEFF' : '#F6F5FB',
-                                      color: active ? '#522EE5' : '#4E4868',
+                                      backgroundColor: active
+                                        ? activePalette.accentSoftBg
+                                        : activePalette.fieldBg,
+                                      color: active
+                                        ? activePalette.accentSoftText
+                                        : activePalette.textSecondary,
                                       border: active
-                                        ? '1.5px solid #633EF6'
-                                        : '1.5px solid #E5E1F2',
+                                        ? `1.5px solid ${activePalette.accentPrimary}`
+                                        : `1.5px solid ${activePalette.fieldBorder}`,
                                     }}
                                   >
                                     {g === 'female' ? 'Девушка' : 'Мужчина'}
@@ -1367,13 +1555,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </div>
                           </motion.div>
 
-                          {/* City & Occupation Inputs */}
-                          <motion.div variants={fadeItemVariants} className="grid grid-cols-2 gap-2.5">
+                          <motion.div variants={fadeItemVariants} className="grid grid-cols-2 gap-2">
                             <div
-                              className="flex items-center gap-2 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
+                              className="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl transition-all duration-150"
                               style={getFieldStyle('city')}
                             >
-                              <MapPin className="w-3.5 h-3.5 text-[#7C7599] shrink-0" />
+                              <MapPin
+                                className="w-3.5 h-3.5 shrink-0"
+                                style={{ color: activePalette.textMuted }}
+                              />
                               <input
                                 type="text"
                                 value={city}
@@ -1381,15 +1571,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 onBlur={() => setFocusedField(null)}
                                 onChange={e => setCity(e.target.value)}
                                 placeholder="Город"
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                                style={{ color: activePalette.textPrimary }}
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs placeholder:opacity-60 font-medium appearance-none"
                               />
                             </div>
 
                             <div
-                              className="flex items-center gap-2 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
+                              className="flex items-center gap-2 px-3.5 min-h-[44px] rounded-2xl transition-all duration-150"
                               style={getFieldStyle('occupation')}
                             >
-                              <Briefcase className="w-3.5 h-3.5 text-[#7C7599] shrink-0" />
+                              <Briefcase
+                                className="w-3.5 h-3.5 shrink-0"
+                                style={{ color: activePalette.textMuted }}
+                              />
                               <input
                                 type="text"
                                 value={occupation}
@@ -1397,12 +1591,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 onBlur={() => setFocusedField(null)}
                                 onChange={e => setOccupation(e.target.value)}
                                 placeholder="Сфера / занятие"
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                                style={{ color: activePalette.textPrimary }}
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs placeholder:opacity-60 font-medium appearance-none"
                               />
                             </div>
                           </motion.div>
 
-                          {/* Quick City Buttons */}
                           <motion.div variants={fadeItemVariants} className="flex flex-wrap gap-1.5">
                             {CITY_PRESETS.map(c => {
                               const active = city === c;
@@ -1416,11 +1610,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   }}
                                   className="px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
                                   style={{
-                                    backgroundColor: active ? '#F2EEFF' : '#F6F5FB',
-                                    color: active ? '#522EE5' : '#6E6888',
+                                    backgroundColor: active
+                                      ? activePalette.accentSoftBg
+                                      : activePalette.fieldBg,
+                                    color: active
+                                      ? activePalette.accentSoftText
+                                      : activePalette.textMuted,
                                     border: active
-                                      ? '1px solid #C4B5FD'
-                                      : '1px solid #E5E1F2',
+                                      ? `1px solid ${activePalette.accentSoftBorder}`
+                                      : `1px solid ${activePalette.fieldBorder}`,
                                   }}
                                 >
                                   {c}
@@ -1429,16 +1627,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             })}
                           </motion.div>
 
-                          {/* Interests Selection Grid */}
                           <motion.div variants={fadeItemVariants} className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs text-[#4E4868] px-0.5">
+                            <div
+                              className="flex items-center justify-between text-xs px-0.5"
+                              style={{ color: activePalette.textSecondary }}
+                            >
                               <span className="font-semibold">Интересные форматы событий:</span>
-                              <span className="font-mono-num font-bold text-[#5E3AEF]">
+                              <span
+                                className="font-mono-num font-bold"
+                                style={{ color: activePalette.accentPrimary }}
+                              >
                                 {interests.length}/10
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-0.5">
+                            <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
                               {INTEREST_CATALOG.map(item => {
                                 const selected = interests.includes(item.tag);
                                 const IconComp = item.icon;
@@ -1447,30 +1650,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                     key={item.tag}
                                     type="button"
                                     onClick={() => toggleInterest(item.tag)}
-                                    className="px-3 py-2.5 rounded-xl text-left flex items-center justify-between gap-1.5 transition-all cursor-pointer"
+                                    className="px-3 py-2 rounded-xl text-left flex items-center justify-between gap-1.5 transition-all cursor-pointer"
                                     style={{
-                                      backgroundColor: selected ? '#F2EEFF' : '#F8F7FC',
+                                      backgroundColor: selected
+                                        ? activePalette.accentSoftBg
+                                        : activePalette.fieldBg,
                                       border: selected
-                                        ? '1.5px solid #633EF6'
-                                        : '1.5px solid #EAE6F5',
+                                        ? `1.5px solid ${activePalette.accentPrimary}`
+                                        : `1.5px solid ${activePalette.fieldBorder}`,
                                     }}
                                   >
                                     <div className="flex items-center gap-2 min-w-0">
                                       <IconComp
-                                        className={`w-3.5 h-3.5 shrink-0 ${
-                                          selected ? 'text-[#5E3AEF]' : 'text-[#7C7599]'
-                                        }`}
+                                        className="w-3.5 h-3.5 shrink-0"
+                                        style={{
+                                          color: selected
+                                            ? activePalette.accentPrimary
+                                            : activePalette.textMuted,
+                                        }}
                                       />
                                       <span
-                                        className={`text-xs font-semibold truncate ${
-                                          selected ? 'text-[#3F1FC2]' : 'text-[#2D2842]'
-                                        }`}
+                                        className="text-xs font-semibold truncate"
+                                        style={{
+                                          color: selected
+                                            ? activePalette.accentSoftText
+                                            : activePalette.textPrimary,
+                                        }}
                                       >
                                         {isEn ? item.labelEn : item.tag}
                                       </span>
                                     </div>
                                     {selected && (
-                                      <Check className="w-3.5 h-3.5 text-[#5E3AEF] shrink-0" />
+                                      <Check
+                                        className="w-3.5 h-3.5 shrink-0"
+                                        style={{ color: activePalette.accentPrimary }}
+                                      />
                                     )}
                                   </button>
                                 );
@@ -1478,7 +1692,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </div>
                           </motion.div>
 
-                          {/* Step 3 Footer CTA */}
                           <motion.div variants={fadeItemVariants} className="pt-1">
                             <motion.button
                               whileHover={{ scale: 1.01 }}
@@ -1486,11 +1699,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               type="button"
                               disabled={isSaving}
                               onClick={handleSaveAndProceedToFinal}
-                              className="w-full min-h-[50px] px-5 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                              className="w-full min-h-[48px] px-5 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                               style={{
-                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
-                                boxShadow:
-                                  '0 10px 24px -6px rgba(84, 48, 230, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+                                background: `linear-gradient(180deg, ${activePalette.accentGradFrom} 0%, ${activePalette.accentGradVia} 100%)`,
+                                boxShadow: `0 10px 24px -6px ${activePalette.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                               }}
                             >
                               <span>{isSaving ? 'Сохранение анкеты...' : 'Продолжить'}</span>
@@ -1501,7 +1713,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
 
                       {wizardStep === 4 && (
-                        /* STEP 4: SUMMARY & EXPLICIT "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" BUTTON */
                         <motion.div
                           variants={staggerContainerVariants}
                           initial="hidden"
@@ -1509,17 +1720,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           className="space-y-4 text-center"
                         >
                           <motion.div variants={fadeItemVariants} className="space-y-1">
-                            <div className="inline-flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
-                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            <div className="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                              <ShieldCheck className="w-4 h-4" />
                               <span>Профиль и телефон подтверждены</span>
                             </div>
-                            <h3 className="text-lg font-display font-extrabold text-[#141026] pt-0.5">
+                            <h3
+                              className="text-lg font-display font-extrabold pt-0.5"
+                              style={{ color: activePalette.textPrimary }}
+                            >
                               {name.trim() || 'Участник Kompa'},{' '}
                               <span className="font-mono-num">{age}</span>
                             </h3>
-                            <p className="text-xs text-[#6E6888]">
+                            <p className="text-xs" style={{ color: activePalette.textMuted }}>
                               {city} · Доступно{' '}
-                              <strong className="font-mono-num text-[#5E3AEF]">
+                              <strong
+                                className="font-mono-num"
+                                style={{ color: activePalette.accentPrimary }}
+                              >
                                 {matchedEventsCount}
                               </strong>{' '}
                               подходящих встреч
@@ -1528,21 +1745,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                           <motion.div
                             variants={fadeItemVariants}
-                            className="p-4 rounded-2xl bg-[#F8F7FC] border border-[#EAE6F5] text-left space-y-2"
+                            className="p-4 rounded-2xl text-left space-y-2"
+                            style={{
+                              backgroundColor: activePalette.fieldBg,
+                              border: `1px solid ${activePalette.fieldBorder}`,
+                            }}
                           >
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#7C7599]">Телефон</span>
-                              <span className="font-mono-num font-semibold text-[#141026]">
+                              <span style={{ color: activePalette.textMuted }}>Телефон</span>
+                              <span
+                                className="font-mono-num font-semibold"
+                                style={{ color: activePalette.textPrimary }}
+                              >
                                 {phoneNumber}
                               </span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#7C7599]">Почта</span>
-                              <span className="font-semibold text-[#141026] truncate max-w-[200px]">
+                              <span style={{ color: activePalette.textMuted }}>Почта</span>
+                              <span
+                                className="font-semibold truncate max-w-[200px]"
+                                style={{ color: activePalette.textPrimary }}
+                              >
                                 {email}
                               </span>
                             </div>
-                            <div className="pt-1 text-xs text-[#56516E]">
+                            <div
+                              className="pt-1 text-xs"
+                              style={{ color: activePalette.textSecondary }}
+                            >
                               {interests.slice(0, 4).join(' · ')}
                             </div>
                           </motion.div>
@@ -1556,11 +1786,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 triggerHaptic([12, 30, 15]);
                                 onClose();
                               }}
-                              className="w-full min-h-[50px] px-6 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full min-h-[48px] px-6 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
                               style={{
-                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
-                                boxShadow:
-                                  '0 10px 24px -6px rgba(84, 48, 230, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+                                background: `linear-gradient(180deg, ${activePalette.accentGradFrom} 0%, ${activePalette.accentGradVia} 100%)`,
+                                boxShadow: `0 10px 24px -6px ${activePalette.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                               }}
                             >
                               <Check className="w-4 h-4 stroke-[2.5]" />
@@ -1570,7 +1799,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             <button
                               type="button"
                               onClick={() => navigateToStep(3)}
-                              className="w-full py-2 text-xs font-semibold text-[#6E6888] hover:text-[#141026] transition-colors cursor-pointer"
+                              className="w-full py-2 text-xs font-semibold transition-colors cursor-pointer"
+                              style={{ color: activePalette.textMuted }}
                             >
                               Изменить данные анкеты
                             </button>
@@ -1580,6 +1810,158 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+            </div>
+
+            {/* =====================================================================
+                INTERACTIVE STUDIO BRAND & PALETTE SHOWCASE
+                Allows the user to live-switch between 5 Logo Concepts and 5 Color
+                Palettes and replay the launch animation on iPhone with one tap.
+                ===================================================================== */}
+            <div
+              className="w-full rounded-[26px] p-4 transition-colors duration-300 space-y-3"
+              style={{
+                backgroundColor: activePalette.cardBg,
+                border: `1px solid ${activePalette.cardBorder}`,
+                boxShadow: activePalette.isDark
+                  ? '0 14px 36px -10px rgba(0, 0, 0, 0.55)'
+                  : '0 12px 32px -10px rgba(24, 16, 54, 0.06)',
+              }}
+            >
+              {/* Row 1: 5 Logo Concepts Selector + Replay Splash Button */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2 px-0.5">
+                  <div className="min-w-0">
+                    <span
+                      className="text-[11px] font-bold block truncate"
+                      style={{ color: activePalette.textPrimary }}
+                    >
+                      {activeConceptObj.title}
+                    </span>
+                    <span
+                      className="text-[10px] block truncate"
+                      style={{ color: activePalette.textMuted }}
+                    >
+                      {activeConceptObj.subtitle}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(8);
+                      setShowLogoSplash(true);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-1 cursor-pointer shrink-0 transition-transform active:scale-95"
+                    style={{
+                      backgroundColor: activePalette.accentSoftBg,
+                      color: activePalette.accentSoftText,
+                      border: `1px solid ${activePalette.accentSoftBorder}`,
+                    }}
+                  >
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>Анимация</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-5 gap-1.5">
+                  {LOGO_CONCEPT_OPTIONS.map((item, idx) => {
+                    const isSelected = item.id === selectedLogoConcept;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectLogoConcept(item.id, false)}
+                        className="py-2 px-1 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
+                        style={{
+                          backgroundColor: isSelected
+                            ? activePalette.accentSoftBg
+                            : activePalette.fieldBg,
+                          border: isSelected
+                            ? `1.5px solid ${activePalette.accentPrimary}`
+                            : `1.5px solid ${activePalette.fieldBorder}`,
+                        }}
+                      >
+                        <KompaLogoMark
+                          size={32}
+                          concept={item.id}
+                          palette={activePalette}
+                          variant="brand"
+                          animated={false}
+                        />
+                        <span
+                          className="text-[10px] font-bold leading-none"
+                          style={{
+                            color: isSelected
+                              ? activePalette.accentSoftText
+                              : activePalette.textMuted,
+                          }}
+                        >
+                          №{idx + 1}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 2: 5 Brand Color Palettes Selector */}
+              <div className="pt-1 border-t space-y-2" style={{ borderColor: activePalette.fieldBorder }}>
+                <div className="flex items-center justify-between text-[11px] px-0.5">
+                  <span
+                    className="font-bold flex items-center gap-1.5"
+                    style={{ color: activePalette.textPrimary }}
+                  >
+                    <Palette className="w-3.5 h-3.5" style={{ color: activePalette.accentPrimary }} />
+                    <span>Палитра: {activePalette.name}</span>
+                  </span>
+                  <span className="text-[10px]" style={{ color: activePalette.textMuted }}>
+                    {activePalette.subtitle}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-5 gap-1.5">
+                  {BRAND_PALETTE_THEMES.map(pal => {
+                    const isSelected = pal.id === selectedPaletteId;
+                    return (
+                      <button
+                        key={pal.id}
+                        type="button"
+                        onClick={() => handleSelectPalette(pal.id)}
+                        className="py-1.5 px-1 rounded-xl flex flex-col items-center gap-1 cursor-pointer transition-all"
+                        style={{
+                          backgroundColor: isSelected
+                            ? activePalette.accentSoftBg
+                            : activePalette.fieldBg,
+                          border: isSelected
+                            ? `1.5px solid ${activePalette.accentPrimary}`
+                            : `1.5px solid ${activePalette.fieldBorder}`,
+                        }}
+                      >
+                        <div className="flex items-center -space-x-1">
+                          <span
+                            className="w-4 h-4 rounded-full border border-black/10"
+                            style={{ backgroundColor: pal.canvasBg }}
+                          />
+                          <span
+                            className="w-4 h-4 rounded-full border border-white/60 shadow-xs"
+                            style={{ backgroundColor: pal.accentPrimary }}
+                          />
+                        </div>
+                        <span
+                          className="text-[9px] font-bold truncate max-w-full px-0.5"
+                          style={{
+                            color: isSelected
+                              ? activePalette.accentSoftText
+                              : activePalette.textMuted,
+                          }}
+                        >
+                          {pal.name.split(' ')[0]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </motion.div>

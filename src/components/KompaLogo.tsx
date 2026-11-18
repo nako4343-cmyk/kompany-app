@@ -1,33 +1,231 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+export type KompaLogoConceptId = 'knot' | 'circle' | 'compass' | 'dialogue' | 'prism';
+
+export interface LogoConceptOption {
+  id: KompaLogoConceptId;
+  title: string;
+  subtitle: string;
+  metaphor: string;
+}
+
+export const LOGO_CONCEPT_OPTIONS: LogoConceptOption[] = [
+  {
+    id: 'knot',
+    title: '01 · Узел Встречи',
+    subtitle: 'Три пути в монограмме «K»',
+    metaphor: 'Три самостоятельные линии-траектории сходятся в одной точке общего события.',
+  },
+  {
+    id: 'circle',
+    title: '02 · Круг Компании',
+    subtitle: 'Симметрия общего круга',
+    metaphor: 'Четыре переплетённых дуги вокруг единого центра — метафора дружеского круга и праздника.',
+  },
+  {
+    id: 'compass',
+    title: '03 · Компас Событий',
+    subtitle: 'Ориентир и буква «K»',
+    metaphor: 'Динамичная стрела-навигатор внутри орбиты города, складывающаяся в знак «K».',
+  },
+  {
+    id: 'dialogue',
+    title: '04 · Живая Волна',
+    subtitle: 'Энергия общения',
+    metaphor: 'Две встречные пластичные дуги диалога с центральной искрой совместного досуга.',
+  },
+  {
+    id: 'prism',
+    title: '05 · Трилистник Эмоций',
+    subtitle: 'Встречи · Праздники · Поездки',
+    metaphor: 'Три объёмных лепестка-грани, объединённых в чистый современный знак.',
+  },
+];
+
+export interface BrandPaletteTheme {
+  id: 'iris' | 'amethyst' | 'indigo' | 'coral' | 'velvet';
+  name: string;
+  subtitle: string;
+  isDark?: boolean;
+  canvasBg: string;
+  canvasAura: string;
+  cardBg: string;
+  cardBorder: string;
+  fieldBg: string;
+  fieldFocusBg: string;
+  fieldBorder: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  accentPrimary: string;
+  accentSecondary: string;
+  accentGradFrom: string;
+  accentGradVia: string;
+  accentGradTo: string;
+  accentSoftBg: string;
+  accentSoftBorder: string;
+  accentSoftText: string;
+  accentShadow: string;
+}
+
+export const BRAND_PALETTE_THEMES: BrandPaletteTheme[] = [
+  {
+    id: 'iris',
+    name: 'Iris Violet',
+    subtitle: 'Светлый ирис и фарфор',
+    isDark: false,
+    canvasBg: '#F7F6FB',
+    canvasAura:
+      'radial-gradient(circle at 50% 18%, rgba(108, 71, 255, 0.10) 0%, rgba(157, 123, 255, 0.04) 40%, rgba(247, 246, 251, 0) 72%)',
+    cardBg: '#FFFFFF',
+    cardBorder: '#EAE6F5',
+    fieldBg: '#F6F5FB',
+    fieldFocusBg: '#FFFFFF',
+    fieldBorder: '#E5E1F2',
+    textPrimary: '#141026',
+    textSecondary: '#4E4868',
+    textMuted: '#7C7599',
+    accentPrimary: '#5E3AEF',
+    accentSecondary: '#A78BFA',
+    accentGradFrom: '#6C47FF',
+    accentGradVia: '#522EE5',
+    accentGradTo: '#3F1FC2',
+    accentSoftBg: '#F3F0FF',
+    accentSoftBorder: '#DDD4FF',
+    accentSoftText: '#522EE5',
+    accentShadow: 'rgba(84, 48, 230, 0.36)',
+  },
+  {
+    id: 'amethyst',
+    name: 'Amethyst & Berry',
+    subtitle: 'Аметист и ягодный праздник',
+    isDark: false,
+    canvasBg: '#FAF6FB',
+    canvasAura:
+      'radial-gradient(circle at 50% 18%, rgba(147, 51, 234, 0.10) 0%, rgba(217, 70, 239, 0.04) 40%, rgba(250, 246, 251, 0) 72%)',
+    cardBg: '#FFFFFF',
+    cardBorder: '#EFE5F5',
+    fieldBg: '#F9F5FA',
+    fieldFocusBg: '#FFFFFF',
+    fieldBorder: '#E9DEF0',
+    textPrimary: '#1E112A',
+    textSecondary: '#584469',
+    textMuted: '#88729B',
+    accentPrimary: '#7E22CE',
+    accentSecondary: '#E879F9',
+    accentGradFrom: '#9333EA',
+    accentGradVia: '#7E22CE',
+    accentGradTo: '#581C87',
+    accentSoftBg: '#F8F0FC',
+    accentSoftBorder: '#E9D5FF',
+    accentSoftText: '#6B21A8',
+    accentShadow: 'rgba(126, 34, 206, 0.35)',
+  },
+  {
+    id: 'indigo',
+    name: 'Nordic Indigo',
+    subtitle: 'Скандинавский индиго и воздух',
+    isDark: false,
+    canvasBg: '#F4F6FB',
+    canvasAura:
+      'radial-gradient(circle at 50% 18%, rgba(79, 70, 229, 0.10) 0%, rgba(59, 130, 246, 0.04) 40%, rgba(244, 246, 251, 0) 72%)',
+    cardBg: '#FFFFFF',
+    cardBorder: '#E2E8F4',
+    fieldBg: '#F3F6FA',
+    fieldFocusBg: '#FFFFFF',
+    fieldBorder: '#DCE3F0',
+    textPrimary: '#0F172A',
+    textSecondary: '#334155',
+    textMuted: '#64748B',
+    accentPrimary: '#4338CA',
+    accentSecondary: '#818CF8',
+    accentGradFrom: '#4F46E5',
+    accentGradVia: '#4338CA',
+    accentGradTo: '#312E81',
+    accentSoftBg: '#EEF2FF',
+    accentSoftBorder: '#C7D2FE',
+    accentSoftText: '#3730A3',
+    accentShadow: 'rgba(67, 56, 202, 0.34)',
+  },
+  {
+    id: 'coral',
+    name: 'Sunset Coral',
+    subtitle: 'Тёплый коралл и сливочный песок',
+    isDark: false,
+    canvasBg: '#FAF7F2',
+    canvasAura:
+      'radial-gradient(circle at 50% 18%, rgba(224, 79, 51, 0.10) 0%, rgba(245, 158, 11, 0.04) 40%, rgba(250, 247, 242, 0) 72%)',
+    cardBg: '#FFFFFF',
+    cardBorder: '#ECE4DA',
+    fieldBg: '#F7F3ED',
+    fieldFocusBg: '#FFFFFF',
+    fieldBorder: '#E5DDD2',
+    textPrimary: '#181310',
+    textSecondary: '#524740',
+    textMuted: '#85776E',
+    accentPrimary: '#DE482B',
+    accentSecondary: '#FDBA74',
+    accentGradFrom: '#F0593B',
+    accentGradVia: '#DE482B',
+    accentGradTo: '#B33219',
+    accentSoftBg: '#FEF1EE',
+    accentSoftBorder: '#FAD4C8',
+    accentSoftText: '#B8331A',
+    accentShadow: 'rgba(222, 72, 43, 0.34)',
+  },
+  {
+    id: 'velvet',
+    name: 'Velvet Night',
+    subtitle: 'Бархатный ночной фиолетовый',
+    isDark: true,
+    canvasBg: '#0D0A14',
+    canvasAura:
+      'radial-gradient(circle at 50% 20%, rgba(124, 58, 237, 0.22) 0%, rgba(88, 28, 135, 0.08) 45%, rgba(13, 10, 20, 0) 75%)',
+    cardBg: '#161224',
+    cardBorder: '#2A2342',
+    fieldBg: '#1D182E',
+    fieldFocusBg: '#231D38',
+    fieldBorder: '#31294D',
+    textPrimary: '#F8F7FC',
+    textSecondary: '#C4BDE0',
+    textMuted: '#867EA6',
+    accentPrimary: '#7C3AED',
+    accentSecondary: '#C4B5FD',
+    accentGradFrom: '#8B5CF6',
+    accentGradVia: '#6D28D9',
+    accentGradTo: '#4C1D95',
+    accentSoftBg: '#231B3A',
+    accentSoftBorder: '#3E2F66',
+    accentSoftText: '#DDD6FE',
+    accentShadow: 'rgba(124, 58, 237, 0.45)',
+  },
+];
+
 export interface KompaLogoMarkProps {
   /** Pixel dimension of the square app icon container */
   size?: number;
-  /** Visual variant: 'brand' (violet icon container), 'light' (white container), 'minimal' (mark only) */
+  /** Which of the 5 studio logo concepts to render */
+  concept?: KompaLogoConceptId;
+  /** Optional palette theme override */
+  palette?: BrandPaletteTheme;
+  /** Visual variant: 'brand' (colored icon container), 'light' (white container), 'minimal' (mark only) */
   variant?: 'brand' | 'light' | 'minimal';
   /** Whether to play the smooth vector formation choreography */
   animated?: boolean;
   className?: string;
 }
 
-/**
- * Version 1: Графический знак приложения (Kompa Graphic Symbol)
- *
- * Concept: "The Gathering Knot" (Узел Встречи — Монограмма «K»)
- * Three smooth architectural ribbons representing three people/paths converging
- * into a single shared event and forming a modern, unmistakable "K" monogram.
- * Equally legible on light and dark backgrounds, with zero clichés.
- */
 export const KompaLogoMark: React.FC<KompaLogoMarkProps> = ({
   size = 56,
+  concept = 'knot',
+  palette = BRAND_PALETTE_THEMES[0],
   variant = 'brand',
   animated = false,
   className = '',
 }) => {
   const easeCurve: [number, number, number, number] = [0.22, 1, 0.36, 1];
   const radius = Math.round(size * 0.28);
-
   const isBrand = variant === 'brand';
   const isLight = variant === 'light';
 
@@ -35,32 +233,32 @@ export const KompaLogoMark: React.FC<KompaLogoMarkProps> = ({
     <motion.div
       initial={animated ? { scale: 0.92, opacity: 0 } : false}
       animate={animated ? { scale: 1, opacity: 1 } : undefined}
-      transition={{ duration: 0.55, ease: easeCurve }}
+      transition={{ duration: 0.52, ease: easeCurve }}
       style={{
         width: size,
         height: size,
         borderRadius: variant === 'minimal' ? 0 : radius,
         background: isBrand
-          ? 'linear-gradient(145deg, #6C47FF 0%, #522EE5 58%, #3F1FC2 100%)'
+          ? `linear-gradient(145deg, ${palette.accentGradFrom} 0%, ${palette.accentGradVia} 58%, ${palette.accentGradTo} 100%)`
           : isLight
           ? '#FFFFFF'
           : 'transparent',
         boxShadow: isBrand
-          ? '0 12px 28px -6px rgba(82, 46, 229, 0.34), 0 2px 6px -1px rgba(82, 46, 229, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.28)'
+          ? `0 12px 28px -6px ${palette.accentShadow}, inset 0 1px 1px rgba(255, 255, 255, 0.28)`
           : isLight
           ? '0 10px 26px -6px rgba(25, 18, 56, 0.10), 0 0 0 1px rgba(99, 62, 246, 0.14)'
           : 'none',
       }}
       className={`relative inline-flex items-center justify-center shrink-0 select-none overflow-hidden ${className}`}
     >
-      {/* Subtle internal top-left specular sheen for hardware-grade tactile depth */}
+      {/* Subtle internal top-left specular sheen */}
       {isBrand && (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 58%)',
+              'radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 58%)',
           }}
         />
       )}
@@ -71,190 +269,226 @@ export const KompaLogoMark: React.FC<KompaLogoMarkProps> = ({
         xmlns="http://www.w3.org/2000/svg"
         className="w-[74%] h-[74%] overflow-visible"
       >
-        <defs>
-          {/* Left Vertical Path Gradient */}
-          <linearGradient id="kompa-ribbon-left" x1="20" y1="12" x2="20" y2="52" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={isBrand ? '#FFFFFF' : '#522EE5'} />
-            <stop offset="100%" stopColor={isBrand ? '#E2D9FF' : '#7C5CFA'} />
-          </linearGradient>
+        {concept === 'knot' && (
+          /* CONCEPT 1: УЗЕЛ ВСТРЕЧИ (The Gathering Knot "K") */
+          <>
+            <motion.path
+              d="M20 14V50"
+              stroke={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              strokeWidth="7.5"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, y: 6 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.62, delay: animated ? 0.06 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M46 15C40 21 34 27 25.5 32"
+              stroke={isBrand ? 'rgba(255,255,255,0.92)' : palette.accentGradFrom}
+              strokeWidth="7.5"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, x: 5, y: -4 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, x: 0, y: 0 } : undefined}
+              transition={{ duration: 0.65, delay: animated ? 0.2 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M27.5 32C34.5 36.8 40.5 42.8 46.5 49"
+              stroke={isBrand ? 'rgba(255,255,255,0.82)' : palette.accentGradTo}
+              strokeWidth="7.5"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, x: 5, y: 4 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, x: 0, y: 0 } : undefined}
+              transition={{ duration: 0.65, delay: animated ? 0.34 : 0, ease: easeCurve }}
+            />
+            <motion.circle
+              cx="46.5"
+              cy="32"
+              r="4.4"
+              fill={isBrand ? palette.accentSecondary : palette.accentPrimary}
+              initial={animated ? { scale: 0, opacity: 0 } : false}
+              animate={animated ? { scale: [0, 1.2, 1], opacity: 1 } : undefined}
+              transition={{ duration: 0.5, delay: animated ? 0.65 : 0, ease: easeCurve }}
+            />
+          </>
+        )}
 
-          {/* Upper-Right Converging Path Gradient */}
-          <linearGradient id="kompa-ribbon-top" x1="48" y1="14" x2="24" y2="34" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={isBrand ? '#FFFFFF' : '#633EF6'} />
-            <stop offset="100%" stopColor={isBrand ? '#D6C8FF' : '#8B6CFF'} />
-          </linearGradient>
+        {concept === 'circle' && (
+          /* CONCEPT 2: КРУГ КОМПАНИИ (Four Interlocking Friendship Arcs Around Shared Table) */
+          <>
+            <motion.path
+              d="M20 26C20 18.268 25.373 12 32 12C38.627 12 44 18.268 44 26"
+              stroke={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              strokeWidth="6.2"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, y: -6 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.6, delay: animated ? 0.06 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M38 20C45.732 20 52 25.373 52 32C52 38.627 45.732 44 38 44"
+              stroke={isBrand ? 'rgba(255,255,255,0.86)' : palette.accentGradFrom}
+              strokeWidth="6.2"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, x: 6 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, x: 0 } : undefined}
+              transition={{ duration: 0.6, delay: animated ? 0.18 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M44 38C44 45.732 38.627 52 32 52C25.373 52 20 45.732 20 38"
+              stroke={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              strokeWidth="6.2"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, y: 6 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.6, delay: animated ? 0.3 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M26 44C18.268 44 12 38.627 12 32C12 25.373 18.268 20 26 20"
+              stroke={isBrand ? 'rgba(255,255,255,0.86)' : palette.accentGradTo}
+              strokeWidth="6.2"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, x: -6 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, x: 0 } : undefined}
+              transition={{ duration: 0.6, delay: animated ? 0.42 : 0, ease: easeCurve }}
+            />
+            <motion.circle
+              cx="32"
+              cy="32"
+              r="5.2"
+              fill={isBrand ? palette.accentSecondary : palette.accentPrimary}
+              initial={animated ? { scale: 0, opacity: 0 } : false}
+              animate={animated ? { scale: [0, 1.25, 1], opacity: 1 } : undefined}
+              transition={{ duration: 0.5, delay: animated ? 0.65 : 0, ease: easeCurve }}
+            />
+          </>
+        )}
 
-          {/* Lower-Right Outgoing Celebration Path Gradient */}
-          <linearGradient id="kompa-ribbon-bottom" x1="26" y1="31" x2="49" y2="50" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={isBrand ? '#CBB9FF' : '#7C5CFA'} />
-            <stop offset="100%" stopColor={isBrand ? '#FFFFFF' : '#4B27D6'} />
-          </linearGradient>
-        </defs>
+        {concept === 'compass' && (
+          /* CONCEPT 3: КОМПАС СОБЫТИЙ (Geometric Event Compass & Monogram K) */
+          <>
+            <motion.circle
+              cx="32"
+              cy="32"
+              r="21"
+              stroke={isBrand ? 'rgba(255,255,255,0.34)' : palette.accentSoftBorder}
+              strokeWidth="4.5"
+              initial={animated ? { pathLength: 0, opacity: 0 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1 } : undefined}
+              transition={{ duration: 0.7, delay: animated ? 0.05 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M22 19V45"
+              stroke={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              strokeWidth="6.8"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1 } : undefined}
+              transition={{ duration: 0.55, delay: animated ? 0.18 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M42 20L28 32L42 44"
+              stroke={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              strokeWidth="6.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={animated ? { pathLength: 0, opacity: 0, x: 6 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, x: 0 } : undefined}
+              transition={{ duration: 0.62, delay: animated ? 0.32 : 0, ease: easeCurve }}
+            />
+            <motion.circle
+              cx="45"
+              cy="17"
+              r="4"
+              fill={isBrand ? palette.accentSecondary : palette.accentPrimary}
+              initial={animated ? { scale: 0, opacity: 0 } : false}
+              animate={animated ? { scale: [0, 1.25, 1], opacity: 1 } : undefined}
+              transition={{ duration: 0.45, delay: animated ? 0.65 : 0, ease: easeCurve }}
+            />
+          </>
+        )}
 
-        {/* PATH 1: The Foundation Pillar (Left vertical trajectory with gentle organic curve) */}
-        <motion.path
-          d="M20 14V50"
-          stroke="url(#kompa-ribbon-left)"
-          strokeWidth="7.5"
-          strokeLinecap="round"
-          initial={animated ? { pathLength: 0, opacity: 0, y: 6 } : false}
-          animate={animated ? { pathLength: 1, opacity: 1, y: 0 } : undefined}
-          transition={{
-            duration: 0.65,
-            delay: animated ? 0.08 : 0,
-            ease: easeCurve,
-          }}
-        />
+        {concept === 'dialogue' && (
+          /* CONCEPT 4: ЖИВАЯ ВОЛНА (Two Resonating Dialogue Waves + Spark) */
+          <>
+            <motion.path
+              d="M14 25C20 15 31 15 37 25C43 35 50 28 50 21"
+              stroke={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              strokeWidth="7"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, y: -5 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.65, delay: animated ? 0.08 : 0, ease: easeCurve }}
+            />
+            <motion.path
+              d="M14 43C14 36 21 29 27 39C33 49 44 49 50 39"
+              stroke={isBrand ? 'rgba(255,255,255,0.84)' : palette.accentGradFrom}
+              strokeWidth="7"
+              strokeLinecap="round"
+              initial={animated ? { pathLength: 0, opacity: 0, y: 5 } : false}
+              animate={animated ? { pathLength: 1, opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.65, delay: animated ? 0.26 : 0, ease: easeCurve }}
+            />
+            <motion.circle
+              cx="32"
+              cy="32"
+              r="4.5"
+              fill={isBrand ? palette.accentSecondary : palette.accentPrimary}
+              initial={animated ? { scale: 0, opacity: 0 } : false}
+              animate={animated ? { scale: [0, 1.25, 1], opacity: 1 } : undefined}
+              transition={{ duration: 0.48, delay: animated ? 0.62 : 0, ease: easeCurve }}
+            />
+          </>
+        )}
 
-        {/* PATH 2: The Incoming Friend Trajectory (Upper-right arc curving smoothly into the meeting point) */}
-        <motion.path
-          d="M46 15C40 21 34 27 25.5 32"
-          stroke="url(#kompa-ribbon-top)"
-          strokeWidth="7.5"
-          strokeLinecap="round"
-          initial={animated ? { pathLength: 0, opacity: 0, x: 6, y: -4 } : false}
-          animate={animated ? { pathLength: 1, opacity: 1, x: 0, y: 0 } : undefined}
-          transition={{
-            duration: 0.68,
-            delay: animated ? 0.24 : 0,
-            ease: easeCurve,
-          }}
-        />
-
-        {/* PATH 3: The Shared Experience Trajectory (Flowing from the meeting point to the bottom-right) */}
-        <motion.path
-          d="M27.5 32C34.5 36.8 40.5 42.8 46.5 49"
-          stroke="url(#kompa-ribbon-bottom)"
-          strokeWidth="7.5"
-          strokeLinecap="round"
-          initial={animated ? { pathLength: 0, opacity: 0, x: 6, y: 4 } : false}
-          animate={animated ? { pathLength: 1, opacity: 1, x: 0, y: 0 } : undefined}
-          transition={{
-            duration: 0.68,
-            delay: animated ? 0.38 : 0,
-            ease: easeCurve,
-          }}
-        />
-
-        {/* ACCENT POINT: The Spark of Gathering (Subtle warm lilac-coral dot floating above the convergence) */}
-        <motion.circle
-          cx="46.5"
-          cy="32"
-          r="4.2"
-          fill={isBrand ? '#C4B5FD' : '#8B5CF6'}
-          initial={animated ? { scale: 0, opacity: 0 } : false}
-          animate={
-            animated
-              ? {
-                  scale: [0, 1.18, 1],
-                  opacity: [0, 1, 1],
-                }
-              : undefined
-          }
-          transition={{
-            duration: 0.55,
-            delay: animated ? 0.72 : 0,
-            ease: easeCurve,
-          }}
-        />
+        {concept === 'prism' && (
+          /* CONCEPT 5: ТРИЛИСТНИК ЭМОЦИЙ (Three Architectural Petals Converging) */
+          <>
+            <motion.rect
+              x="16"
+              y="13"
+              width="12"
+              height="38"
+              rx="6"
+              fill={isBrand ? '#FFFFFF' : palette.accentPrimary}
+              initial={animated ? { scaleY: 0, opacity: 0 } : false}
+              animate={animated ? { scaleY: 1, opacity: 1 } : undefined}
+              transition={{ duration: 0.55, delay: animated ? 0.08 : 0, ease: easeCurve }}
+            />
+            <motion.rect
+              x="31"
+              y="13"
+              width="12"
+              height="24"
+              rx="6"
+              transform="rotate(38 37 25)"
+              fill={isBrand ? 'rgba(255,255,255,0.92)' : palette.accentGradFrom}
+              initial={animated ? { scale: 0.4, opacity: 0 } : false}
+              animate={animated ? { scale: 1, opacity: 1 } : undefined}
+              transition={{ duration: 0.55, delay: animated ? 0.24 : 0, ease: easeCurve }}
+            />
+            <motion.rect
+              x="31"
+              y="27"
+              width="12"
+              height="24"
+              rx="6"
+              transform="rotate(-38 37 39)"
+              fill={isBrand ? 'rgba(255,255,255,0.78)' : palette.accentGradTo}
+              initial={animated ? { scale: 0.4, opacity: 0 } : false}
+              animate={animated ? { scale: 1, opacity: 1 } : undefined}
+              transition={{ duration: 0.55, delay: animated ? 0.38 : 0, ease: easeCurve }}
+            />
+            <motion.circle
+              cx="48"
+              cy="32"
+              r="4.2"
+              fill={isBrand ? palette.accentSecondary : palette.accentPrimary}
+              initial={animated ? { scale: 0, opacity: 0 } : false}
+              animate={animated ? { scale: [0, 1.25, 1], opacity: 1 } : undefined}
+              transition={{ duration: 0.48, delay: animated ? 0.64 : 0, ease: easeCurve }}
+            />
+          </>
+        )}
       </svg>
     </motion.div>
-  );
-};
-
-export interface KompaLogoFullProps {
-  /** Size preset */
-  size?: 'sm' | 'md' | 'lg';
-  /** Theme surface context */
-  theme?: 'light' | 'dark';
-  /** Layout orientation */
-  orientation?: 'horizontal' | 'vertical';
-  /** Whether to show the subtle descriptor below the wordmark */
-  showTagline?: boolean;
-  /** Whether to animate the formation sequence */
-  animated?: boolean;
-  className?: string;
-}
-
-/**
- * Version 2: Полная версия с названием приложения (Graphic Symbol + Wordmark Lockup)
- */
-export const KompaLogoFull: React.FC<KompaLogoFullProps> = ({
-  size = 'md',
-  theme = 'light',
-  orientation = 'horizontal',
-  showTagline = false,
-  animated = false,
-  className = '',
-}) => {
-  const easeCurve: [number, number, number, number] = [0.22, 1, 0.36, 1];
-  const isVertical = orientation === 'vertical';
-
-  const markSize = size === 'lg' ? 68 : size === 'md' ? 48 : 36;
-  const wordSizeClass =
-    size === 'lg'
-      ? 'text-[30px] leading-none'
-      : size === 'md'
-      ? 'text-[22px] leading-none'
-      : 'text-[18px] leading-none';
-
-  const primaryTextColor = theme === 'dark' ? '#FFFFFF' : '#141026';
-  const taglineTextColor = theme === 'dark' ? 'rgba(226, 217, 255, 0.72)' : '#6E6888';
-
-  return (
-    <div
-      className={`inline-flex ${
-        isVertical ? 'flex-col items-center text-center gap-3.5' : 'flex-row items-center gap-3'
-      } select-none ${className}`}
-    >
-      <KompaLogoMark size={markSize} variant="brand" animated={animated} />
-
-      <motion.div
-        initial={animated ? { opacity: 0, y: isVertical ? 8 : 0, x: isVertical ? 0 : -6 } : false}
-        animate={animated ? { opacity: 1, y: 0, x: 0 } : undefined}
-        transition={{
-          duration: 0.55,
-          delay: animated ? 0.52 : 0,
-          ease: easeCurve,
-        }}
-        className={`flex flex-col ${isVertical ? 'items-center' : 'items-start'}`}
-      >
-        <div className="flex items-baseline">
-          <span
-            className={`font-display font-extrabold tracking-[-0.035em] ${wordSizeClass}`}
-            style={{ color: primaryTextColor }}
-          >
-            kompa
-          </span>
-          <motion.span
-            initial={animated ? { scale: 0, opacity: 0 } : false}
-            animate={animated ? { scale: 1, opacity: 1 } : undefined}
-            transition={{
-              duration: 0.4,
-              delay: animated ? 0.85 : 0,
-              ease: easeCurve,
-            }}
-            className="inline-block w-1.5 h-1.5 rounded-full ml-0.5 mb-0.5"
-            style={{ backgroundColor: '#6C47FF' }}
-          />
-        </div>
-
-        {showTagline && (
-          <motion.span
-            initial={animated ? { opacity: 0, y: 4 } : false}
-            animate={animated ? { opacity: 1, y: 0 } : undefined}
-            transition={{
-              duration: 0.45,
-              delay: animated ? 0.78 : 0,
-              ease: easeCurve,
-            }}
-            className="text-xs font-medium tracking-[-0.01em] mt-1.5"
-            style={{ color: taglineTextColor }}
-          >
-            Люди и события рядом
-          </motion.span>
-        )}
-      </motion.div>
-    </div>
   );
 };
