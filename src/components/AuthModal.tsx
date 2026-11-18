@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, LayoutGroup } from 'framer-motion';
 import {
   X,
   LogOut,
@@ -126,279 +126,206 @@ const fadeScaleItemVariants: Variants = {
 };
 
 /**
- * Pure Geometric Kinetic Logo Intro (Modeled directly on Tilda 02.gif reference:
- * pure #000000 background, zero words, zero progress bar, three -45° vermilion capsules
- * with negative-space intersection cutouts and high-velocity white/orange diagonal laser slices).
+ * Pure HTML/CSS + Framer Motion Brand Logo Mark ("K" Geometric Capsules + Spark)
+ * Uses 100% hardware-accelerated HTML/CSS transforms so it works reliably on iOS Safari
+ * both during the initial kinetic assembly and when docked at the top of the Login card.
  */
-const KineticGeometricLogoSplash: React.FC = () => {
+const KompaGeometricLogoMark: React.FC<{
+  size?: 'splash' | 'docked';
+  animateAssembly?: boolean;
+}> = ({ size = 'docked', animateAssembly = false }) => {
+  const isSplash = size === 'splash';
+  const dim = isSplash ? 'w-32 h-32' : 'w-24 h-24';
+
   return (
-    <div className="relative w-80 h-64 sm:w-96 sm:h-72 flex items-center justify-center select-none pointer-events-none">
-      <svg
-        viewBox="0 0 420 300"
-        className="w-full h-full overflow-visible"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <motion.div
+      layoutId="kompa-brand-logo-mark"
+      transition={{
+        layout: {
+          type: 'spring',
+          stiffness: 240,
+          damping: 28,
+          mass: 0.9,
+        },
+      }}
+      className={`relative ${dim} rounded-full flex items-center justify-center select-none`}
+      style={{
+        background:
+          'radial-gradient(circle at 35% 30%, rgba(56, 26, 19, 0.95) 0%, rgba(18, 10, 8, 0.98) 75%)',
+        border: '2.5px solid rgba(255, 138, 108, 0.82)',
+        boxShadow: isSplash
+          ? '0 0 55px rgba(222, 72, 43, 0.55), inset 0 0 24px rgba(222, 72, 43, 0.25)'
+          : '0 0 28px rgba(222, 72, 43, 0.3), inset 0 0 18px rgba(222, 72, 43, 0.18)',
+      }}
+    >
+      {/* Outer Orbital Dashed Ring */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
+        className="pointer-events-none absolute -inset-2.5 rounded-full border border-dashed border-[#ff8a6c]/40"
+      />
+
+      {/* Pulse Shockwave Ring During Assembly */}
+      {animateAssembly && (
+        <motion.div
+          initial={{ scale: 0.45, opacity: 0 }}
+          animate={{
+            scale: [0.5, 1.15, 1.55],
+            opacity: [0, 0.85, 0],
+          }}
+          transition={{
+            duration: 1.35,
+            delay: 0.65,
+            ease: 'easeOut',
+          }}
+          className="pointer-events-none absolute inset-0 rounded-full border-2 border-[#ff7c5c]"
+        />
+      )}
+
+      {/* Kinetic Diagonal Laser Streaks During Assembly */}
+      {animateAssembly && (
+        <div className="pointer-events-none absolute inset-0 overflow-visible flex items-center justify-center">
+          {/* Diagonal Streak 1 */}
+          <motion.div
+            initial={{ x: -130, y: 130, opacity: 0, rotate: -45, scaleX: 0.3 }}
+            animate={{
+              x: [-130, 0, 140],
+              y: [130, 0, -140],
+              opacity: [0, 1, 0],
+              scaleX: [0.4, 1.3, 0.3],
+            }}
+            transition={{ duration: 0.85, delay: 0.12, ease: 'easeInOut' }}
+            className="absolute w-28 h-[3px] rounded-full bg-gradient-to-r from-transparent via-white to-[#FF4D2A]"
+          />
+          {/* Diagonal Streak 2 */}
+          <motion.div
+            initial={{ x: 130, y: -130, opacity: 0, rotate: -45, scaleX: 0.3 }}
+            animate={{
+              x: [130, 0, -140],
+              y: [-130, 0, 140],
+              opacity: [0, 1, 0],
+              scaleX: [0.4, 1.2, 0.3],
+            }}
+            transition={{ duration: 0.85, delay: 0.28, ease: 'easeInOut' }}
+            className="absolute w-24 h-[2.5px] rounded-full bg-gradient-to-r from-transparent via-amber-300 to-white"
+          />
+          {/* Micro Spark Diamonds */}
+          <motion.div
+            initial={{ x: -75, y: -65, scale: 0, opacity: 0, rotate: 45 }}
+            animate={{
+              x: [-75, -44, -58],
+              y: [-65, -40, -52],
+              scale: [0, 1.25, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{ duration: 0.9, delay: 0.45, ease: 'easeOut' }}
+            className="absolute w-2.5 h-2.5 bg-white"
+          />
+          <motion.div
+            initial={{ x: 75, y: 65, scale: 0, opacity: 0, rotate: 45 }}
+            animate={{
+              x: [75, 44, 58],
+              y: [65, 40, 52],
+              scale: [0, 1.25, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{ duration: 0.9, delay: 0.52, ease: 'easeOut' }}
+            className="absolute w-2.5 h-2.5 bg-[#FF4D2A]"
+          />
+        </div>
+      )}
+
+      {/* ASSEMBLING GEOMETRIC LOGO CORE (The 4 Interlocking Brand Pieces) */}
+      <div
+        className={`relative ${
+          isSplash ? 'w-16 h-16' : 'w-12 h-12'
+        } flex items-center justify-center`}
       >
-        <defs>
-          {/* Capsule 1 (-45 deg around 130, 150) */}
-          <clipPath id="cap1-clip">
-            <rect
-              x="92"
-              y="55"
-              width="76"
-              height="190"
-              rx="38"
-              transform="rotate(45 130 150)"
-            />
-          </clipPath>
-          {/* Capsule 2 (-45 deg around 210, 150) */}
-          <clipPath id="cap2-clip">
-            <rect
-              x="172"
-              y="55"
-              width="76"
-              height="190"
-              rx="38"
-              transform="rotate(45 210 150)"
-            />
-          </clipPath>
-          {/* Capsule 3 (-45 deg around 290, 150) */}
-          <clipPath id="cap3-clip">
-            <rect
-              x="252"
-              y="55"
-              width="76"
-              height="190"
-              rx="38"
-              transform="rotate(45 290 150)"
-            />
-          </clipPath>
-        </defs>
-
-        {/* 1. INITIAL SPARK DIAMONDS ( matches frame 1-2 of 02.gif ) */}
-        <motion.rect
-          x="74"
-          y="196"
-          width="9"
-          height="9"
-          fill="#FFFFFF"
-          transform="rotate(45 78.5 200.5)"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{
-            opacity: [0, 1, 1, 0],
-            scale: [0, 1.3, 1, 0],
-            x: [0, 8, 22, 45],
-            y: [0, -8, -22, -45],
+        {/* PIECE 1: Left Vertical Geometric Capsule of "K" */}
+        <motion.div
+          initial={
+            animateAssembly
+              ? { x: -110, y: -85, rotate: -45, scale: 0.35, opacity: 0 }
+              : false
+          }
+          animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 260,
+            damping: 22,
+            delay: animateAssembly ? 0.05 : 0,
           }}
-          transition={{ duration: 0.75, times: [0, 0.25, 0.7, 1], ease: 'easeOut' }}
-        />
-
-        <motion.rect
-          x="336"
-          y="86"
-          width="16"
-          height="4.5"
-          fill="#FF3B00"
-          transform="rotate(-45 344 88)"
-          initial={{ opacity: 0, x: -40, y: 40 }}
-          animate={{
-            opacity: [0, 1, 1, 0],
-            x: [-40, 0, 18, 34],
-            y: [40, 0, -18, -34],
+          className="absolute left-[14%] top-[10%] w-[22%] h-[80%] rounded-full"
+          style={{
+            background: 'linear-gradient(180deg, #FF7A59 0%, #DE482B 55%, #A92910 100%)',
+            boxShadow: '0 4px 14px rgba(222, 72, 43, 0.55)',
           }}
-          transition={{ duration: 1.15, delay: 0.35, ease: 'easeOut' }}
         />
 
-        {/* 2. CAPSULE 1 (LEFT) */}
-        <g clipPath="url(#cap1-clip)">
-          <motion.rect
-            x="30"
-            y="10"
-            width="200"
-            height="280"
-            fill="#FF3B00"
-            transform="rotate(45 130 150)"
-            initial={{ y: 210 }}
-            animate={{ y: [210, 0, 0] }}
-            transition={{
-              duration: 1.8,
-              times: [0, 0.36, 1],
-              ease: [0.16, 1, 0.3, 1],
-            }}
-          />
-          {/* Kinetic White & Black Diagonal Slices Inside Capsule 1 */}
-          <motion.rect
-            x="104"
-            y="30"
-            width="6"
-            height="90"
-            fill="#FFFFFF"
-            transform="rotate(45 130 150)"
-            initial={{ y: 150, opacity: 0 }}
-            animate={{ y: [150, -120], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.9, delay: 0.22, ease: 'easeInOut' }}
-          />
-          <motion.rect
-            x="126"
-            y="45"
-            width="4.5"
-            height="110"
-            fill="#000000"
-            transform="rotate(45 130 150)"
-            initial={{ y: 140, opacity: 0 }}
-            animate={{ y: [140, -140], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.95, delay: 0.28, ease: 'easeInOut' }}
-          />
-        </g>
-
-        {/* 3. CAPSULE 2 (CENTER) */}
-        <g clipPath="url(#cap2-clip)">
-          <motion.rect
-            x="110"
-            y="10"
-            width="200"
-            height="280"
-            fill="#FF3B00"
-            transform="rotate(45 210 150)"
-            initial={{ y: -210 }}
-            animate={{ y: [-210, 0, 0] }}
-            transition={{
-              duration: 1.8,
-              delay: 0.1,
-              times: [0, 0.4, 1],
-              ease: [0.16, 1, 0.3, 1],
-            }}
-          />
-          {/* Negative-space lens cutout between Capsule 1 and Capsule 2 */}
-          <motion.rect
-            x="92"
-            y="55"
-            width="76"
-            height="190"
-            rx="38"
-            fill="#000000"
-            transform="rotate(45 130 150)"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 1] }}
-            transition={{ duration: 0.5, delay: 0.32 }}
-          />
-          {/* Kinetic White & Black Slices Inside Capsule 2 */}
-          <motion.rect
-            x="186"
-            y="40"
-            width="7"
-            height="120"
-            fill="#000000"
-            transform="rotate(45 210 150)"
-            initial={{ y: -150, opacity: 0 }}
-            animate={{ y: [-150, 150], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.95, delay: 0.32, ease: 'easeInOut' }}
-          />
-          <motion.rect
-            x="216"
-            y="60"
-            width="5"
-            height="85"
-            fill="#FFFFFF"
-            transform="rotate(45 210 150)"
-            initial={{ y: 150, opacity: 0 }}
-            animate={{ y: [150, -150], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.9, delay: 0.38, ease: 'easeInOut' }}
-          />
-        </g>
-
-        {/* 4. CAPSULE 3 (RIGHT) */}
-        <g clipPath="url(#cap3-clip)">
-          <motion.rect
-            x="190"
-            y="10"
-            width="200"
-            height="280"
-            fill="#FF3B00"
-            transform="rotate(45 290 150)"
-            initial={{ y: 220 }}
-            animate={{ y: [220, 0, 0] }}
-            transition={{
-              duration: 1.8,
-              delay: 0.2,
-              times: [0, 0.44, 1],
-              ease: [0.16, 1, 0.3, 1],
-            }}
-          />
-          {/* Negative-space lens cutout between Capsule 2 and Capsule 3 */}
-          <motion.rect
-            x="172"
-            y="55"
-            width="76"
-            height="190"
-            rx="38"
-            fill="#000000"
-            transform="rotate(45 210 150)"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 1] }}
-            transition={{ duration: 0.5, delay: 0.42 }}
-          />
-          {/* High-contrast kinetic laser slices matching frame 2 & 8 of 02.gif */}
-          <motion.rect
-            x="268"
-            y="40"
-            width="6"
-            height="95"
-            fill="#FFFFFF"
-            transform="rotate(45 290 150)"
-            initial={{ y: 160, opacity: 0 }}
-            animate={{ y: [160, -150], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.95, delay: 0.42, ease: 'easeInOut' }}
-          />
-          <motion.rect
-            x="284"
-            y="50"
-            width="4.5"
-            height="115"
-            fill="#000000"
-            transform="rotate(45 290 150)"
-            initial={{ y: 150, opacity: 0 }}
-            animate={{ y: [150, -160], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 1.0, delay: 0.48, ease: 'easeInOut' }}
-          />
-          <motion.rect
-            x="306"
-            y="35"
-            width="10"
-            height="42"
-            fill="#000000"
-            transform="rotate(45 290 150)"
-            initial={{ y: 120, opacity: 0 }}
-            animate={{ y: [120, -130], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.85, delay: 0.52, ease: 'easeInOut' }}
-          />
-          <motion.rect
-            x="314"
-            y="42"
-            width="5"
-            height="28"
-            fill="#FFFFFF"
-            transform="rotate(45 290 150)"
-            initial={{ y: 120, opacity: 0 }}
-            animate={{ y: [120, -130], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.85, delay: 0.56, ease: 'easeInOut' }}
-          />
-        </g>
-
-        {/* Tiny White Diamond Spark at Bottom Center */}
-        <motion.rect
-          x="176"
-          y="196"
-          width="6"
-          height="6"
-          fill="#FFFFFF"
-          transform="rotate(45 179 199)"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: [0, 1, 1, 0], scale: [0, 1.2, 1, 0] }}
-          transition={{ duration: 0.7, delay: 0.65 }}
+        {/* PIECE 2: Upper-Right Diagonal Capsule Wing of "K" (-42 deg) */}
+        <motion.div
+          initial={
+            animateAssembly
+              ? { x: 115, y: -105, rotate: 42, scale: 0.35, opacity: 0 }
+              : false
+          }
+          animate={{ x: 0, y: 0, rotate: 42, scale: 1, opacity: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 260,
+            damping: 22,
+            delay: animateAssembly ? 0.22 : 0,
+          }}
+          className="absolute right-[18%] top-[8%] w-[22%] h-[54%] rounded-full origin-bottom"
+          style={{
+            background: 'linear-gradient(180deg, #FBBF24 0%, #F97316 55%, #DE482B 100%)',
+            boxShadow: '0 4px 14px rgba(249, 115, 22, 0.5)',
+          }}
         />
-      </svg>
-    </div>
+
+        {/* PIECE 3: Lower-Right Diagonal Capsule Wing of "K" (-42 deg counter) */}
+        <motion.div
+          initial={
+            animateAssembly
+              ? { x: 115, y: 105, rotate: -42, scale: 0.35, opacity: 0 }
+              : false
+          }
+          animate={{ x: 0, y: 0, rotate: -42, scale: 1, opacity: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 260,
+            damping: 22,
+            delay: animateAssembly ? 0.36 : 0,
+          }}
+          className="absolute right-[18%] bottom-[8%] w-[22%] h-[54%] rounded-full origin-top"
+          style={{
+            background: 'linear-gradient(180deg, #DE482B 0%, #FF6B4A 50%, #F59E0B 100%)',
+            boxShadow: '0 4px 14px rgba(222, 72, 43, 0.5)',
+          }}
+        />
+
+        {/* PIECE 4: Center Glowing Nexus Diamond locking the capsules together */}
+        <motion.div
+          initial={
+            animateAssembly
+              ? { scale: 0, rotate: -135, opacity: 0 }
+              : false
+          }
+          animate={{ scale: 1, rotate: 45, opacity: 1 }}
+          transition={{
+            type: 'spring',
+            stiffness: 340,
+            damping: 18,
+            delay: animateAssembly ? 0.54 : 0,
+          }}
+          className="absolute left-[37%] top-[39%] w-[22%] h-[22%] rounded-[4px]"
+          style={{
+            background: 'linear-gradient(135deg, #FFFFFF 0%, #FDE68A 45%, #FF7A59 100%)',
+            boxShadow: '0 0 14px rgba(255, 255, 255, 0.9)',
+          }}
+        />
+      </div>
+    </motion.div>
   );
 };
 
@@ -468,19 +395,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Pure Kinetic Geometric Logo Splash (No words, no loading bar, 2.2s)
+  // Stage 0: Logo Assembly Intro (1.85s) -> smoothly glides into top of Login Card
   const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!showLogoSplash) return;
     const timer = setTimeout(() => {
       setShowLogoSplash(false);
-    }, 2250);
+    }, 1850);
     return () => clearTimeout(timer);
-  }, []);
+  }, [showLogoSplash]);
 
   // Auth Flow Mode:
-  // 'login' = Login + Password screen with "ВОЙТИ" at the bottom and "РЕГИСТРАЦИЯ" on the right
-  // 'register' = 4-step registration inside the exact same card format
+  // 'login' = Login + Password screen with assembled Logo at top, "ВОЙТИ" at bottom and "РЕГИСТРАЦИЯ" on right
+  // 'register' = 4-step registration inside the same card with Personal Photo Upload button at top
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>([1, 1]);
 
@@ -852,52 +780,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto pt-safe pb-safe select-none"
       style={{
-        background: showLogoSplash
-          ? '#000000'
-          : 'radial-gradient(circle at 50% 35%, #2b1812 0%, #170e0b 48%, #0a0706 100%)',
-        transition: 'background 0.45s ease',
+        background: 'radial-gradient(circle at 50% 35%, #2b1812 0%, #170e0b 48%, #0a0706 100%)',
       }}
     >
       {/* Hidden Recaptcha container for Firebase Phone Auth */}
       <div ref={recaptchaContainerRef} className="hidden" />
 
-      {/* CONTINUOUSLY MOVING AMBIENT LIGHT ORBS ON THE SCREEN BACKDROP (After Splash) */}
-      {!showLogoSplash && (
-        <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-          <motion.div
-            animate={{
-              x: [-80, 90, -50, -80],
-              y: [-70, 50, 95, -70],
-              scale: [1, 1.22, 0.92, 1],
-            }}
-            transition={{
-              duration: 11,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="absolute top-1/4 left-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-35"
-            style={{
-              background: 'radial-gradient(circle, #DE482B 0%, rgba(222, 72, 43, 0) 70%)',
-            }}
-          />
-          <motion.div
-            animate={{
-              x: [90, -85, 45, 90],
-              y: [80, -60, -90, 80],
-              scale: [1.1, 0.88, 1.18, 1.1],
-            }}
-            transition={{
-              duration: 13,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="absolute bottom-1/4 right-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-25"
-            style={{
-              background: 'radial-gradient(circle, #F59E0B 0%, rgba(245, 158, 11, 0) 70%)',
-            }}
-          />
-        </div>
-      )}
+      {/* CONTINUOUSLY MOVING AMBIENT LIGHT ORBS ON THE SCREEN BACKDROP */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+        <motion.div
+          animate={{
+            x: [-80, 90, -50, -80],
+            y: [-70, 50, 95, -70],
+            scale: [1, 1.22, 0.92, 1],
+          }}
+          transition={{
+            duration: 11,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute top-1/4 left-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-35"
+          style={{
+            background: 'radial-gradient(circle, #DE482B 0%, rgba(222, 72, 43, 0) 70%)',
+          }}
+        />
+        <motion.div
+          animate={{
+            x: [90, -85, 45, 90],
+            y: [80, -60, -90, 80],
+            scale: [1.1, 0.88, 1.18, 1.1],
+          }}
+          transition={{
+            duration: 13,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute bottom-1/4 right-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-25"
+          style={{
+            background: 'radial-gradient(circle, #F59E0B 0%, rgba(245, 158, 11, 0) 70%)',
+          }}
+        />
+      </div>
 
       {/* Interactive iOS-Style Push / SMS Code Banner at Top */}
       <AnimatePresence>
@@ -945,27 +868,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      {/* SHARED LAYOUT GROUP FOR SEAMLESS TRANSITION FROM LOGO ASSEMBLY TO LOGIN CARD */}
+      <LayoutGroup>
         {showLogoSplash ? (
-          /* STAGE 0: PURE KINETIC GEOMETRIC LOGO ANIMATION (02.gif Reference — No Text, No Loading Bar) */
-          <motion.div
-            key="kompa-kinetic-splash"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.94 }}
-            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 flex items-center justify-center"
-          >
-            <KineticGeometricLogoSplash />
-          </motion.div>
+          /* STAGE 0: KINETIC LOGO ASSEMBLY IN THE CENTER OF THE SCREEN */
+          <div className="relative z-10 flex items-center justify-center">
+            <KompaGeometricLogoMark size="splash" animateAssembly={true} />
+          </div>
         ) : (
-          /* STAGE 1: PORTRAIT CARD WITH MOVING GLOW — LOGIN FIRST, REGISTRATION ON RIGHT */
+          /* STAGE 1: PORTRAIT CARD WITH MOVING GLOW — LOGO smoothly docks at the top */
           <motion.div
             key="kompa-auth-card"
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              duration: 0.48,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             onClick={e => e.stopPropagation()}
             className="relative z-10 w-full max-w-[395px] my-auto flex flex-col items-center"
           >
@@ -1062,67 +981,73 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               )}
 
-              {/* TOP CIRCULAR CAMERA / PERSONAL PHOTO EMBLEM */}
-              <div className="flex flex-col items-center pt-1 pb-4 z-10">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCustomAvatarUpload}
-                  className="hidden"
-                />
+              {/* Hidden File Input for Personal Photo in Registration */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCustomAvatarUpload}
+                className="hidden"
+              />
 
-                <div className="relative flex items-center justify-center">
-                  <motion.svg
-                    viewBox="0 0 112 112"
-                    className="absolute -inset-2 w-28 h-28 pointer-events-none"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <circle
-                      cx="56"
-                      cy="56"
-                      r="52"
-                      fill="none"
-                      stroke="rgba(255, 138, 108, 0.35)"
-                      strokeWidth="1.2"
-                      strokeDasharray="8 6"
-                    />
-                  </motion.svg>
-
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Загрузить личную фотографию"
-                    className="relative w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all group"
-                    style={{
-                      border: '2.5px solid rgba(255, 138, 108, 0.78)',
-                      background: 'rgba(22, 13, 10, 0.65)',
-                      boxShadow:
-                        '0 0 28px rgba(222, 72, 43, 0.28), inset 0 0 18px rgba(222, 72, 43, 0.16)',
+              {/* TOP HEADER AREA:
+                  - In LOGIN mode: Shows the Assembled App Logo (smoothly transitioned via layoutId)
+                  - In REGISTER mode: Shows the Personal Photo Upload Button (Camera) + step progress */}
+              <div className="flex flex-col items-center pt-1 pb-5 z-10">
+                {authMode === 'login' ? (
+                  <div
+                    onClick={() => {
+                      triggerHaptic(6);
+                      setShowLogoSplash(true);
                     }}
+                    title="Логотип КОМПАНИЯ"
+                    className="cursor-pointer"
                   >
-                    {avatarUrl ? (
-                      <>
-                        <img
-                          src={avatarUrl}
-                          alt={name || 'Ваше фото'}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                        <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#26140f] border border-[#ff8a6c]/75 flex items-center justify-center text-[#ffbfa9] shadow-md">
-                          <Camera className="w-3.5 h-3.5" />
-                        </div>
-                      </>
-                    ) : (
-                      <Camera className="w-10 h-10 text-[#ff9d82] stroke-[1.7] group-hover:scale-105 transition-transform" />
-                    )}
-                  </motion.button>
-                </div>
-
-                {authMode === 'register' && (
+                    <KompaGeometricLogoMark size="docked" animateAssembly={false} />
+                  </div>
+                ) : (
                   <>
+                    {/* PERSONAL PHOTO UPLOAD BUTTON (Moved strictly into Registration process) */}
+                    <div className="relative flex items-center justify-center">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
+                        className="pointer-events-none absolute -inset-2.5 rounded-full border border-dashed border-[#ff8a6c]/40"
+                      />
+
+                      <motion.button
+                        type="button"
+                        initial={{ scale: 0.88, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Загрузить личную фотографию"
+                        className="relative w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all group"
+                        style={{
+                          border: '2.5px solid rgba(255, 138, 108, 0.78)',
+                          background: 'rgba(22, 13, 10, 0.65)',
+                          boxShadow:
+                            '0 0 28px rgba(222, 72, 43, 0.28), inset 0 0 18px rgba(222, 72, 43, 0.16)',
+                        }}
+                      >
+                        {avatarUrl ? (
+                          <>
+                            <img
+                              src={avatarUrl}
+                              alt={name || 'Ваше фото'}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#26140f] border border-[#ff8a6c]/75 flex items-center justify-center text-[#ffbfa9] shadow-md">
+                              <Camera className="w-3.5 h-3.5" />
+                            </div>
+                          </>
+                        ) : (
+                          <Camera className="w-10 h-10 text-[#ff9d82] stroke-[1.7] group-hover:scale-105 transition-transform" />
+                        )}
+                      </motion.button>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -1132,7 +1057,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         ? 'Обработка фото...'
                         : avatarUrl
                         ? 'Личное фото загружено · Изменить'
-                        : 'Нажмите на камеру, чтобы добавить ваше фото'}
+                        : 'Загрузить ваше личное фото'}
                     </button>
 
                     {/* Minimal Step Progress Pills in Register Mode */}
@@ -1192,7 +1117,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="relative overflow-hidden z-10">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   {authMode === 'login' ? (
-                    /* INITIAL LOGIN SCREEN: LOGIN + PASSWORD + BOTTOM "ВОЙТИ" & RIGHT "РЕГИСТРАЦИЯ" */
+                    /* INITIAL LOGIN SCREEN: LOGO AT TOP + LOGIN + PASSWORD + BOTTOM "ВОЙТИ" & RIGHT "РЕГИСТРАЦИЯ" */
                     <motion.div
                       key="login-view"
                       variants={staggerContainerVariants}
@@ -1249,10 +1174,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         />
                       </motion.div>
 
-                      {/* Remember Me Row */}
+                      {/* Remember Me Row (Italic "Регистрация" word completely removed) */}
                       <motion.div
                         variants={fadeScaleItemVariants}
-                        className="flex items-center justify-between pt-0.5 px-1 text-xs"
+                        className="flex items-center justify-start pt-0.5 px-1 text-xs"
                       >
                         <label className="flex items-center gap-2 text-[#ffdfd4]/85 cursor-pointer">
                           <input
@@ -1263,21 +1188,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           />
                           <span>Запомнить меня</span>
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic(8);
-                            setErrorMessage('');
-                            setAuthMode('register');
-                            setStepState([1, 1]);
-                          }}
-                          className="text-[#ffbfa9] hover:text-white italic text-xs font-semibold cursor-pointer transition-colors"
-                        >
-                          Регистрация
-                        </button>
                       </motion.div>
 
-                      {/* Bottom Row: Left/Main "ВОЙТИ" and Right "РЕГИСТРАЦИЯ" */}
+                      {/* Bottom Row: Left "ВОЙТИ" and Right "РЕГИСТРАЦИЯ" */}
                       <motion.div
                         variants={fadeScaleItemVariants}
                         className="grid grid-cols-2 gap-2.5 pt-2"
@@ -1559,7 +1472,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               type="button"
                               disabled={resendCooldown > 0}
                               onClick={handleRequestSmsCode}
-                              className="text-[#ffcab8]/85 hover:text-white italic flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="text-[#ffcab8]/85 hover:text-white flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <RefreshCw className="w-3 h-3" />
                               <span>
@@ -1598,63 +1511,76 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           animate="show"
                           className="space-y-3"
                         >
-                          <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-2.5">
+                          {/* Age & Gender Row */}
+                          <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-12 gap-2">
                             <div
-                              className="flex items-center justify-between px-3 py-2 rounded-xl border border-[#ff8a6c]/22"
-                              style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
+                              className="col-span-5 flex items-center justify-between px-3 py-2.5 rounded-xl"
+                              style={{
+                                backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                                border: '1px solid rgba(255, 138, 108, 0.22)',
+                              }}
                             >
                               <button
                                 type="button"
-                                onClick={() => setAge(prev => Math.max(18, prev - 1))}
-                                className="w-7 h-7 rounded-lg bg-[#DE482B]/20 text-white font-bold cursor-pointer"
+                                onClick={() => {
+                                  triggerHaptic(5);
+                                  setAge(prev => Math.max(18, prev - 1));
+                                }}
+                                className="w-6 h-6 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center cursor-pointer"
                               >
                                 −
                               </button>
                               <div className="text-center">
-                                <span className="text-xs font-mono-num font-bold text-white block">
-                                  {age} лет
+                                <span className="text-sm font-mono-num font-extrabold text-white block leading-none">
+                                  {age}
                                 </span>
-                                <span className="text-[10px] text-[#ffcab8]/65 block">Возраст</span>
+                                <span className="text-[9px] text-[#ffcab8]/65">лет</span>
                               </div>
                               <button
                                 type="button"
-                                onClick={() => setAge(prev => Math.min(99, prev + 1))}
-                                className="w-7 h-7 rounded-lg bg-[#DE482B]/20 text-white font-bold cursor-pointer"
+                                onClick={() => {
+                                  triggerHaptic(5);
+                                  setAge(prev => Math.min(90, prev + 1));
+                                }}
+                                className="w-6 h-6 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center cursor-pointer"
                               >
                                 +
                               </button>
                             </div>
 
-                            <div
-                              className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-[#ff8a6c]/22"
-                              style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
-                            >
-                              {[
-                                { val: 'female', label: 'Жен' },
-                                { val: 'male', label: 'Муж' },
-                              ].map(opt => {
-                                const active = gender === opt.val;
+                            <div className="col-span-7 grid grid-cols-2 gap-1.5">
+                              {(['female', 'male'] as const).map(g => {
+                                const active = gender === g;
                                 return (
                                   <button
-                                    key={opt.val}
+                                    key={g}
                                     type="button"
-                                    onClick={() => setGender(opt.val as 'female' | 'male')}
-                                    className="rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                                    onClick={() => {
+                                      triggerHaptic(6);
+                                      setGender(g);
+                                    }}
+                                    className="px-2.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
                                     style={{
-                                      backgroundColor: active ? '#DE482B' : 'transparent',
-                                      color: active ? '#ffffff' : 'rgba(255, 202, 184, 0.75)',
+                                      backgroundColor: active
+                                        ? 'rgba(222, 72, 43, 0.42)'
+                                        : 'rgba(18, 11, 9, 0.82)',
+                                      color: '#ffffff',
+                                      border: active
+                                        ? '1px solid rgba(255, 138, 108, 0.85)'
+                                        : '1px solid rgba(255, 138, 108, 0.2)',
                                     }}
                                   >
-                                    {opt.label}
+                                    {g === 'female' ? 'Девушка' : 'Мужчина'}
                                   </button>
                                 );
                               })}
                             </div>
                           </motion.div>
 
-                          <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
+                          {/* City & Occupation Inputs */}
+                          <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-2">
                             <div
-                              className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all"
+                              className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
                               style={{
                                 backgroundColor: 'rgba(18, 11, 9, 0.82)',
                                 border:
@@ -1663,119 +1589,124 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                     : '1px solid rgba(255, 138, 108, 0.22)',
                               }}
                             >
-                              <MapPin className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                              <MapPin className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
                               <input
                                 type="text"
-                                maxLength={60}
                                 value={city}
                                 onFocus={() => setFocusedField('city')}
                                 onBlur={() => setFocusedField(null)}
                                 onChange={e => setCity(e.target.value)}
-                                placeholder="Ваш город"
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                                placeholder="Город"
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
                               />
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {CITY_PRESETS.map(c => (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  onClick={() => setCity(c)}
-                                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer"
-                                  style={{
-                                    backgroundColor:
-                                      city === c
-                                        ? 'rgba(222, 72, 43, 0.35)'
-                                        : 'rgba(18, 11, 9, 0.65)',
-                                    borderColor:
-                                      city === c
-                                        ? 'rgba(255, 138, 108, 0.75)'
-                                        : 'rgba(255, 138, 108, 0.2)',
-                                    color: '#ffdfd4',
-                                  }}
-                                >
-                                  {c}
-                                </button>
-                              ))}
+
+                            <div
+                              className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
+                              style={{
+                                backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                                border:
+                                  focusedField === 'occupation'
+                                    ? '1px solid rgba(255, 138, 108, 0.85)'
+                                    : '1px solid rgba(255, 138, 108, 0.22)',
+                              }}
+                            >
+                              <Briefcase className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
+                              <input
+                                type="text"
+                                value={occupation}
+                                onFocus={() => setFocusedField('occupation')}
+                                onBlur={() => setFocusedField(null)}
+                                onChange={e => setOccupation(e.target.value)}
+                                placeholder="Кто вы по делу"
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                              />
                             </div>
                           </motion.div>
 
-                          <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                              border:
-                                focusedField === 'occupation'
-                                  ? '1px solid rgba(255, 138, 108, 0.85)'
-                                  : '1px solid rgba(255, 138, 108, 0.22)',
-                            }}
-                          >
-                            <Briefcase className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                            <input
-                              type="text"
-                              maxLength={100}
-                              value={occupation}
-                              onFocus={() => setFocusedField('occupation')}
-                              onBlur={() => setFocusedField(null)}
-                              onChange={e => setOccupation(e.target.value)}
-                              placeholder="Сфера / Профессия (например: Дизайн, IT)"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                            />
+                          {/* Quick City Buttons */}
+                          <motion.div variants={fadeScaleItemVariants} className="flex flex-wrap gap-1.5">
+                            {CITY_PRESETS.map(c => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => {
+                                  triggerHaptic(5);
+                                  setCity(c);
+                                }}
+                                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer"
+                                style={{
+                                  backgroundColor:
+                                    city === c ? 'rgba(222, 72, 43, 0.45)' : 'rgba(18, 11, 9, 0.65)',
+                                  color: city === c ? '#ffffff' : 'rgba(255, 202, 184, 0.8)',
+                                  border:
+                                    city === c
+                                      ? '1px solid rgba(255, 138, 108, 0.7)'
+                                      : '1px solid rgba(255, 138, 108, 0.16)',
+                                }}
+                              >
+                                {c}
+                              </button>
+                            ))}
                           </motion.div>
 
+                          {/* Interests Selection Grid */}
                           <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs px-0.5">
-                              <span className="font-semibold text-[#ffdfd4]">
-                                Выберите интересы ({interests.length})
-                              </span>
-                              <span className="text-[11px] text-[#ff9d82] font-mono-num">
-                                {matchedEventsCount} встреч рядом
+                            <div className="flex items-center justify-between text-[11px] text-[#ffdfd4]/85 px-0.5">
+                              <span className="font-semibold">Выберите любимые форматы встреч:</span>
+                              <span className="font-mono-num font-bold text-[#ff9d82]">
+                                {interests.length}/10
                               </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+
+                            <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-0.5">
                               {INTEREST_CATALOG.map(item => {
-                                const Icon = item.icon;
-                                const active = interests.includes(item.tag);
+                                const selected = interests.includes(item.tag);
+                                const IconComp = item.icon;
                                 return (
                                   <button
                                     key={item.tag}
                                     type="button"
                                     onClick={() => toggleInterest(item.tag)}
-                                    className="px-2.5 py-2 rounded-xl text-[11px] font-semibold border flex items-center justify-between gap-1.5 text-left transition-all cursor-pointer"
+                                    className="px-2.5 py-2 rounded-xl text-left flex items-center justify-between gap-1.5 transition-all cursor-pointer"
                                     style={{
-                                      backgroundColor: active
-                                        ? 'rgba(222, 72, 43, 0.82)'
-                                        : 'rgba(18, 11, 9, 0.75)',
-                                      borderColor: active
-                                        ? 'rgba(255, 165, 140, 0.8)'
-                                        : 'rgba(255, 138, 108, 0.2)',
-                                      color: '#ffffff',
+                                      backgroundColor: selected
+                                        ? 'rgba(222, 72, 43, 0.36)'
+                                        : 'rgba(18, 11, 9, 0.78)',
+                                      border: selected
+                                        ? '1px solid rgba(255, 138, 108, 0.85)'
+                                        : '1px solid rgba(255, 138, 108, 0.18)',
                                     }}
                                   >
-                                    <span className="flex items-center gap-1.5 truncate">
-                                      <Icon className="w-3.5 h-3.5 text-[#ffb49e] shrink-0" />
-                                      <span className="truncate">{item.tag}</span>
-                                    </span>
-                                    {active && <Check className="w-3 h-3 text-white shrink-0" />}
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <IconComp className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
+                                      <span className="text-[11px] font-semibold text-white truncate">
+                                        {isEn ? item.labelEn : item.tag}
+                                      </span>
+                                    </div>
+                                    {selected && (
+                                      <Check className="w-3.5 h-3.5 text-[#ffcab8] shrink-0" />
+                                    )}
                                   </button>
                                 );
                               })}
                             </div>
                           </motion.div>
 
+                          {/* Step 3 Footer Actions */}
                           <motion.div
                             variants={fadeScaleItemVariants}
-                            className="flex items-center gap-2.5 pt-2"
+                            className="flex items-center gap-2 pt-2"
                           >
                             <button
                               type="button"
-                              onClick={() => navigateToStep(2)}
+                              onClick={() => navigateToStep(1)}
                               className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
                             >
                               <ArrowLeft className="w-4 h-4" />
                               <span>Назад</span>
                             </button>
+
                             <motion.button
                               whileHover={{ scale: 1.015 }}
                               whileTap={{ scale: 0.98 }}
@@ -1797,91 +1728,93 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
 
                       {wizardStep === 4 && (
-                        /* STEP 4: SUMMARY & EXPLICIT MANUAL "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" BUTTON */
+                        /* STEP 4: SUMMARY & EXPLICIT "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" BUTTON */
                         <motion.div
                           variants={staggerContainerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-3"
+                          className="space-y-4 text-center"
                         >
+                          <motion.div variants={fadeScaleItemVariants} className="space-y-1">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold">
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              Телефон и профиль подтверждены
+                            </span>
+                            <h3 className="text-lg font-display font-extrabold text-white pt-1">
+                              {name.trim() || 'Участник Kompa'},{' '}
+                              <span className="font-mono-num">{age}</span>
+                            </h3>
+                            <p className="text-xs text-[#ffcab8]/80">
+                              {city} · Подобрано{' '}
+                              <strong className="font-mono-num text-white">
+                                {matchedEventsCount}
+                              </strong>{' '}
+                              мероприятий
+                            </p>
+                          </motion.div>
+
                           <motion.div
                             variants={fadeScaleItemVariants}
-                            className="p-3.5 rounded-2xl border border-[#ff8a6c]/35 space-y-2.5"
-                            style={{ backgroundColor: 'rgba(18, 11, 9, 0.82)' }}
+                            className="p-3.5 rounded-2xl text-left space-y-2"
+                            style={{
+                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
+                              border: '1px solid rgba(255, 138, 108, 0.28)',
+                            }}
                           >
-                            <div className="flex items-center justify-between border-b border-[#ff8a6c]/20 pb-2">
-                              <span className="text-[11px] font-mono-num font-bold uppercase tracking-wider text-[#ff9d82]">
-                                АНКЕТА ПОДТВЕРЖДЕНА
-                              </span>
-                              <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1">
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                СМС проверено
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[#ffcab8]/65">Телефон:</span>
+                              <span className="font-mono-num font-semibold text-white">
+                                {phoneNumber}
                               </span>
                             </div>
-
-                            <div className="space-y-1 text-left">
-                              <div className="text-sm font-display font-bold text-white">
-                                {name.trim()}, {age} · {city}
-                              </div>
-                              <div className="text-xs text-[#ffdfd4]/85 flex items-center gap-2">
-                                <Phone className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
-                                <span className="font-mono-num">{phoneNumber}</span>
-                              </div>
-                              <div className="text-xs text-[#ffdfd4]/85 flex items-center gap-2">
-                                <Mail className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
-                                <span className="truncate">{email}</span>
-                              </div>
-                              <div className="text-[11px] text-[#ffb49e] pt-1">
-                                {interests.slice(0, 4).join(' · ')}
-                              </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[#ffcab8]/65">Почта:</span>
+                              <span className="font-semibold text-white truncate max-w-[190px]">
+                                {email}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {interests.slice(0, 4).map(tag => (
+                                <span
+                                  key={tag}
+                                  className="px-2 py-0.5 rounded-md bg-[#DE482B]/30 border border-[#ff8a6c]/35 text-[10px] font-semibold text-[#ffdfd4]"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
                             </div>
                           </motion.div>
 
-                          <motion.label
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#ff8a6c]/22 cursor-pointer text-xs text-[#ffdfd4]"
-                            style={{ backgroundColor: 'rgba(18, 11, 9, 0.72)' }}
-                          >
-                            <span>Открыт(а) к приглашениям на вечер</span>
-                            <input
-                              type="checkbox"
-                              checked={openToInvites}
-                              onChange={e => setOpenToInvites(e.target.checked)}
-                              className="w-4 h-4 rounded accent-[#DE482B]"
-                            />
-                          </motion.label>
-
                           <motion.div
                             variants={fadeScaleItemVariants}
-                            className="flex items-center gap-2.5 pt-2"
+                            className="space-y-2 pt-1"
                           >
-                            <button
-                              type="button"
-                              onClick={() => navigateToStep(3)}
-                              className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
-                            >
-                              <ArrowLeft className="w-4 h-4" />
-                              <span>Назад</span>
-                            </button>
-
                             <motion.button
                               whileHover={{ scale: 1.015 }}
                               whileTap={{ scale: 0.98 }}
                               type="button"
                               onClick={() => {
-                                triggerHaptic([15, 35, 15]);
+                                triggerHaptic([12, 30, 15]);
                                 onClose();
                               }}
-                              className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                               style={{
                                 background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
                                 border: '1px solid rgba(255, 165, 140, 0.5)',
-                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.8)',
+                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
                               }}
                             >
-                              <CheckCircle2 className="w-4 h-4 text-amber-200" />
+                              <Check className="w-4 h-4 text-amber-200 stroke-[2.5]" />
                               <span>ЗАВЕРШИТЬ РЕГИСТРАЦИЮ</span>
                             </motion.button>
+
+                            <button
+                              type="button"
+                              onClick={() => navigateToStep(3)}
+                              className="w-full py-2 text-xs font-semibold text-[#ffcab8]/75 hover:text-white transition-colors cursor-pointer"
+                            >
+                              Изменить данные анкеты
+                            </button>
                           </motion.div>
                         </motion.div>
                       )}
@@ -1892,7 +1825,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </LayoutGroup>
     </motion.div>
   );
 };
