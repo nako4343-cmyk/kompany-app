@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Compass,
-  Flame,
   Plus,
   MessageSquare,
   User,
@@ -67,23 +66,75 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const tabs = [
+  const leftTabs = [
     { id: 'feed' as NavTab, label: t.navFeed, icon: Compass },
-    { id: 'today' as NavTab, label: t.navToday, icon: Flame },
-    {
-      id: 'create' as NavTab,
-      label: t.createShortBtn,
-      icon: Plus,
-      isPrimary: true,
-    },
     {
       id: 'chats' as NavTab,
       label: t.navChats,
       icon: MessageSquare,
       badge: unreadChatCount,
     },
-    { id: 'profile' as NavTab, label: t.navProfile, icon: User },
   ];
+
+  const rightTab = { id: 'profile' as NavTab, label: t.navProfile, icon: User };
+
+  const renderTabButton = (tab: {
+    id: NavTab;
+    label: string;
+    icon: React.FC<{ className?: string }>;
+    badge?: number;
+  }) => {
+    const Icon = tab.icon;
+    const isActive = activeTab === tab.id && !showNotifications;
+
+    return (
+      <motion.button
+        key={tab.id}
+        type="button"
+        whileTap={{ scale: 0.92 }}
+        onClick={() => {
+          triggerHaptic();
+          setShowNotifications(false);
+          onTabChange(tab.id);
+        }}
+        className="relative flex flex-col items-center justify-center min-h-[44px] py-1 px-2 rounded-2xl transition-colors cursor-pointer"
+        style={{
+          color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+        }}
+      >
+        {isActive && (
+          <motion.div
+            layoutId="bottom-nav-pill"
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+            className="absolute inset-0 rounded-2xl"
+            style={{ backgroundColor: 'var(--accent-soft)' }}
+          />
+        )}
+        <div className="relative z-10">
+          <Icon
+            className={`w-5 h-5 transition-transform duration-200 ${
+              isActive ? 'stroke-[2.3]' : 'stroke-[1.8]'
+            }`}
+          />
+          {tab.badge && tab.badge > 0 ? (
+            <span
+              className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-white text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums shadow-xs"
+              style={{ backgroundColor: 'var(--accent-primary)' }}
+            >
+              {tab.badge}
+            </span>
+          ) : null}
+        </div>
+        <span
+          className={`relative z-10 text-[10px] mt-0.5 tracking-tight transition-all whitespace-nowrap ${
+            isActive ? 'font-bold' : 'font-medium'
+          }`}
+        >
+          {tab.label}
+        </span>
+      </motion.button>
+    );
+  };
 
   return (
     <div
@@ -201,7 +252,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Bottom Dock Bar */}
+      {/* Bottom Dock Bar: 5 symmetric columns with '+' centered */}
       <nav
         aria-label="Нижняя навигация"
         className="w-full rounded-3xl border shadow-2xl px-2 py-1.5 transition-colors duration-250 pointer-events-auto"
@@ -212,83 +263,36 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           borderColor: 'var(--border-subtle)',
         }}
       >
-        <div className="flex items-center justify-around">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id && !showNotifications;
+        <div className="grid grid-cols-5 items-center gap-1">
+          {/* 1. Feed & 2. Chats */}
+          {leftTabs.map((tab) => renderTabButton(tab))}
 
-            if (tab.isPrimary) {
-              return (
-                <motion.button
-                  key={tab.id}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.93 }}
-                  onClick={() => {
-                    triggerHaptic();
-                    setShowNotifications(false);
-                    onTabChange(tab.id);
-                  }}
-                  aria-label={tab.label}
-                  className="flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-4 py-2.5 rounded-2xl text-white font-display font-bold text-xs shadow-md cursor-pointer"
-                  style={{
-                    backgroundColor: 'var(--accent-primary)',
-                  }}
-                >
-                  <Icon className="w-4 h-4 stroke-[2.5]" />
-                  <span className="hidden xs:inline">{tab.label}</span>
-                </motion.button>
-              );
-            }
+          {/* 3. Center '+' Create Event Button */}
+          <div className="flex items-center justify-center">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => {
+                triggerHaptic();
+                setShowNotifications(false);
+                onTabChange('create');
+              }}
+              aria-label={t.createShortBtn}
+              title={t.createShortBtn}
+              className="w-12 h-11 rounded-2xl text-white font-display font-bold flex items-center justify-center shadow-lg cursor-pointer"
+              style={{
+                backgroundColor: 'var(--accent-primary)',
+              }}
+            >
+              <Plus className="w-5 h-5 stroke-[2.6]" />
+            </motion.button>
+          </div>
 
-            return (
-              <motion.button
-                key={tab.id}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => {
-                  triggerHaptic();
-                  setShowNotifications(false);
-                  onTabChange(tab.id);
-                }}
-                className="relative flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2.5 rounded-2xl transition-colors cursor-pointer"
-                style={{
-                  color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
-                }}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="bottom-nav-pill"
-                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                    className="absolute inset-0 rounded-2xl"
-                    style={{ backgroundColor: 'var(--accent-soft)' }}
-                  />
-                )}
-                <div className="relative z-10">
-                  <Icon
-                    className={`w-5 h-5 transition-transform duration-200 ${
-                      isActive ? 'stroke-[2.3]' : 'stroke-[1.8]'
-                    }`}
-                  />
-                  {tab.badge && tab.badge > 0 ? (
-                    <span
-                      className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 text-white text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums shadow-xs"
-                      style={{ backgroundColor: 'var(--accent-primary)' }}
-                    >
-                      {tab.badge}
-                    </span>
-                  ) : null}
-                </div>
-                <span
-                  className={`relative z-10 text-[10px] mt-0.5 tracking-tight transition-all whitespace-nowrap ${
-                    isActive ? 'font-bold' : 'font-medium'
-                  }`}
-                >
-                  {tab.label}
-                </span>
-              </motion.button>
-            );
-          })}
+          {/* 4. Profile */}
+          {renderTabButton(rightTab)}
 
-          {/* Notifications Button with Unread Badge */}
+          {/* 5. Notifications */}
           <motion.button
             type="button"
             whileTap={{ scale: 0.92 }}
@@ -298,7 +302,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             }}
             aria-label={t.navNotifications}
             title={t.navNotifications}
-            className="relative flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2.5 rounded-2xl transition-colors cursor-pointer"
+            className="relative flex flex-col items-center justify-center min-h-[44px] py-1 px-2 rounded-2xl transition-colors cursor-pointer"
             style={{
               color: showNotifications
                 ? 'var(--accent-primary)'

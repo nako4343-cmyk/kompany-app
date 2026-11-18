@@ -22,6 +22,8 @@ import {
   Trophy,
   Coffee,
   Ticket,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
 import {
@@ -344,7 +346,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  const [phoneNumber] = useState(currentUser.phoneNumber || '+7 (999) 123-45-67');
+  const [email, setEmail] = useState<string>(() => {
+    if (isInitialGate && currentUser.email === 'anna.voronova@example.com') {
+      return '';
+    }
+    return currentUser.email || '';
+  });
+
+  const [phoneNumber, setPhoneNumber] = useState<string>(() => {
+    if (isInitialGate && currentUser.phoneNumber === '+7 (916) 555-01-92') {
+      return '';
+    }
+    return currentUser.phoneNumber || '';
+  });
+
   const [bio, setBio] = useState(currentUser.bio || '');
   const [interests, setInterests] = useState<string[]>(
     currentUser.interests && currentUser.interests.length > 0
@@ -359,6 +374,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  const validateIdentityFields = (): boolean => {
+    if (name.trim().length < 2) {
+      setErrorMessage(
+        isEn ? 'Please enter your full name' : 'Укажите ваше имя и фамилию (минимум 2 символа)'
+      );
+      return false;
+    }
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setErrorMessage(
+        isEn
+          ? 'Please enter a valid email address'
+          : 'Для регистрации укажите корректную электронную почту (Email)'
+      );
+      return false;
+    }
+    const digitsOnly = phoneNumber.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      setErrorMessage(
+        isEn
+          ? 'Please enter a valid phone number'
+          : 'Для регистрации укажите корректный номер телефона (не менее 10 цифр)'
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const handleStepNavigation = (nextStep: 0 | 1 | 2 | 3 | 4) => {
+    if (nextStep > 1) {
+      if (!validateIdentityFields()) {
+        triggerHaptic([12, 30, 12]);
+        if (wizardStep !== 1) {
+          setStepState([1, 1]);
+        }
+        return;
+      }
+    }
+    navigateToStep(nextStep);
+  };
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -442,6 +498,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
 
   const handleFinishRegistration = async () => {
+    if (!validateIdentityFields()) {
+      setStepState([1, -1]);
+      return;
+    }
+
     setIsSaving(true);
     setErrorMessage('');
     setStatusMessage('');
@@ -468,7 +529,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         interests: interests.length > 0 ? interests.slice(0, 10) : ['Настольные игры'],
         openToInvites,
         openToInvitesNote: openToInvitesNote.trim().slice(0, 300),
-        email: activeFbUser?.email || currentUser.email || 'user@kompa.app',
+        email: email.trim().slice(0, 120) || activeFbUser?.email || 'user@kompa.app',
+        isEmailVerified: true,
+        isPhoneVerified: true,
         onlineStatus: 'online',
         lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
       };
@@ -480,10 +543,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onProfileRegistered(updatedProfile);
       triggerHaptic([15, 40, 20]);
       navigateToStep(4);
-
-      setTimeout(() => {
-        onClose();
-      }, 1350);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Ошибка сохранения профиля');
     } finally {
@@ -624,7 +683,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button
                     key={s.num}
                     type="button"
-                    onClick={() => navigateToStep(stepNum)}
+                    onClick={() => handleStepNavigation(stepNum)}
                     className="group text-left space-y-1.5 cursor-pointer focus:outline-none"
                   >
                     <div className="flex items-center justify-between text-[11px] font-bold">
@@ -830,7 +889,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   {/* 3-Step Interactive Roadmap */}
                   <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-3 gap-2.5">
                     {[
-                      { num: '01', label: 'Личное фото', sub: 'Имя и сфера' },
+                      { num: '01', label: 'Личное фото', sub: 'Почта и телефон' },
                       { num: '02', label: 'Интересы', sub: 'Вайб вечера' },
                       { num: '03', label: 'Регистрация', sub: 'Доступ к встречам' },
                     ].map(item => (
@@ -839,7 +898,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         key={item.num}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.97 }}
-                        onClick={() => navigateToStep(Number(item.num) as 1 | 2 | 3)}
+                        onClick={() => handleStepNavigation(Number(item.num) as 1 | 2 | 3)}
                         className="p-3 rounded-2xl border text-left cursor-pointer"
                         style={{
                           backgroundColor: 'var(--bg-elevated)',
@@ -959,7 +1018,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             : 'var(--text-primary)',
                       }}
                     >
-                      Ваше имя и фамилия
+                      Ваше имя и фамилия <span style={{ color: 'var(--accent-primary)' }}>*</span>
                     </label>
                     <input
                       type="text"
@@ -970,7 +1029,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onBlur={() => setFocusedField(null)}
                       onChange={e => setName(e.target.value)}
                       placeholder="Например: Анна Воронова"
-                      className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 rounded-xl border text-[15px] font-medium focus:outline-none transition-colors"
                       style={{
                         backgroundColor: 'var(--bg-elevated)',
                         borderColor:
@@ -980,6 +1039,79 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         color: 'var(--text-primary)',
                       }}
                     />
+                  </motion.div>
+
+                  {/* Required Email & Phone Number Inputs */}
+                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label
+                        className="text-xs font-bold flex items-center gap-1.5 mb-1.5 transition-colors"
+                        style={{
+                          color:
+                            focusedField === 'email'
+                              ? 'var(--accent-primary)'
+                              : 'var(--text-primary)',
+                        }}
+                      >
+                        <Mail className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                        <span>Почта (Email) *</span>
+                      </label>
+                      <input
+                        type="email"
+                        inputMode="email"
+                        required
+                        maxLength={120}
+                        value={email}
+                        onFocus={() => setFocusedField('email')}
+                        onBlur={() => setFocusedField(null)}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-[15px] font-medium focus:outline-none transition-colors"
+                        style={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          borderColor:
+                            focusedField === 'email'
+                              ? 'var(--accent-primary)'
+                              : 'var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        className="text-xs font-bold flex items-center gap-1.5 mb-1.5 transition-colors"
+                        style={{
+                          color:
+                            focusedField === 'phone'
+                              ? 'var(--accent-primary)'
+                              : 'var(--text-primary)',
+                        }}
+                      >
+                        <Phone className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                        <span>Номер телефона *</span>
+                      </label>
+                      <input
+                        type="tel"
+                        inputMode="tel"
+                        required
+                        maxLength={30}
+                        value={phoneNumber}
+                        onFocus={() => setFocusedField('phone')}
+                        onBlur={() => setFocusedField(null)}
+                        onChange={e => setPhoneNumber(e.target.value)}
+                        placeholder="+7 (999) 123-45-67"
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-[15px] font-medium focus:outline-none transition-colors"
+                        style={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          borderColor:
+                            focusedField === 'phone'
+                              ? 'var(--accent-primary)'
+                              : 'var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </div>
                   </motion.div>
 
                   {/* Age & Gender Segmented Controls */}
@@ -1439,6 +1571,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </div>
                     </div>
 
+                    <div
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t text-xs"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      <div className="flex items-center gap-2 truncate" style={{ color: 'var(--text-secondary)' }}>
+                        <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                        <span className="truncate font-medium">{email.trim() || 'Почта не указана'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 truncate" style={{ color: 'var(--text-secondary)' }}>
+                        <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                        <span className="truncate font-mono-num font-medium">{phoneNumber.trim() || 'Телефон не указан'}</span>
+                      </div>
+                    </div>
+
                     {bio && (
                       <p
                         className="text-xs leading-relaxed pt-3 border-t"
@@ -1564,7 +1710,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="text-xs sm:text-sm leading-relaxed"
                       style={{ color: 'var(--text-secondary)' }}
                     >
-                      Для вас подобрано {matchedEventsCount} вечерних встреч в городе {city || 'Москва'}. Открываем радар...
+                      Для вас подобрано {matchedEventsCount} вечерних встреч в городе {city || 'Москва'}. Нажмите кнопку ниже, чтобы завершить регистрацию и перейти к встречам.
                     </p>
                   </div>
 
@@ -1598,7 +1744,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         {name.trim() || 'Участник Kompa'}, {age}
                       </span>
                       <span className="text-[11px] text-emerald-600 font-semibold block">
-                        Проверенный участник · В сети
+                        {email.trim()} · {phoneNumber.trim()}
                       </span>
                     </div>
                   </motion.div>
@@ -1609,82 +1755,113 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* FIXED BOTTOM FOOTER */}
-        {wizardStep !== 4 && (
-          <div
-            className="px-4 py-3.5 sm:px-6 sm:py-4 border-t shrink-0 z-10 pb-safe"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderColor: 'var(--border-subtle)',
-            }}
-          >
-            {wizardStep === 0 ? (
-              <div>
+        <div
+          className="px-4 py-3.5 sm:px-6 sm:py-4 border-t shrink-0 z-10 pb-safe"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
+          {wizardStep === 0 ? (
+            <div>
+              <motion.button
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => navigateToStep(1)}
+                className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              >
+                <span>{isEn ? 'Registration' : 'Регистрация'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </motion.button>
+            </div>
+          ) : wizardStep === 4 ? (
+            <div className="flex items-center justify-between gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={() => navigateToStep(3)}
+                className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{isEn ? 'Back' : 'Назад'}</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => {
+                  triggerHaptic([12, 30, 15]);
+                  onClose();
+                }}
+                className="flex-1 py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isEn ? 'Complete Registration' : 'Завершить регистрацию'}</span>
+              </motion.button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={() => navigateToStep((wizardStep - 1) as 0 | 1 | 2)}
+                className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
+                style={{
+                  backgroundColor: 'var(--bg-elevated)',
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{isEn ? 'Back' : 'Назад'}</span>
+              </motion.button>
+
+              {wizardStep < 3 ? (
                 <motion.button
                   whileHover={{ scale: 1.015 }}
                   whileTap={{ scale: 0.98 }}
                   type="button"
-                  onClick={() => navigateToStep(1)}
-                  className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() => handleStepNavigation((wizardStep + 1) as 2 | 3)}
+                  className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
-                  <span>{isEn ? 'Registration' : 'Регистрация'}</span>
+                  <span>
+                    {wizardStep === 1
+                      ? 'Далее: Интересы и формат вечера'
+                      : 'Далее: Проверка анкеты'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </motion.button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
+              ) : (
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.98 }}
                   type="button"
-                  onClick={() => navigateToStep((wizardStep - 1) as 0 | 1 | 2)}
-                  className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
+                  disabled={isSaving}
+                  onClick={handleFinishRegistration}
+                  className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>{isEn ? 'Back' : 'Назад'}</span>
+                  <Users className="w-4 h-4" />
+                  <span>
+                    {isSaving ? 'Сохранение...' : 'Подтвердить анкету'}
+                  </span>
                 </motion.button>
-
-                {wizardStep < 3 ? (
-                  <motion.button
-                    whileHover={{ scale: 1.015 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={() => navigateToStep((wizardStep + 1) as 2 | 3)}
-                    className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  >
-                    <span>
-                      {wizardStep === 1
-                        ? 'Далее: Интересы и формат вечера'
-                        : 'Далее: Завершение регистрации'}
-                    </span>
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    whileHover={{ scale: 1.015 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    disabled={isSaving}
-                    onClick={handleFinishRegistration}
-                    className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>
-                      {isSaving ? 'Сохранение...' : 'Завершить регистрацию'}
-                    </span>
-                  </motion.button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </motion.div>
     </motion.div>
   );
