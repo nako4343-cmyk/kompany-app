@@ -27,6 +27,8 @@ import {
   Briefcase,
   MessageSquare,
   RefreshCw,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { UserProfile } from '../types/index.ts';
@@ -37,6 +39,7 @@ import {
   FirebaseUser,
   sanitizeValidId,
 } from '../lib/firebase.ts';
+import { KompaLogoMark } from './KompaLogo.tsx';
 
 interface AuthModalProps {
   currentUser: UserProfile;
@@ -47,6 +50,8 @@ interface AuthModalProps {
   onLogout?: () => void;
   lang?: 'ru' | 'en';
 }
+
+const STUDIO_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const triggerHaptic = (pattern: number | number[] = 8) => {
   try {
@@ -79,19 +84,16 @@ const CITY_PRESETS = ['Москва', 'Санкт-Петербург', 'Каза
 
 const slideVariants: Variants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? '85%' : '-85%',
+    x: direction > 0 ? 36 : -36,
     opacity: 0,
-    scale: 0.96,
   }),
   center: {
     x: 0,
     opacity: 1,
-    scale: 1,
   },
   exit: (direction: number) => ({
-    x: direction > 0 ? '-85%' : '85%',
+    x: direction > 0 ? -36 : 36,
     opacity: 0,
-    scale: 0.96,
   }),
 };
 
@@ -100,233 +102,25 @@ const staggerContainerVariants: Variants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
+      staggerChildren: 0.045,
       delayChildren: 0.02,
     },
   },
 };
 
-const fadeScaleItemVariants: Variants = {
+const fadeItemVariants: Variants = {
   hidden: {
     opacity: 0,
-    scale: 0.96,
     y: 8,
   },
   show: {
     opacity: 1,
-    scale: 1,
     y: 0,
     transition: {
-      type: 'spring',
-      stiffness: 360,
-      damping: 28,
-      mass: 0.8,
+      duration: 0.36,
+      ease: STUDIO_EASE,
     },
   },
-};
-
-/**
- * Pure HTML/CSS + Framer Motion Brand Logo Mark ("K" Geometric Capsules + Spark)
- * Uses 100% hardware-accelerated HTML/CSS transforms so it works reliably on iOS Safari
- * both during the initial kinetic assembly and when docked at the top of the Login card.
- */
-const KompaGeometricLogoMark: React.FC<{
-  size?: 'splash' | 'docked';
-  animateAssembly?: boolean;
-}> = ({ size = 'docked', animateAssembly = false }) => {
-  const isSplash = size === 'splash';
-  const dim = isSplash ? 'w-32 h-32' : 'w-24 h-24';
-
-  return (
-    <motion.div
-      layoutId="kompa-brand-logo-mark"
-      transition={{
-        layout: {
-          type: 'spring',
-          stiffness: 240,
-          damping: 28,
-          mass: 0.9,
-        },
-      }}
-      className={`relative ${dim} rounded-full flex items-center justify-center select-none`}
-      style={{
-        background:
-          'radial-gradient(circle at 35% 30%, rgba(56, 26, 19, 0.95) 0%, rgba(18, 10, 8, 0.98) 75%)',
-        border: '2.5px solid rgba(255, 138, 108, 0.82)',
-        boxShadow: isSplash
-          ? '0 0 55px rgba(222, 72, 43, 0.55), inset 0 0 24px rgba(222, 72, 43, 0.25)'
-          : '0 0 28px rgba(222, 72, 43, 0.3), inset 0 0 18px rgba(222, 72, 43, 0.18)',
-      }}
-    >
-      {/* Outer Orbital Dashed Ring */}
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
-        className="pointer-events-none absolute -inset-2.5 rounded-full border border-dashed border-[#ff8a6c]/40"
-      />
-
-      {/* Pulse Shockwave Ring During Assembly */}
-      {animateAssembly && (
-        <motion.div
-          initial={{ scale: 0.45, opacity: 0 }}
-          animate={{
-            scale: [0.5, 1.15, 1.55],
-            opacity: [0, 0.85, 0],
-          }}
-          transition={{
-            duration: 1.35,
-            delay: 0.65,
-            ease: 'easeOut',
-          }}
-          className="pointer-events-none absolute inset-0 rounded-full border-2 border-[#ff7c5c]"
-        />
-      )}
-
-      {/* Kinetic Diagonal Laser Streaks During Assembly */}
-      {animateAssembly && (
-        <div className="pointer-events-none absolute inset-0 overflow-visible flex items-center justify-center">
-          {/* Diagonal Streak 1 */}
-          <motion.div
-            initial={{ x: -130, y: 130, opacity: 0, rotate: -45, scaleX: 0.3 }}
-            animate={{
-              x: [-130, 0, 140],
-              y: [130, 0, -140],
-              opacity: [0, 1, 0],
-              scaleX: [0.4, 1.3, 0.3],
-            }}
-            transition={{ duration: 0.85, delay: 0.12, ease: 'easeInOut' }}
-            className="absolute w-28 h-[3px] rounded-full bg-gradient-to-r from-transparent via-white to-[#FF4D2A]"
-          />
-          {/* Diagonal Streak 2 */}
-          <motion.div
-            initial={{ x: 130, y: -130, opacity: 0, rotate: -45, scaleX: 0.3 }}
-            animate={{
-              x: [130, 0, -140],
-              y: [-130, 0, 140],
-              opacity: [0, 1, 0],
-              scaleX: [0.4, 1.2, 0.3],
-            }}
-            transition={{ duration: 0.85, delay: 0.28, ease: 'easeInOut' }}
-            className="absolute w-24 h-[2.5px] rounded-full bg-gradient-to-r from-transparent via-amber-300 to-white"
-          />
-          {/* Micro Spark Diamonds */}
-          <motion.div
-            initial={{ x: -75, y: -65, scale: 0, opacity: 0, rotate: 45 }}
-            animate={{
-              x: [-75, -44, -58],
-              y: [-65, -40, -52],
-              scale: [0, 1.25, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{ duration: 0.9, delay: 0.45, ease: 'easeOut' }}
-            className="absolute w-2.5 h-2.5 bg-white"
-          />
-          <motion.div
-            initial={{ x: 75, y: 65, scale: 0, opacity: 0, rotate: 45 }}
-            animate={{
-              x: [75, 44, 58],
-              y: [65, 40, 52],
-              scale: [0, 1.25, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{ duration: 0.9, delay: 0.52, ease: 'easeOut' }}
-            className="absolute w-2.5 h-2.5 bg-[#FF4D2A]"
-          />
-        </div>
-      )}
-
-      {/* ASSEMBLING GEOMETRIC LOGO CORE (The 4 Interlocking Brand Pieces) */}
-      <div
-        className={`relative ${
-          isSplash ? 'w-16 h-16' : 'w-12 h-12'
-        } flex items-center justify-center`}
-      >
-        {/* PIECE 1: Left Vertical Geometric Capsule of "K" */}
-        <motion.div
-          initial={
-            animateAssembly
-              ? { x: -110, y: -85, rotate: -45, scale: 0.35, opacity: 0 }
-              : false
-          }
-          animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 260,
-            damping: 22,
-            delay: animateAssembly ? 0.05 : 0,
-          }}
-          className="absolute left-[14%] top-[10%] w-[22%] h-[80%] rounded-full"
-          style={{
-            background: 'linear-gradient(180deg, #FF7A59 0%, #DE482B 55%, #A92910 100%)',
-            boxShadow: '0 4px 14px rgba(222, 72, 43, 0.55)',
-          }}
-        />
-
-        {/* PIECE 2: Upper-Right Diagonal Capsule Wing of "K" (-42 deg) */}
-        <motion.div
-          initial={
-            animateAssembly
-              ? { x: 115, y: -105, rotate: 42, scale: 0.35, opacity: 0 }
-              : false
-          }
-          animate={{ x: 0, y: 0, rotate: 42, scale: 1, opacity: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 260,
-            damping: 22,
-            delay: animateAssembly ? 0.22 : 0,
-          }}
-          className="absolute right-[18%] top-[8%] w-[22%] h-[54%] rounded-full origin-bottom"
-          style={{
-            background: 'linear-gradient(180deg, #FBBF24 0%, #F97316 55%, #DE482B 100%)',
-            boxShadow: '0 4px 14px rgba(249, 115, 22, 0.5)',
-          }}
-        />
-
-        {/* PIECE 3: Lower-Right Diagonal Capsule Wing of "K" (-42 deg counter) */}
-        <motion.div
-          initial={
-            animateAssembly
-              ? { x: 115, y: 105, rotate: -42, scale: 0.35, opacity: 0 }
-              : false
-          }
-          animate={{ x: 0, y: 0, rotate: -42, scale: 1, opacity: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 260,
-            damping: 22,
-            delay: animateAssembly ? 0.36 : 0,
-          }}
-          className="absolute right-[18%] bottom-[8%] w-[22%] h-[54%] rounded-full origin-top"
-          style={{
-            background: 'linear-gradient(180deg, #DE482B 0%, #FF6B4A 50%, #F59E0B 100%)',
-            boxShadow: '0 4px 14px rgba(222, 72, 43, 0.5)',
-          }}
-        />
-
-        {/* PIECE 4: Center Glowing Nexus Diamond locking the capsules together */}
-        <motion.div
-          initial={
-            animateAssembly
-              ? { scale: 0, rotate: -135, opacity: 0 }
-              : false
-          }
-          animate={{ scale: 1, rotate: 45, opacity: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 340,
-            damping: 18,
-            delay: animateAssembly ? 0.54 : 0,
-          }}
-          className="absolute left-[37%] top-[39%] w-[22%] h-[22%] rounded-[4px]"
-          style={{
-            background: 'linear-gradient(135deg, #FFFFFF 0%, #FDE68A 45%, #FF7A59 100%)',
-            boxShadow: '0 0 14px rgba(255, 255, 255, 0.9)',
-          }}
-        />
-      </div>
-    </motion.div>
-  );
 };
 
 function compressImageFile(file: File): Promise<string> {
@@ -360,7 +154,7 @@ function compressImageFile(file: File): Promise<string> {
           return;
         }
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.84));
+        resolve(canvas.toDataURL('image/jpeg', 0.86));
       };
       img.src = reader.result as string;
     };
@@ -376,8 +170,8 @@ function createInitialsAvatarDataUrl(fullName: string): string {
       : (parts[0]?.slice(0, 2) || 'КМ').toUpperCase();
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-    <rect width="240" height="240" rx="120" fill="#DE482B"/>
-    <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" fill="#FFF7F5" font-family="Onest, Manrope, sans-serif" font-weight="800" font-size="84">${initials}</text>
+    <rect width="240" height="240" rx="120" fill="#5E3AEF"/>
+    <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" fill="#FFFFFF" font-family="Onest, Manrope, sans-serif" font-weight="800" font-size="84">${initials}</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
@@ -395,20 +189,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Stage 0: Logo Assembly Intro (1.85s) -> smoothly glides into top of Login Card
+  // Flagship iOS Launch Splash Screen (2.05s duration -> smooth transition to Auth screen)
   const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
 
   useEffect(() => {
     if (!showLogoSplash) return;
     const timer = setTimeout(() => {
       setShowLogoSplash(false);
-    }, 1850);
+    }, 2050);
     return () => clearTimeout(timer);
   }, [showLogoSplash]);
 
   // Auth Flow Mode:
-  // 'login' = Login + Password screen with assembled Logo at top, "ВОЙТИ" at bottom and "РЕГИСТРАЦИЯ" on right
-  // 'register' = 4-step registration inside the same card with Personal Photo Upload button at top
+  // 'login' = Clean Flagship Login Screen (Logo at top, Login + Password, bottom "Войти" & right "Регистрация")
+  // 'register' = 4-Step Registration Flow (with Personal Photo Upload at top of Step 1)
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>([1, 1]);
 
@@ -421,6 +215,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState<string>('');
   const [loginPassword, setLoginPassword] = useState<string>('');
+  const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false);
 
   // Registration Form State
   const [name, setName] = useState<string>(() => {
@@ -445,6 +240,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   });
 
   const [registerPassword, setRegisterPassword] = useState<string>('');
+  const [showRegisterPassword, setShowRegisterPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -481,7 +277,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       ? currentUser.interests.slice(0, 10)
       : ['Настольные игры', 'Рестораны / Бары']
   );
-  const [openToInvites, setOpenToInvites] = useState<boolean>(currentUser.openToInvites ?? true);
+  const [openToInvites] = useState<boolean>(currentUser.openToInvites ?? true);
   const [openToInvitesNote] = useState(
     currentUser.openToInvitesNote || 'Свободен(на) сегодня вечером на ужин или настольные игры!'
   );
@@ -532,7 +328,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const cleanLogin = loginIdentifier.trim();
     const cleanPass = loginPassword.trim();
     if (!cleanLogin) {
-      setErrorMessage('Введите логин (номер телефона или электронную почту)');
+      setErrorMessage('Введите телефон или электронную почту');
       triggerHaptic([12, 30, 12]);
       return;
     }
@@ -543,7 +339,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
 
     setErrorMessage('');
-    triggerHaptic([12, 30, 15]);
+    triggerHaptic([10, 25, 12]);
 
     const isEmail = cleanLogin.includes('@');
     const resolvedName =
@@ -567,21 +363,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const validateStep1Fields = (): boolean => {
     if (name.trim().length < 2) {
-      setErrorMessage('Укажите ваше имя и фамилию (минимум 2 символа)');
+      setErrorMessage('Укажите ваше имя и фамилию');
       return false;
     }
     const digitsOnly = phoneNumber.replace(/\D/g, '');
     if (digitsOnly.length < 10) {
-      setErrorMessage('Укажите корректный номер телефона (минимум 10 цифр)');
+      setErrorMessage('Укажите корректный номер телефона');
       return false;
     }
     const cleanEmail = email.trim();
     if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setErrorMessage('Укажите корректную электронную почту (Email)');
+      setErrorMessage('Укажите корректную электронную почту');
       return false;
     }
     if (registerPassword.trim().length < 4) {
-      setErrorMessage('Придумайте пароль (не менее 4 символов)');
+      setErrorMessage('Придумайте пароль (минимум 4 символа)');
       return false;
     }
     return true;
@@ -655,7 +451,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleVerifySmsCode = async () => {
     const trimmed = smsCodeInput.trim();
     if (trimmed.length < 4) {
-      setErrorMessage('Введите 4-значный код подтверждения из СМС');
+      setErrorMessage('Введите 4-значный код из СМС');
       triggerHaptic([12, 30, 12]);
       return;
     }
@@ -665,7 +461,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         await firebaseConfirmation.confirm(trimmed);
         setIsSmsVerified(true);
         setSmsBannerVisible(false);
-        setStatusMessage('Номер телефона успешно подтверждён по СМС');
+        setStatusMessage('Номер телефона подтверждён');
         navigateToStep(3);
         return;
       } catch {
@@ -677,10 +473,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setIsSmsVerified(true);
       setSmsBannerVisible(false);
       triggerHaptic([10, 30, 15]);
-      setStatusMessage('Номер телефона подтверждён по СМС');
+      setStatusMessage('Номер телефона подтверждён');
       navigateToStep(3);
     } else {
-      setErrorMessage('Неверный СМС-код. Проверьте уведомление сверху или нажмите на код');
+      setErrorMessage('Неверный код. Нажмите на уведомление сверху для автозаполнения');
       triggerHaptic([20, 40, 20]);
     }
   };
@@ -765,12 +561,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setStatusMessage(isEn ? 'You have signed out.' : 'Вы вышли из аккаунта.');
   };
 
+  const getFieldStyle = (fieldId: string): React.CSSProperties => {
+    const isFocused = focusedField === fieldId;
+    return {
+      backgroundColor: isFocused ? '#FFFFFF' : '#F6F5FB',
+      border: isFocused ? '1.5px solid #5E3AEF' : '1.5px solid #E5E1F2',
+      boxShadow: isFocused
+        ? '0 0 0 4px rgba(94, 58, 239, 0.10)'
+        : '0 1px 2px rgba(20, 16, 38, 0.02)',
+    };
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.3, ease: STUDIO_EASE }}
       onClick={() => {
         if (showLogoSplash) {
           setShowLogoSplash(false);
@@ -778,441 +585,465 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
         if (!isInitialGate) onClose();
       }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto pt-safe pb-safe select-none"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto pt-safe pb-safe select-none"
       style={{
-        background: 'radial-gradient(circle at 50% 35%, #2b1812 0%, #170e0b 48%, #0a0706 100%)',
+        backgroundColor: '#F7F6FB',
+        backgroundImage:
+          'radial-gradient(circle at 50% 18%, rgba(108, 71, 255, 0.09) 0%, rgba(157, 123, 255, 0.04) 38%, rgba(247, 246, 251, 0) 72%)',
       }}
     >
       {/* Hidden Recaptcha container for Firebase Phone Auth */}
       <div ref={recaptchaContainerRef} className="hidden" />
 
-      {/* CONTINUOUSLY MOVING AMBIENT LIGHT ORBS ON THE SCREEN BACKDROP */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-        <motion.div
-          animate={{
-            x: [-80, 90, -50, -80],
-            y: [-70, 50, 95, -70],
-            scale: [1, 1.22, 0.92, 1],
-          }}
-          transition={{
-            duration: 11,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute top-1/4 left-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-35"
-          style={{
-            background: 'radial-gradient(circle, #DE482B 0%, rgba(222, 72, 43, 0) 70%)',
-          }}
-        />
-        <motion.div
-          animate={{
-            x: [90, -85, 45, 90],
-            y: [80, -60, -90, 80],
-            scale: [1.1, 0.88, 1.18, 1.1],
-          }}
-          transition={{
-            duration: 13,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute bottom-1/4 right-1/3 w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-3xl opacity-25"
-          style={{
-            background: 'radial-gradient(circle, #F59E0B 0%, rgba(245, 158, 11, 0) 70%)',
-          }}
-        />
-      </div>
+      {/* Hidden File Input for Personal Photo in Registration */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleCustomAvatarUpload}
+        className="hidden"
+      />
 
-      {/* Interactive iOS-Style Push / SMS Code Banner at Top */}
+      {/* iOS-Style Top Notification Banner for SMS Verification Code */}
       <AnimatePresence>
         {smsBannerVisible && generatedSmsCode && (
           <motion.div
-            initial={{ opacity: 0, y: -40, scale: 0.94 }}
+            initial={{ opacity: 0, y: -32, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -30, scale: 0.94 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            exit={{ opacity: 0, y: -24, scale: 0.96 }}
+            transition={{ duration: 0.35, ease: STUDIO_EASE }}
             onClick={e => {
               e.stopPropagation();
               triggerHaptic(10);
               setSmsCodeInput(generatedSmsCode);
             }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-60 w-[calc(100%-2rem)] max-w-[395px] p-3.5 rounded-2xl border border-[#ff7c5c]/45 shadow-2xl cursor-pointer flex items-center justify-between gap-3"
-            style={{
-              background: 'rgba(26, 15, 12, 0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-            }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-60 w-[calc(100%-2rem)] max-w-[400px] p-3.5 rounded-2xl bg-white/95 border border-[#DDD6FE] shadow-xl cursor-pointer flex items-center justify-between gap-3 backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-[#DE482B]/25 border border-[#ff7c5c]/45 flex items-center justify-center text-[#ff9378] shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#F2EEFF] border border-[#DDD6FE] flex items-center justify-center text-[#5E3AEF] shrink-0">
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div className="min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#ff9378]">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#5E3AEF]">
                     СМС · KOMPA
                   </span>
-                  <span className="text-[10px] text-amber-200/60">сейчас</span>
+                  <span className="text-[11px] text-[#8A84A3]">сейчас</span>
                 </div>
-                <p className="text-xs text-white font-medium truncate mt-0.5">
+                <p className="text-xs text-[#141026] font-medium truncate mt-0.5">
                   Код подтверждения:{' '}
-                  <strong className="font-mono-num text-sm text-[#ff9378] tracking-wider">
+                  <strong className="font-mono-num text-sm text-[#5E3AEF] tracking-wider">
                     {generatedSmsCode}
                   </strong>
                 </p>
               </div>
             </div>
-            <span className="px-2.5 py-1.5 rounded-xl bg-[#DE482B]/25 border border-[#ff7c5c]/40 text-[11px] font-bold text-[#ffb4a1] shrink-0">
+            <span className="px-3 py-1.5 rounded-xl bg-[#F2EEFF] text-xs font-bold text-[#5E3AEF] shrink-0">
               Вставить
             </span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* SHARED LAYOUT GROUP FOR SEAMLESS TRANSITION FROM LOGO ASSEMBLY TO LOGIN CARD */}
-      <LayoutGroup>
+      <LayoutGroup id="kompa-launch-to-auth">
         {showLogoSplash ? (
-          /* STAGE 0: KINETIC LOGO ASSEMBLY IN THE CENTER OF THE SCREEN */
-          <div className="relative z-10 flex items-center justify-center">
-            <KompaGeometricLogoMark size="splash" animateAssembly={true} />
-          </div>
-        ) : (
-          /* STAGE 1: PORTRAIT CARD WITH MOVING GLOW — LOGO smoothly docks at the top */
+          /* =====================================================================
+             STAGE 0: FLAGSHIP iOS LAUNCH ANIMATION (SPLASH SCREEN — 2.05s)
+             1. Clean porcelain-lavender canvas (#F7F6FB)
+             2. Graphic symbol smoothly forms via 3 converging ribbon paths
+             3. Brand wordmark "kompa." emerges below with balanced typography
+             4. Subtle celebration accent dot completes the mark
+             5. Seamless layout transition into the Authorization Screen
+             ===================================================================== */
           <motion.div
-            key="kompa-auth-card"
-            initial={{ opacity: 0, y: 18, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{
-              duration: 0.48,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            onClick={e => e.stopPropagation()}
-            className="relative z-10 w-full max-w-[395px] my-auto flex flex-col items-center"
+            key="kompa-flagship-splash"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: STUDIO_EASE }}
+            className="relative z-10 flex flex-col items-center justify-center text-center px-6"
           >
-            {/* Portrait Card Wrapper with Continuously Moving Edge Glows */}
+            <motion.div
+              layoutId="kompa-brand-identity-lockup"
+              transition={{ duration: 0.58, ease: STUDIO_EASE }}
+              className="flex flex-col items-center"
+            >
+              {/* Graphic Symbol with Vector Formation Choreography */}
+              <div className="relative flex items-center justify-center">
+                {/* Soft natural accent pulse on completion */}
+                <motion.div
+                  initial={{ scale: 0.85, opacity: 0 }}
+                  animate={{
+                    scale: [0.85, 1.16, 1.24],
+                    opacity: [0, 0.28, 0],
+                  }}
+                  transition={{
+                    duration: 1.1,
+                    delay: 0.68,
+                    ease: STUDIO_EASE,
+                  }}
+                  className="pointer-events-none absolute inset-0 rounded-[24px]"
+                  style={{ backgroundColor: '#6C47FF' }}
+                />
+                <KompaLogoMark size={84} variant="brand" animated={true} />
+              </div>
+
+              {/* Wordmark & Tagline Emergence */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.55,
+                  delay: 0.48,
+                  ease: STUDIO_EASE,
+                }}
+                className="mt-5 flex flex-col items-center"
+              >
+                <div className="flex items-baseline">
+                  <span className="font-display font-extrabold text-[34px] leading-none tracking-[-0.04em] text-[#141026]">
+                    kompa
+                  </span>
+                  <motion.span
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: [0, 1.25, 1], opacity: 1 }}
+                    transition={{
+                      duration: 0.45,
+                      delay: 0.82,
+                      ease: STUDIO_EASE,
+                    }}
+                    className="inline-block w-2 h-2 rounded-full ml-0.5 mb-0.5 bg-[#6C47FF]"
+                  />
+                </div>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.48,
+                    delay: 0.72,
+                    ease: STUDIO_EASE,
+                  }}
+                  className="mt-2 text-[13px] font-medium tracking-[-0.01em] text-[#6E6888]"
+                >
+                  Живые события и компания рядом
+                </motion.p>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        ) : (
+          /* =====================================================================
+             STAGE 1: FLAGSHIP AUTHORIZATION & REGISTRATION CARD
+             Clean light surface, balanced whitespace, refined violet accents,
+             ergonomic iPhone touch targets.
+             ===================================================================== */
+          <motion.div
+            key="kompa-flagship-auth-card"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.48, ease: STUDIO_EASE }}
+            onClick={e => e.stopPropagation()}
+            className="relative z-10 w-full max-w-[408px] my-auto"
+          >
             <div
-              className="relative w-full rounded-[36px] p-6 sm:p-7 flex flex-col justify-between overflow-hidden"
+              className="relative w-full rounded-[32px] bg-white p-6 sm:p-8 flex flex-col justify-between overflow-hidden"
               style={{
-                background:
-                  'linear-gradient(165deg, rgba(74, 37, 27, 0.62) 0%, rgba(36, 20, 16, 0.82) 52%, rgba(20, 12, 10, 0.94) 100%)',
-                backdropFilter: 'blur(26px)',
-                WebkitBackdropFilter: 'blur(26px)',
-                border: '1.5px solid rgba(255, 138, 108, 0.44)',
+                border: '1px solid #EAE6F5',
                 boxShadow:
-                  '0 28px 70px -15px rgba(0, 0, 0, 0.78), 0 0 42px -8px rgba(222, 72, 43, 0.35), inset 0 1px 1px rgba(255, 210, 195, 0.25)',
+                  '0 24px 60px -16px rgba(24, 16, 54, 0.08), 0 4px 16px -2px rgba(24, 16, 54, 0.04)',
               }}
             >
-              {/* MOVING GLOW #1: Left Border Vertical Gliding Flare */}
-              <motion.div
-                aria-hidden="true"
-                animate={{
-                  y: [-75, 115, -75],
-                  opacity: [0.55, 0.95, 0.55],
-                  scale: [0.9, 1.2, 0.9],
-                }}
-                transition={{
-                  duration: 4.8,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="pointer-events-none absolute -left-3.5 top-1/4 w-7 h-36 rounded-full blur-xl"
-                style={{
-                  background:
-                    'radial-gradient(circle, #ff8566 0%, #DE482B 45%, transparent 75%)',
-                }}
-              />
-
-              {/* MOVING GLOW #2: Right Border Vertical Gliding Flare */}
-              <motion.div
-                aria-hidden="true"
-                animate={{
-                  y: [95, -95, 95],
-                  opacity: [0.6, 0.98, 0.6],
-                  scale: [1.1, 0.88, 1.1],
-                }}
-                transition={{
-                  duration: 5.4,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="pointer-events-none absolute -right-3.5 bottom-1/4 w-7 h-40 rounded-full blur-xl"
-                style={{
-                  background:
-                    'radial-gradient(circle, #fbbf24 0%, #DE482B 50%, transparent 75%)',
-                }}
-              />
-
-              {/* MOVING GLOW #3: Top-to-Bottom Ambient Internal Light Sweep */}
-              <motion.div
-                aria-hidden="true"
-                animate={{
-                  x: [-110, 110, -110],
-                  y: [-40, 60, -40],
-                  opacity: [0.12, 0.24, 0.12],
-                }}
-                transition={{
-                  duration: 7,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="pointer-events-none absolute -top-16 left-1/4 w-56 h-56 rounded-full blur-3xl"
-                style={{
-                  background: 'radial-gradient(circle, #ff7c5c 0%, transparent 70%)',
-                }}
-              />
-
-              {/* Top Close / SignOut Row (when opened from inside the app) */}
+              {/* Top Close / SignOut Row (only when opened manually from inside the app) */}
               {!isInitialGate && (
-                <div className="flex items-center justify-between mb-1 z-10">
+                <div className="flex items-center justify-between mb-3">
                   <button
                     type="button"
                     onClick={handleSignOutClick}
-                    className="px-2.5 py-1 rounded-xl bg-[#160d0a]/70 border border-[#ff8a6c]/25 text-[11px] font-semibold text-[#ffcab8] flex items-center gap-1 cursor-pointer hover:bg-rose-500/20 hover:text-rose-200 transition-colors"
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#F6F5FB] hover:bg-rose-50 text-xs font-semibold text-[#56516E] hover:text-rose-600 flex items-center gap-1.5 cursor-pointer transition-colors"
                   >
-                    <LogOut className="w-3 h-3" />
+                    <LogOut className="w-3.5 h-3.5" />
                     <span>Выйти</span>
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-8 h-8 rounded-full bg-[#160d0a]/70 border border-[#ff8a6c]/25 flex items-center justify-center text-[#ffcab8] cursor-pointer hover:bg-[#241410]"
+                    className="w-9 h-9 rounded-full bg-[#F6F5FB] hover:bg-[#ECE9F8] flex items-center justify-center text-[#56516E] cursor-pointer transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               )}
 
-              {/* Hidden File Input for Personal Photo in Registration */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleCustomAvatarUpload}
-                className="hidden"
-              />
-
-              {/* TOP HEADER AREA:
-                  - In LOGIN mode: Shows the Assembled App Logo (smoothly transitioned via layoutId)
-                  - In REGISTER mode: Shows the Personal Photo Upload Button (Camera) + step progress */}
-              <div className="flex flex-col items-center pt-1 pb-5 z-10">
+              {/* HEADER AREA:
+                  - In LOGIN mode: Full Brand Identity Lockup (Graphic Symbol + kompa. wordmark)
+                  - In REGISTER mode: Personal Photo Upload Button + Step Progress */}
+              <div className="flex flex-col items-center text-center pb-6">
                 {authMode === 'login' ? (
-                  <div
-                    onClick={() => {
-                      triggerHaptic(6);
-                      setShowLogoSplash(true);
-                    }}
-                    title="Логотип КОМПАНИЯ"
-                    className="cursor-pointer"
+                  <motion.div
+                    layoutId="kompa-brand-identity-lockup"
+                    transition={{ duration: 0.52, ease: STUDIO_EASE }}
+                    className="flex flex-col items-center"
                   >
-                    <KompaGeometricLogoMark size="docked" animateAssembly={false} />
-                  </div>
-                ) : (
-                  <>
-                    {/* PERSONAL PHOTO UPLOAD BUTTON (Moved strictly into Registration process) */}
-                    <div className="relative flex items-center justify-center">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
-                        className="pointer-events-none absolute -inset-2.5 rounded-full border border-dashed border-[#ff8a6c]/40"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(6);
+                        setShowLogoSplash(true);
+                      }}
+                      title="Воспроизвести анимацию логотипа"
+                      className="group cursor-pointer focus:outline-none"
+                    >
+                      <KompaLogoMark
+                        size={64}
+                        variant="brand"
+                        animated={false}
+                        className="transition-transform duration-200 group-hover:scale-[1.03] group-active:scale-[0.97]"
                       />
+                    </button>
 
-                      <motion.button
-                        type="button"
-                        initial={{ scale: 0.88, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => fileInputRef.current?.click()}
-                        title="Загрузить личную фотографию"
-                        className="relative w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all group"
-                        style={{
-                          border: '2.5px solid rgba(255, 138, 108, 0.78)',
-                          background: 'rgba(22, 13, 10, 0.65)',
-                          boxShadow:
-                            '0 0 28px rgba(222, 72, 43, 0.28), inset 0 0 18px rgba(222, 72, 43, 0.16)',
-                        }}
-                      >
-                        {avatarUrl ? (
-                          <>
-                            <img
-                              src={avatarUrl}
-                              alt={name || 'Ваше фото'}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                            <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#26140f] border border-[#ff8a6c]/75 flex items-center justify-center text-[#ffbfa9] shadow-md">
-                              <Camera className="w-3.5 h-3.5" />
-                            </div>
-                          </>
-                        ) : (
-                          <Camera className="w-10 h-10 text-[#ff9d82] stroke-[1.7] group-hover:scale-105 transition-transform" />
-                        )}
-                      </motion.button>
+                    <div className="mt-3.5 flex items-baseline">
+                      <span className="font-display font-extrabold text-[26px] leading-none tracking-[-0.035em] text-[#141026]">
+                        kompa
+                      </span>
+                      <span className="inline-block w-1.5 h-1.5 rounded-full ml-0.5 mb-0.5 bg-[#6C47FF]" />
                     </div>
+
+                    <p className="mt-1.5 text-[13px] text-[#6E6888] font-medium max-w-[270px] leading-snug">
+                      Находите компанию для праздников, событий и совместного отдыха
+                    </p>
+                  </motion.div>
+                ) : (
+                  /* REGISTRATION HEADER: Personal Photo Upload + Step Progress */
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between mb-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(6);
+                          setErrorMessage('');
+                          if (wizardStep > 1) {
+                            navigateToStep((wizardStep - 1) as 1 | 2 | 3 | 4);
+                          } else {
+                            setAuthMode('login');
+                          }
+                        }}
+                        className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#F6F5FB] hover:bg-[#EDEAF8] text-xs font-semibold text-[#4E4868] flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>{wizardStep > 1 ? 'Назад' : 'Ко входу'}</span>
+                      </button>
+
+                      {/* Clean Step Progress Bar */}
+                      <div className="flex items-center gap-1.5">
+                        {[1, 2, 3, 4].map(stepNum => {
+                          const active = wizardStep === stepNum;
+                          const done = wizardStep > stepNum;
+                          return (
+                            <div
+                              key={stepNum}
+                              className="h-1.5 rounded-full transition-all duration-300"
+                              style={{
+                                width: active ? '24px' : '7px',
+                                backgroundColor: active
+                                  ? '#5E3AEF'
+                                  : done
+                                  ? '#C4B5FD'
+                                  : '#E6E2F2',
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Personal Photo Uploader inside Registration */}
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Загрузить личную фотографию"
+                      className="relative w-20 h-20 rounded-full flex items-center justify-center cursor-pointer transition-all group"
+                      style={{
+                        backgroundColor: '#F3F0FF',
+                        border: '2px solid #D8CEFF',
+                        boxShadow: '0 8px 20px -6px rgba(94, 58, 239, 0.16)',
+                      }}
+                    >
+                      {avatarUrl ? (
+                        <>
+                          <img
+                            src={avatarUrl}
+                            alt={name || 'Ваше фото'}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                          <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#5E3AEF] text-white border-2 border-white flex items-center justify-center shadow-sm">
+                            <Camera className="w-3.5 h-3.5" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-[#5E3AEF]">
+                          <Camera className="w-7 h-7 stroke-[1.8] group-hover:scale-105 transition-transform" />
+                        </div>
+                      )}
+                    </motion.button>
 
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="mt-2.5 text-[11px] font-semibold text-[#ffcab8]/85 hover:text-white transition-colors cursor-pointer"
+                      className="mt-2 text-xs font-semibold text-[#5E3AEF] hover:text-[#4C29DC] transition-colors cursor-pointer"
                     >
                       {isUploadingPhoto
-                        ? 'Обработка фото...'
+                        ? 'Обработка фотографии...'
                         : avatarUrl
-                        ? 'Личное фото загружено · Изменить'
+                        ? 'Личное фото добавлено · Изменить'
                         : 'Загрузить ваше личное фото'}
                     </button>
-
-                    {/* Minimal Step Progress Pills in Register Mode */}
-                    <div className="flex items-center gap-1.5 mt-2.5">
-                      {[1, 2, 3, 4].map(stepNum => {
-                        const active = wizardStep === stepNum;
-                        const done = wizardStep > stepNum;
-                        return (
-                          <div
-                            key={stepNum}
-                            className="h-1.5 rounded-full transition-all duration-300"
-                            style={{
-                              width: active ? '26px' : '8px',
-                              backgroundColor: active
-                                ? '#ff7c5c'
-                                : done
-                                ? 'rgba(255, 138, 108, 0.55)'
-                                : 'rgba(22, 13, 10, 0.75)',
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
 
-              {/* Status / Error Feedback */}
+              {/* Status / Error Banner */}
               <AnimatePresence mode="wait">
                 {statusMessage && (
                   <motion.div
                     key="status"
-                    initial={{ opacity: 0, y: -6 }}
+                    initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="mb-3 px-3.5 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-medium flex items-center gap-2 z-10"
+                    exit={{ opacity: 0, y: -4 }}
+                    className="mb-4 px-3.5 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{statusMessage}</span>
                   </motion.div>
                 )}
                 {errorMessage && (
                   <motion.div
                     key="error"
-                    initial={{ opacity: 0, y: -6 }}
+                    initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="mb-3 px-3.5 py-2.5 rounded-xl bg-rose-500/25 border border-rose-400/45 text-rose-100 text-xs font-medium flex items-center gap-2 z-10"
+                    exit={{ opacity: 0, y: -4 }}
+                    className="mb-4 px-3.5 py-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-medium flex items-center gap-2"
                   >
-                    <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                     <span>{errorMessage}</span>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* MAIN CONTENT AREA: LOGIN SCREEN FIRST OR 4-STEP REGISTRATION */}
-              <div className="relative overflow-hidden z-10">
+              {/* MAIN CONTENT AREA: LOGIN VIEW OR 4-STEP REGISTRATION WIZARD */}
+              <div className="relative overflow-hidden">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   {authMode === 'login' ? (
-                    /* INITIAL LOGIN SCREEN: LOGO AT TOP + LOGIN + PASSWORD + BOTTOM "ВОЙТИ" & RIGHT "РЕГИСТРАЦИЯ" */
+                    /* =========================================================
+                       LOGIN VIEW:
+                       - Login input (Phone or Email)
+                       - Password input
+                       - Remember me checkbox (no italic "Регистрация" word)
+                       - Bottom row: Left "Войти" & Right "Регистрация"
+                       ========================================================= */
                     <motion.div
                       key="login-view"
                       variants={staggerContainerVariants}
                       initial="hidden"
                       animate="show"
-                      exit={{ opacity: 0, x: -60 }}
+                      exit={{ opacity: 0, x: -32 }}
                       className="space-y-3.5"
                     >
-                      {/* Login Input Bar */}
-                      <motion.div
-                        variants={fadeScaleItemVariants}
-                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
-                        style={{
-                          backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                          border:
-                            focusedField === 'loginId'
-                              ? '1px solid rgba(255, 138, 108, 0.85)'
-                              : '1px solid rgba(255, 138, 108, 0.22)',
-                        }}
-                      >
-                        <User className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                        <input
-                          type="text"
-                          value={loginIdentifier}
-                          onFocus={() => setFocusedField('loginId')}
-                          onBlur={() => setFocusedField(null)}
-                          onChange={e => setLoginIdentifier(e.target.value)}
-                          placeholder="Логин (телефон или почта)"
-                          className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                        />
+                      {/* Field 1: Login */}
+                      <motion.div variants={fadeItemVariants} className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-[#4E4868] px-1">
+                          Логин
+                        </label>
+                        <div
+                          className="flex items-center gap-3 px-4 min-h-[50px] rounded-2xl transition-all duration-150"
+                          style={getFieldStyle('loginId')}
+                        >
+                          <User className="w-4 h-4 text-[#7C7599] shrink-0" />
+                          <input
+                            type="text"
+                            value={loginIdentifier}
+                            onFocus={() => setFocusedField('loginId')}
+                            onBlur={() => setFocusedField(null)}
+                            onChange={e => setLoginIdentifier(e.target.value)}
+                            placeholder="Телефон или электронная почта"
+                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                          />
+                        </div>
                       </motion.div>
 
-                      {/* Password Input Bar */}
-                      <motion.div
-                        variants={fadeScaleItemVariants}
-                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
-                        style={{
-                          backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                          border:
-                            focusedField === 'loginPass'
-                              ? '1px solid rgba(255, 138, 108, 0.85)'
-                              : '1px solid rgba(255, 138, 108, 0.22)',
-                        }}
-                      >
-                        <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
-                        <input
-                          type="password"
-                          value={loginPassword}
-                          onFocus={() => setFocusedField('loginPass')}
-                          onBlur={() => setFocusedField(null)}
-                          onChange={e => setLoginPassword(e.target.value)}
-                          placeholder="Пароль"
-                          className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
-                        />
+                      {/* Field 2: Password */}
+                      <motion.div variants={fadeItemVariants} className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-[#4E4868] px-1">
+                          Пароль
+                        </label>
+                        <div
+                          className="flex items-center gap-3 px-4 min-h-[50px] rounded-2xl transition-all duration-150"
+                          style={getFieldStyle('loginPass')}
+                        >
+                          <Lock className="w-4 h-4 text-[#7C7599] shrink-0" />
+                          <input
+                            type={showLoginPassword ? 'text' : 'password'}
+                            value={loginPassword}
+                            onFocus={() => setFocusedField('loginPass')}
+                            onBlur={() => setFocusedField(null)}
+                            onChange={e => setLoginPassword(e.target.value)}
+                            placeholder="Введите ваш пароль"
+                            className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginPassword(prev => !prev)}
+                            className="p-1 text-[#8A84A3] hover:text-[#4E4868] transition-colors cursor-pointer shrink-0"
+                            title={showLoginPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                          >
+                            {showLoginPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </motion.div>
 
-                      {/* Remember Me Row (Italic "Регистрация" word completely removed) */}
+                      {/* Remember Me Checkbox (Clean single item, no italic "Регистрация") */}
                       <motion.div
-                        variants={fadeScaleItemVariants}
-                        className="flex items-center justify-start pt-0.5 px-1 text-xs"
+                        variants={fadeItemVariants}
+                        className="flex items-center justify-start pt-0.5 px-1"
                       >
-                        <label className="flex items-center gap-2 text-[#ffdfd4]/85 cursor-pointer">
+                        <label className="inline-flex items-center gap-2.5 text-xs font-medium text-[#56516E] cursor-pointer">
                           <input
                             type="checkbox"
                             checked={rememberMe}
                             onChange={e => setRememberMe(e.target.checked)}
-                            className="w-4 h-4 rounded accent-[#DE482B] cursor-pointer"
+                            className="w-4 h-4 rounded accent-[#5E3AEF] cursor-pointer"
                           />
                           <span>Запомнить меня</span>
                         </label>
                       </motion.div>
 
-                      {/* Bottom Row: Left "ВОЙТИ" and Right "РЕГИСТРАЦИЯ" */}
+                      {/* Bottom Action Row: Left "Войти" & Right "Регистрация" */}
                       <motion.div
-                        variants={fadeScaleItemVariants}
-                        className="grid grid-cols-2 gap-2.5 pt-2"
+                        variants={fadeItemVariants}
+                        className="grid grid-cols-2 gap-3 pt-2"
                       >
                         <motion.button
-                          whileHover={{ scale: 1.015 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.985 }}
                           type="button"
                           onClick={handleLoginSubmit}
-                          className="py-3.5 px-4 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all"
                           style={{
-                            background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                            border: '1px solid rgba(255, 165, 140, 0.5)',
-                            boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                            background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
+                            boxShadow:
+                              '0 10px 24px -6px rgba(84, 48, 230, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
                           }}
                         >
-                          <span>ВОЙТИ</span>
+                          <span>Войти</span>
                         </motion.button>
 
                         <motion.button
-                          whileHover={{ scale: 1.015 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.985 }}
                           type="button"
                           onClick={() => {
                             triggerHaptic(8);
@@ -1220,18 +1051,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             setAuthMode('register');
                             setStepState([1, 1]);
                           }}
-                          className="py-3.5 px-4 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-[#ffdfd4] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                          style={{
-                            backgroundColor: 'rgba(18, 11, 9, 0.85)',
-                            border: '1px solid rgba(255, 138, 108, 0.45)',
-                          }}
+                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold text-[#522EE5] bg-[#F3F0FF] hover:bg-[#EAE4FF] border border-[#DDD4FF] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                         >
-                          <span>РЕГИСТРАЦИЯ</span>
+                          <span>Регистрация</span>
                         </motion.button>
                       </motion.div>
                     </motion.div>
                   ) : (
-                    /* REGISTRATION WIZARD STEPS IN THE EXACT SAME CARD FORMAT */
+                    /* =========================================================
+                       4-STEP REGISTRATION WIZARD
+                       ========================================================= */
                     <motion.div
                       key={`register-step-${wizardStep}`}
                       custom={direction}
@@ -1239,34 +1068,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       initial="enter"
                       animate="center"
                       exit="exit"
-                      transition={{
-                        x: { type: 'spring', stiffness: 320, damping: 32, mass: 0.85 },
-                        opacity: { duration: 0.2 },
-                        scale: { duration: 0.2 },
-                      }}
+                      transition={{ duration: 0.28, ease: STUDIO_EASE }}
                       className="w-full"
                     >
                       {wizardStep === 1 && (
-                        /* STEP 1: REGISTRATION CONTACTS & PASSWORD */
+                        /* STEP 1: CONTACTS & PASSWORD */
                         <motion.div
                           variants={staggerContainerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-2.5"
+                          className="space-y-3"
                         >
-                          {/* Name Input Bar */}
+                          {/* Name Input */}
                           <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                              border:
-                                focusedField === 'name'
-                                  ? '1px solid rgba(255, 138, 108, 0.85)'
-                                  : '1px solid rgba(255, 138, 108, 0.22)',
-                            }}
+                            variants={fadeItemVariants}
+                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            style={getFieldStyle('name')}
                           >
-                            <User className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <User className="w-4 h-4 text-[#7C7599] shrink-0" />
                             <input
                               type="text"
                               required
@@ -1275,24 +1094,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onFocus={() => setFocusedField('name')}
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setName(e.target.value)}
-                              placeholder="Ваше имя и фамилия *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                              placeholder="Имя и фамилия *"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
                             />
                           </motion.div>
 
-                          {/* Phone Input Bar */}
+                          {/* Phone Input */}
                           <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                              border:
-                                focusedField === 'phone'
-                                  ? '1px solid rgba(255, 138, 108, 0.85)'
-                                  : '1px solid rgba(255, 138, 108, 0.22)',
-                            }}
+                            variants={fadeItemVariants}
+                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            style={getFieldStyle('phone')}
                           >
-                            <Phone className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <Phone className="w-4 h-4 text-[#7C7599] shrink-0" />
                             <input
                               type="tel"
                               inputMode="tel"
@@ -1303,23 +1116,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setPhoneNumber(e.target.value)}
                               placeholder="Номер телефона (+7 999 123-45-67) *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
                             />
                           </motion.div>
 
-                          {/* Email Input Bar */}
+                          {/* Email Input */}
                           <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                              border:
-                                focusedField === 'email'
-                                  ? '1px solid rgba(255, 138, 108, 0.85)'
-                                  : '1px solid rgba(255, 138, 108, 0.22)',
-                            }}
+                            variants={fadeItemVariants}
+                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            style={getFieldStyle('email')}
                           >
-                            <Mail className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <Mail className="w-4 h-4 text-[#7C7599] shrink-0" />
                             <input
                               type="email"
                               inputMode="email"
@@ -1330,25 +1137,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setEmail(e.target.value)}
                               placeholder="Электронная почта (Email) *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
                             />
                           </motion.div>
 
-                          {/* Password Input Bar */}
+                          {/* Password Input */}
                           <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                              border:
-                                focusedField === 'regPass'
-                                  ? '1px solid rgba(255, 138, 108, 0.85)'
-                                  : '1px solid rgba(255, 138, 108, 0.22)',
-                            }}
+                            variants={fadeItemVariants}
+                            className="flex items-center gap-3 px-4 min-h-[48px] rounded-2xl transition-all duration-150"
+                            style={getFieldStyle('regPass')}
                           >
-                            <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <Lock className="w-4 h-4 text-[#7C7599] shrink-0" />
                             <input
-                              type="password"
+                              type={showRegisterPassword ? 'text' : 'password'}
                               required
                               maxLength={60}
                               value={registerPassword}
@@ -1356,43 +1157,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setRegisterPassword(e.target.value)}
                               placeholder="Придумайте пароль *"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
                             />
-                          </motion.div>
-
-                          {/* Action Buttons */}
-                          <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-2.5 pt-2"
-                          >
                             <button
                               type="button"
-                              onClick={() => {
-                                triggerHaptic(8);
-                                setErrorMessage('');
-                                setAuthMode('login');
-                              }}
-                              className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
+                              onClick={() => setShowRegisterPassword(prev => !prev)}
+                              className="p-1 text-[#8A84A3] hover:text-[#4E4868] transition-colors cursor-pointer shrink-0"
                             >
-                              <ArrowLeft className="w-4 h-4" />
-                              <span>Вход</span>
+                              {showRegisterPassword ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
                             </button>
+                          </motion.div>
 
+                          {/* Step 1 Primary CTA */}
+                          <motion.div variants={fadeItemVariants} className="pt-2">
                             <motion.button
-                              whileHover={{ scale: 1.015 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.985 }}
                               type="button"
                               disabled={isSendingSms}
                               onClick={handleRequestSmsCode}
-                              className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                              className="w-full min-h-[50px] px-5 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                               style={{
-                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                                border: '1px solid rgba(255, 165, 140, 0.45)',
-                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
+                                boxShadow:
+                                  '0 10px 24px -6px rgba(84, 48, 230, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
                               }}
                             >
-                              <span>{isSendingSms ? 'ОТПРАВКА СМС...' : 'ДАЛЕЕ · КОД СМС'}</span>
-                              <ArrowRight className="w-4 h-4 text-amber-200" />
+                              <span>
+                                {isSendingSms ? 'Отправка СМС-кода...' : 'Получить код по СМС'}
+                              </span>
+                              <ArrowRight className="w-4 h-4" />
                             </motion.button>
                           </motion.div>
                         </motion.div>
@@ -1404,32 +1202,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           variants={staggerContainerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-3.5"
+                          className="space-y-4"
                         >
-                          <motion.div variants={fadeScaleItemVariants} className="text-center space-y-1">
-                            <h2 className="text-base font-display font-bold text-white">
-                              Подтверждение номера по СМС
+                          <motion.div variants={fadeItemVariants} className="text-center space-y-1">
+                            <h2 className="text-base font-display font-bold text-[#141026]">
+                              Подтверждение номера
                             </h2>
-                            <p className="text-xs text-[#ffdfd4]/80">
-                              Мы отправили 4-значный код на номер{' '}
-                              <span className="font-mono-num font-semibold text-[#ff9d82]">
+                            <p className="text-xs text-[#6E6888]">
+                              Отправили 4-значный СМС-код на{' '}
+                              <span className="font-mono-num font-semibold text-[#5E3AEF]">
                                 {phoneNumber}
                               </span>
                             </p>
                           </motion.div>
 
                           <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.86)',
-                              border:
-                                focusedField === 'sms'
-                                  ? '1px solid rgba(255, 138, 108, 0.9)'
-                                  : '1px solid rgba(255, 138, 108, 0.38)',
-                            }}
+                            variants={fadeItemVariants}
+                            className="flex items-center gap-3 px-4 min-h-[52px] rounded-2xl transition-all duration-150"
+                            style={getFieldStyle('sms')}
                           >
-                            <Lock className="w-4 h-4 text-[#ff9d82] shrink-0" />
+                            <Lock className="w-4 h-4 text-[#7C7599] shrink-0" />
                             <input
                               type="text"
                               inputMode="numeric"
@@ -1439,7 +1231,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setSmsCodeInput(e.target.value.replace(/\D/g, ''))}
                               placeholder="Код из СМС (4 цифры)"
-                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[16px] font-mono-num tracking-[0.25em] text-white placeholder:tracking-normal placeholder:text-[#ffcab8]/45 font-bold appearance-none"
+                              className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-base font-mono-num tracking-[0.22em] text-[#141026] placeholder:tracking-normal placeholder:text-[#9892B0] font-bold appearance-none"
                             />
                             {generatedSmsCode && (
                               <button
@@ -1448,7 +1240,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   triggerHaptic(8);
                                   setSmsCodeInput(generatedSmsCode);
                                 }}
-                                className="px-2.5 py-1 rounded-lg bg-[#DE482B]/25 border border-[#ff8a6c]/40 text-[11px] font-bold text-[#ffcab8] shrink-0 cursor-pointer"
+                                className="px-2.5 py-1 rounded-xl bg-[#F2EEFF] text-xs font-bold text-[#5E3AEF] shrink-0 cursor-pointer"
                               >
                                 Код: {generatedSmsCode}
                               </button>
@@ -1456,13 +1248,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           </motion.div>
 
                           <motion.div
-                            variants={fadeScaleItemVariants}
+                            variants={fadeItemVariants}
                             className="flex items-center justify-between px-1 text-xs"
                           >
                             <button
                               type="button"
                               onClick={() => navigateToStep(1)}
-                              className="text-[#ffcab8]/80 hover:text-white flex items-center gap-1 cursor-pointer"
+                              className="text-[#6E6888] hover:text-[#141026] font-medium flex items-center gap-1 cursor-pointer"
                             >
                               <ArrowLeft className="w-3.5 h-3.5" />
                               <span>Изменить номер</span>
@@ -1472,7 +1264,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               type="button"
                               disabled={resendCooldown > 0}
                               onClick={handleRequestSmsCode}
-                              className="text-[#ffcab8]/85 hover:text-white flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="text-[#5E3AEF] hover:text-[#4C29DC] font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <RefreshCw className="w-3 h-3" />
                               <span>
@@ -1483,21 +1275,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </button>
                           </motion.div>
 
-                          <motion.div variants={fadeScaleItemVariants} className="pt-2">
+                          <motion.div variants={fadeItemVariants} className="pt-1">
                             <motion.button
-                              whileHover={{ scale: 1.015 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.985 }}
                               type="button"
                               onClick={handleVerifySmsCode}
-                              className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full min-h-[50px] px-6 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
                               style={{
-                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                                border: '1px solid rgba(255, 165, 140, 0.45)',
-                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
+                                boxShadow:
+                                  '0 10px 24px -6px rgba(84, 48, 230, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
                               }}
                             >
-                              <span>ПОДТВЕРДИТЬ СМС-КОД</span>
-                              <ArrowRight className="w-4 h-4 text-amber-200" />
+                              <span>Подтвердить код</span>
+                              <ArrowRight className="w-4 h-4" />
                             </motion.button>
                           </motion.div>
                         </motion.div>
@@ -1509,15 +1301,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           variants={staggerContainerVariants}
                           initial="hidden"
                           animate="show"
-                          className="space-y-3"
+                          className="space-y-3.5"
                         >
                           {/* Age & Gender Row */}
-                          <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-12 gap-2">
+                          <motion.div variants={fadeItemVariants} className="grid grid-cols-12 gap-2.5">
                             <div
-                              className="col-span-5 flex items-center justify-between px-3 py-2.5 rounded-xl"
+                              className="col-span-5 flex items-center justify-between px-3 min-h-[46px] rounded-2xl"
                               style={{
-                                backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                                border: '1px solid rgba(255, 138, 108, 0.22)',
+                                backgroundColor: '#F6F5FB',
+                                border: '1.5px solid #E5E1F2',
                               }}
                             >
                               <button
@@ -1526,15 +1318,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   triggerHaptic(5);
                                   setAge(prev => Math.max(18, prev - 1));
                                 }}
-                                className="w-6 h-6 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center cursor-pointer"
+                                className="w-7 h-7 rounded-xl bg-white text-[#141026] border border-[#E5E1F2] font-bold flex items-center justify-center cursor-pointer"
                               >
                                 −
                               </button>
                               <div className="text-center">
-                                <span className="text-sm font-mono-num font-extrabold text-white block leading-none">
+                                <span className="text-sm font-mono-num font-extrabold text-[#141026] block leading-none">
                                   {age}
                                 </span>
-                                <span className="text-[9px] text-[#ffcab8]/65">лет</span>
+                                <span className="text-[10px] text-[#7C7599]">лет</span>
                               </div>
                               <button
                                 type="button"
@@ -1542,13 +1334,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                   triggerHaptic(5);
                                   setAge(prev => Math.min(90, prev + 1));
                                 }}
-                                className="w-6 h-6 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center cursor-pointer"
+                                className="w-7 h-7 rounded-xl bg-white text-[#141026] border border-[#E5E1F2] font-bold flex items-center justify-center cursor-pointer"
                               >
                                 +
                               </button>
                             </div>
 
-                            <div className="col-span-7 grid grid-cols-2 gap-1.5">
+                            <div className="col-span-7 grid grid-cols-2 gap-2">
                               {(['female', 'male'] as const).map(g => {
                                 const active = gender === g;
                                 return (
@@ -1559,15 +1351,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                       triggerHaptic(6);
                                       setGender(g);
                                     }}
-                                    className="px-2.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                                    className="px-3 min-h-[46px] rounded-2xl text-xs font-bold transition-all cursor-pointer"
                                     style={{
-                                      backgroundColor: active
-                                        ? 'rgba(222, 72, 43, 0.42)'
-                                        : 'rgba(18, 11, 9, 0.82)',
-                                      color: '#ffffff',
+                                      backgroundColor: active ? '#F2EEFF' : '#F6F5FB',
+                                      color: active ? '#522EE5' : '#4E4868',
                                       border: active
-                                        ? '1px solid rgba(255, 138, 108, 0.85)'
-                                        : '1px solid rgba(255, 138, 108, 0.2)',
+                                        ? '1.5px solid #633EF6'
+                                        : '1.5px solid #E5E1F2',
                                     }}
                                   >
                                     {g === 'female' ? 'Девушка' : 'Мужчина'}
@@ -1578,18 +1368,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           </motion.div>
 
                           {/* City & Occupation Inputs */}
-                          <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-2">
+                          <motion.div variants={fadeItemVariants} className="grid grid-cols-2 gap-2.5">
                             <div
-                              className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
-                              style={{
-                                backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                                border:
-                                  focusedField === 'city'
-                                    ? '1px solid rgba(255, 138, 108, 0.85)'
-                                    : '1px solid rgba(255, 138, 108, 0.22)',
-                              }}
+                              className="flex items-center gap-2 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
+                              style={getFieldStyle('city')}
                             >
-                              <MapPin className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
+                              <MapPin className="w-3.5 h-3.5 text-[#7C7599] shrink-0" />
                               <input
                                 type="text"
                                 value={city}
@@ -1597,64 +1381,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 onBlur={() => setFocusedField(null)}
                                 onChange={e => setCity(e.target.value)}
                                 placeholder="Город"
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
                               />
                             </div>
 
                             <div
-                              className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
-                              style={{
-                                backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                                border:
-                                  focusedField === 'occupation'
-                                    ? '1px solid rgba(255, 138, 108, 0.85)'
-                                    : '1px solid rgba(255, 138, 108, 0.22)',
-                              }}
+                              className="flex items-center gap-2 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
+                              style={getFieldStyle('occupation')}
                             >
-                              <Briefcase className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
+                              <Briefcase className="w-3.5 h-3.5 text-[#7C7599] shrink-0" />
                               <input
                                 type="text"
                                 value={occupation}
                                 onFocus={() => setFocusedField('occupation')}
                                 onBlur={() => setFocusedField(null)}
                                 onChange={e => setOccupation(e.target.value)}
-                                placeholder="Кто вы по делу"
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-white placeholder:text-[#ffcab8]/45 font-medium appearance-none"
+                                placeholder="Сфера / занятие"
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs text-[#141026] placeholder:text-[#9892B0] font-medium appearance-none"
                               />
                             </div>
                           </motion.div>
 
                           {/* Quick City Buttons */}
-                          <motion.div variants={fadeScaleItemVariants} className="flex flex-wrap gap-1.5">
-                            {CITY_PRESETS.map(c => (
-                              <button
-                                key={c}
-                                type="button"
-                                onClick={() => {
-                                  triggerHaptic(5);
-                                  setCity(c);
-                                }}
-                                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer"
-                                style={{
-                                  backgroundColor:
-                                    city === c ? 'rgba(222, 72, 43, 0.45)' : 'rgba(18, 11, 9, 0.65)',
-                                  color: city === c ? '#ffffff' : 'rgba(255, 202, 184, 0.8)',
-                                  border:
-                                    city === c
-                                      ? '1px solid rgba(255, 138, 108, 0.7)'
-                                      : '1px solid rgba(255, 138, 108, 0.16)',
-                                }}
-                              >
-                                {c}
-                              </button>
-                            ))}
+                          <motion.div variants={fadeItemVariants} className="flex flex-wrap gap-1.5">
+                            {CITY_PRESETS.map(c => {
+                              const active = city === c;
+                              return (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => {
+                                    triggerHaptic(5);
+                                    setCity(c);
+                                  }}
+                                  className="px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
+                                  style={{
+                                    backgroundColor: active ? '#F2EEFF' : '#F6F5FB',
+                                    color: active ? '#522EE5' : '#6E6888',
+                                    border: active
+                                      ? '1px solid #C4B5FD'
+                                      : '1px solid #E5E1F2',
+                                  }}
+                                >
+                                  {c}
+                                </button>
+                              );
+                            })}
                           </motion.div>
 
                           {/* Interests Selection Grid */}
-                          <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
-                            <div className="flex items-center justify-between text-[11px] text-[#ffdfd4]/85 px-0.5">
-                              <span className="font-semibold">Выберите любимые форматы встреч:</span>
-                              <span className="font-mono-num font-bold text-[#ff9d82]">
+                          <motion.div variants={fadeItemVariants} className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs text-[#4E4868] px-0.5">
+                              <span className="font-semibold">Интересные форматы событий:</span>
+                              <span className="font-mono-num font-bold text-[#5E3AEF]">
                                 {interests.length}/10
                               </span>
                             </div>
@@ -1668,24 +1447,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                     key={item.tag}
                                     type="button"
                                     onClick={() => toggleInterest(item.tag)}
-                                    className="px-2.5 py-2 rounded-xl text-left flex items-center justify-between gap-1.5 transition-all cursor-pointer"
+                                    className="px-3 py-2.5 rounded-xl text-left flex items-center justify-between gap-1.5 transition-all cursor-pointer"
                                     style={{
-                                      backgroundColor: selected
-                                        ? 'rgba(222, 72, 43, 0.36)'
-                                        : 'rgba(18, 11, 9, 0.78)',
+                                      backgroundColor: selected ? '#F2EEFF' : '#F8F7FC',
                                       border: selected
-                                        ? '1px solid rgba(255, 138, 108, 0.85)'
-                                        : '1px solid rgba(255, 138, 108, 0.18)',
+                                        ? '1.5px solid #633EF6'
+                                        : '1.5px solid #EAE6F5',
                                     }}
                                   >
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                      <IconComp className="w-3.5 h-3.5 text-[#ff9d82] shrink-0" />
-                                      <span className="text-[11px] font-semibold text-white truncate">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <IconComp
+                                        className={`w-3.5 h-3.5 shrink-0 ${
+                                          selected ? 'text-[#5E3AEF]' : 'text-[#7C7599]'
+                                        }`}
+                                      />
+                                      <span
+                                        className={`text-xs font-semibold truncate ${
+                                          selected ? 'text-[#3F1FC2]' : 'text-[#2D2842]'
+                                        }`}
+                                      >
                                         {isEn ? item.labelEn : item.tag}
                                       </span>
                                     </div>
                                     {selected && (
-                                      <Check className="w-3.5 h-3.5 text-[#ffcab8] shrink-0" />
+                                      <Check className="w-3.5 h-3.5 text-[#5E3AEF] shrink-0" />
                                     )}
                                   </button>
                                 );
@@ -1693,35 +1478,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </div>
                           </motion.div>
 
-                          {/* Step 3 Footer Actions */}
-                          <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="flex items-center gap-2 pt-2"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => navigateToStep(1)}
-                              className="px-3.5 py-3.5 rounded-xl border border-[#ff8a6c]/30 bg-[#140c0a]/75 text-xs font-bold text-[#ffdfd4] flex items-center gap-1 cursor-pointer"
-                            >
-                              <ArrowLeft className="w-4 h-4" />
-                              <span>Назад</span>
-                            </button>
-
+                          {/* Step 3 Footer CTA */}
+                          <motion.div variants={fadeItemVariants} className="pt-1">
                             <motion.button
-                              whileHover={{ scale: 1.015 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.985 }}
                               type="button"
                               disabled={isSaving}
                               onClick={handleSaveAndProceedToFinal}
-                              className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                              className="w-full min-h-[50px] px-5 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                               style={{
-                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                                border: '1px solid rgba(255, 165, 140, 0.45)',
-                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
+                                boxShadow:
+                                  '0 10px 24px -6px rgba(84, 48, 230, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
                               }}
                             >
-                              <span>{isSaving ? 'СОХРАНЕНИЕ...' : 'ДАЛЕЕ'}</span>
-                              <ArrowRight className="w-4 h-4 text-amber-200" />
+                              <span>{isSaving ? 'Сохранение анкеты...' : 'Продолжить'}</span>
+                              <ArrowRight className="w-4 h-4" />
                             </motion.button>
                           </motion.div>
                         </motion.div>
@@ -1735,83 +1508,69 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           animate="show"
                           className="space-y-4 text-center"
                         >
-                          <motion.div variants={fadeScaleItemVariants} className="space-y-1">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[11px] font-bold">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              Телефон и профиль подтверждены
-                            </span>
-                            <h3 className="text-lg font-display font-extrabold text-white pt-1">
+                          <motion.div variants={fadeItemVariants} className="space-y-1">
+                            <div className="inline-flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                              <span>Профиль и телефон подтверждены</span>
+                            </div>
+                            <h3 className="text-lg font-display font-extrabold text-[#141026] pt-0.5">
                               {name.trim() || 'Участник Kompa'},{' '}
                               <span className="font-mono-num">{age}</span>
                             </h3>
-                            <p className="text-xs text-[#ffcab8]/80">
-                              {city} · Подобрано{' '}
-                              <strong className="font-mono-num text-white">
+                            <p className="text-xs text-[#6E6888]">
+                              {city} · Доступно{' '}
+                              <strong className="font-mono-num text-[#5E3AEF]">
                                 {matchedEventsCount}
                               </strong>{' '}
-                              мероприятий
+                              подходящих встреч
                             </p>
                           </motion.div>
 
                           <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="p-3.5 rounded-2xl text-left space-y-2"
-                            style={{
-                              backgroundColor: 'rgba(18, 11, 9, 0.82)',
-                              border: '1px solid rgba(255, 138, 108, 0.28)',
-                            }}
+                            variants={fadeItemVariants}
+                            className="p-4 rounded-2xl bg-[#F8F7FC] border border-[#EAE6F5] text-left space-y-2"
                           >
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#ffcab8]/65">Телефон:</span>
-                              <span className="font-mono-num font-semibold text-white">
+                              <span className="text-[#7C7599]">Телефон</span>
+                              <span className="font-mono-num font-semibold text-[#141026]">
                                 {phoneNumber}
                               </span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-[#ffcab8]/65">Почта:</span>
-                              <span className="font-semibold text-white truncate max-w-[190px]">
+                              <span className="text-[#7C7599]">Почта</span>
+                              <span className="font-semibold text-[#141026] truncate max-w-[200px]">
                                 {email}
                               </span>
                             </div>
-                            <div className="flex flex-wrap gap-1 pt-1">
-                              {interests.slice(0, 4).map(tag => (
-                                <span
-                                  key={tag}
-                                  className="px-2 py-0.5 rounded-md bg-[#DE482B]/30 border border-[#ff8a6c]/35 text-[10px] font-semibold text-[#ffdfd4]"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
+                            <div className="pt-1 text-xs text-[#56516E]">
+                              {interests.slice(0, 4).join(' · ')}
                             </div>
                           </motion.div>
 
-                          <motion.div
-                            variants={fadeScaleItemVariants}
-                            className="space-y-2 pt-1"
-                          >
+                          <motion.div variants={fadeItemVariants} className="space-y-2 pt-1">
                             <motion.button
-                              whileHover={{ scale: 1.015 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.985 }}
                               type="button"
                               onClick={() => {
                                 triggerHaptic([12, 30, 15]);
                                 onClose();
                               }}
-                              className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full min-h-[50px] px-6 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
                               style={{
-                                background: 'linear-gradient(180deg, #E85234 0%, #B83319 100%)',
-                                border: '1px solid rgba(255, 165, 140, 0.5)',
-                                boxShadow: '0 10px 25px -5px rgba(20, 8, 5, 0.75)',
+                                background: 'linear-gradient(180deg, #6844FF 0%, #5430E6 100%)',
+                                boxShadow:
+                                  '0 10px 24px -6px rgba(84, 48, 230, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
                               }}
                             >
-                              <Check className="w-4 h-4 text-amber-200 stroke-[2.5]" />
-                              <span>ЗАВЕРШИТЬ РЕГИСТРАЦИЮ</span>
+                              <Check className="w-4 h-4 stroke-[2.5]" />
+                              <span>Завершить регистрацию</span>
                             </motion.button>
 
                             <button
                               type="button"
                               onClick={() => navigateToStep(3)}
-                              className="w-full py-2 text-xs font-semibold text-[#ffcab8]/75 hover:text-white transition-colors cursor-pointer"
+                              className="w-full py-2 text-xs font-semibold text-[#6E6888] hover:text-[#141026] transition-colors cursor-pointer"
                             >
                               Изменить данные анкеты
                             </button>

@@ -16,6 +16,7 @@ import {
 import { UserProfile, AppNotification } from '../types/index.ts';
 import { OnlineStatusBadge } from './OnlineStatusBadge.tsx';
 import { AppLanguage, LANGUAGE_OPTIONS, UI_TEXT } from '../i18n/translations.ts';
+import { KompaLogoMark } from './KompaLogo.tsx';
 
 export type ColorPaletteId = 'sunset' | 'cobalt' | 'midnight';
 
@@ -30,10 +31,10 @@ export interface PaletteOption {
 export const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: 'sunset',
-    name: 'Warm Terracotta',
-    subtitle: 'Тёплый терракотовый',
-    swatchBg: '#FAF7F2',
-    swatchAccent: '#E04F33',
+    name: 'Iris Violet',
+    subtitle: 'Светлый фиолетовый',
+    swatchBg: '#F7F6FB',
+    swatchAccent: '#5E3AEF',
   },
   {
     id: 'cobalt',
@@ -142,31 +143,21 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <div className="max-w-6xl w-full mx-auto px-2.5 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-3 min-w-0">
         {/* Left Zone: Brand Identity */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <motion.div
-            whileHover={{ rotate: -6, scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-display font-extrabold text-sm sm:text-lg shadow-sm shrink-0"
-            style={{ backgroundColor: 'var(--accent-primary)' }}
-          >
-            K
-          </motion.div>
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
+          <KompaLogoMark size={36} variant="brand" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span
-                className="font-display font-extrabold text-sm sm:text-base tracking-tight truncate"
+                className="font-display font-extrabold text-base sm:text-lg tracking-[-0.03em] truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
-                Kompa
+                kompa
               </span>
               <span
-                className="hidden sm:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-                style={{
-                  backgroundColor: 'var(--accent-soft)',
-                  color: 'var(--accent-text)',
-                }}
+                className="hidden sm:inline-block text-xs font-medium shrink-0"
+                style={{ color: 'var(--text-muted)' }}
               >
-                {lang === 'en' ? 'Moscow' : 'Москва'}
+                · {lang === 'en' ? 'Moscow' : 'Москва'}
               </span>
             </div>
             <p
