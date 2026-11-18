@@ -212,14 +212,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Launch Splash Screen (2.1s duration -> smooth transition into the Login screen)
+  // Launch Splash Screen (3.2s duration -> smooth transition into the Login screen)
   const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
 
   useEffect(() => {
     if (!showLogoSplash) return;
     const timer = setTimeout(() => {
       setShowLogoSplash(false);
-    }, 2100);
+    }, 3200);
     return () => clearTimeout(timer);
   }, [showLogoSplash]);
 
@@ -605,7 +605,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       transition={{ duration: 0.3, ease: STUDIO_EASE }}
       onClick={() => {
         if (showLogoSplash) {
-          setShowLogoSplash(false);
           return;
         }
         if (!isInitialGate) onClose();
@@ -698,7 +697,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       <LayoutGroup id="kompa-launch-to-auth">
         {showLogoSplash ? (
           /* =====================================================================
-             STAGE 0: LAUNCH SPLASH ANIMATION (2.1s)
+             STAGE 0: LAUNCH SPLASH ANIMATION (3.2s)
              Smooth formation of the official Kompa Constellation & Map Pin Logo
              and bold navy "Kompa" wordmark on the warm cream canvas (#FAF7F2).
              ===================================================================== */
@@ -712,34 +711,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           >
             <motion.div
               layoutId="kompa-brand-identity-lockup"
-              transition={{ duration: 0.58, ease: STUDIO_EASE }}
+              transition={{ duration: 0.62, ease: STUDIO_EASE }}
               className="flex flex-col items-center"
             >
-              <KompaLogoMark size={136} variant="standalone" animated={true} />
+              <KompaLogoMark size={148} variant="standalone" animated={true} />
 
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: 0.52,
-                  delay: 0.5,
+                  duration: 0.58,
+                  delay: 1.85,
                   ease: STUDIO_EASE,
                 }}
-                className="mt-3 flex flex-col items-center"
+                className="mt-3.5 flex flex-col items-center"
               >
                 <span
-                  className="font-display font-extrabold text-[40px] leading-none tracking-[-0.035em]"
+                  className="font-display font-extrabold text-[42px] leading-none tracking-[-0.035em]"
                   style={{ color: PALETTE.textNavy }}
                 >
                   Kompa
                 </span>
 
                 <motion.p
-                  initial={{ opacity: 0, y: 4 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: 0.48,
-                    delay: 0.72,
+                    duration: 0.52,
+                    delay: 2.2,
                     ease: STUDIO_EASE,
                   }}
                   className="mt-2.5 text-[13px] font-medium tracking-[-0.01em]"
