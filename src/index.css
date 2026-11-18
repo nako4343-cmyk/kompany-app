@@ -2,69 +2,80 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
-  --font-display: 'Onest', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Onest', 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+
+/* ==========================================================================
+   KOMPA STUDIO DESIGN SYSTEM — 60-30-10 Architectural Palettes
+   ========================================================================== */
 
 :root,
 [data-palette="sunset"] {
-  --bg-canvas: #FAF7F2;
+  --bg-canvas: #F9F7F3;
   --bg-surface: #FFFFFF;
-  --bg-elevated: #F3EFE6;
-  --glass-bg: rgba(255, 255, 255, 0.92);
-  --text-primary: #181512;
-  --text-secondary: #4A443E;
-  --text-muted: #787067;
-  --border-subtle: #E6E0D5;
-  --accent-primary: #E04F33;
-  --accent-hover: #C83E23;
-  --accent-soft: #FFF1EE;
-  --accent-text: #9E2B15;
+  --bg-elevated: #F2EFE9;
+  --glass-bg: rgba(255, 255, 255, 0.94);
+  --text-primary: #141210;
+  --text-secondary: #49433D;
+  --text-muted: #766E65;
+  --border-subtle: #E6E1D8;
+  --accent-primary: #DE482B;
+  --accent-hover: #C43B20;
+  --accent-soft: #FDF0EC;
+  --accent-text: #9A2914;
   --accent-secondary: #15803D;
-  --hero-grad-from: #1C1613;
-  --hero-grad-via: #2E1F18;
-  --hero-grad-to: #140F0D;
-  --badge-glow: rgba(224, 79, 51, 0.25);
+  --hero-grad-from: #181412;
+  --hero-grad-via: #291D17;
+  --hero-grad-to: #120E0C;
+  --badge-glow: rgba(222, 72, 43, 0.22);
+  --shadow-card: 0 2px 10px -2px rgba(20, 18, 16, 0.05), 0 1px 3px 0 rgba(20, 18, 16, 0.03);
+  --shadow-elevated: 0 14px 34px -8px rgba(20, 18, 16, 0.10), 0 4px 12px -2px rgba(20, 18, 16, 0.05);
 }
 
 [data-palette="cobalt"] {
-  --bg-canvas: #F4F6FB;
+  --bg-canvas: #F5F7FA;
   --bg-surface: #FFFFFF;
-  --bg-elevated: #EAEFF8;
-  --glass-bg: rgba(255, 255, 255, 0.92);
-  --text-primary: #0D1321;
-  --text-secondary: #3B4659;
+  --bg-elevated: #EBF0F7;
+  --glass-bg: rgba(255, 255, 255, 0.94);
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
   --text-muted: #64748B;
-  --border-subtle: #DCE3F0;
-  --accent-primary: #3B44F6;
-  --accent-hover: #2932DF;
-  --accent-soft: #EEF0FF;
-  --accent-text: #232B99;
+  --border-subtle: #DCE3EE;
+  --accent-primary: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-soft: #EFF4FF;
+  --accent-text: #1E40AF;
   --accent-secondary: #0D9488;
-  --hero-grad-from: #0B1026;
-  --hero-grad-via: #19224D;
-  --hero-grad-to: #080C1D;
-  --badge-glow: rgba(59, 68, 246, 0.25);
+  --hero-grad-from: #0B1120;
+  --hero-grad-via: #172554;
+  --hero-grad-to: #090D16;
+  --badge-glow: rgba(37, 99, 235, 0.22);
+  --shadow-card: 0 2px 10px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+  --shadow-elevated: 0 14px 34px -8px rgba(15, 23, 42, 0.10), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
 }
 
 [data-palette="midnight"] {
-  --bg-canvas: #0D0F14;
-  --bg-surface: #161922;
-  --bg-elevated: #1F2430;
-  --glass-bg: rgba(22, 25, 34, 0.92);
-  --text-primary: #F7F8FA;
-  --text-secondary: #B8C1D1;
-  --text-muted: #7E899D;
-  --border-subtle: #262C3A;
-  --accent-primary: #FF5E3A;
-  --accent-hover: #FF7455;
-  --accent-soft: rgba(255, 94, 58, 0.14);
-  --accent-text: #FF947B;
+  --bg-canvas: #0C0E13;
+  --bg-surface: #141821;
+  --bg-elevated: #1D222E;
+  --glass-bg: rgba(20, 24, 33, 0.94);
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #8492A6;
+  --border-subtle: #262D3D;
+  --accent-primary: #FF5A36;
+  --accent-hover: #FF7050;
+  --accent-soft: rgba(255, 90, 54, 0.15);
+  --accent-text: #FF9C85;
   --accent-secondary: #10B981;
-  --hero-grad-from: #090A0F;
-  --hero-grad-via: #1D1623;
+  --hero-grad-from: #090B10;
+  --hero-grad-via: #1B1824;
   --hero-grad-to: #07080C;
-  --badge-glow: rgba(255, 94, 58, 0.35);
+  --badge-glow: rgba(255, 90, 54, 0.30);
+  --shadow-card: 0 4px 16px -2px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 18px 42px -8px rgba(0, 0, 0, 0.55);
 }
 
 html,
@@ -83,12 +94,52 @@ body {
   -webkit-tap-highlight-color: transparent;
   color: var(--text-primary);
   background-color: var(--bg-canvas);
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.22s ease, color 0.22s ease;
 }
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.022em;
+  letter-spacing: -0.024em;
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* iOS Safe Area Utilities */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem));
+}
+
+/* Studio Card Elevation */
+.studio-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+.studio-card-hover {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease;
+}
+
+.studio-card-hover:hover {
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Accessible Focus Rings */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
 }
 
 /* Custom scrollbar for mobile drawers & horizontal feeds */
@@ -109,17 +160,14 @@ body {
   scrollbar-width: none;
 }
 
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
+/* Respect System Reduce Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
-
-@keyframes shimmerSweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.animate-float-slow {
-  animation: floatSlow 4s ease-in-out infinite;
-}
-

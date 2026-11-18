@@ -914,7 +914,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                   <div
                     className={`max-w-[84%] sm:max-w-[76%] rounded-2xl px-3.5 py-2.5 shadow-xs relative transition-all ${
                       isStructuredCard || msg.isPinned
-                        ? 'border border-l-4'
+                        ? 'border'
                         : isMine
                         ? 'text-white rounded-br-xs'
                         : 'border rounded-bl-xs'
@@ -922,9 +922,8 @@ export const ChatModal: React.FC<ChatModalProps> = ({
                     style={
                       isStructuredCard || msg.isPinned
                         ? {
-                            backgroundColor: 'var(--bg-surface)',
+                            backgroundColor: 'var(--bg-elevated)',
                             borderColor: 'var(--border-subtle)',
-                            borderLeftColor: 'var(--accent-primary)',
                             color: 'var(--text-primary)',
                           }
                         : isMine

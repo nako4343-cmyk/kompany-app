@@ -511,33 +511,30 @@ export default function App() {
         color: 'var(--text-primary)',
       }}
     >
-      {/* 1. COMPACT ROLE SWITCHER BAR FOR TESTING */}
+      {/* 1. SLEEK STUDIO ROLE SWITCHER BAR FOR TESTING */}
       <aside
         aria-label="Панель переключения ролей"
-        className="w-full max-w-full overflow-hidden text-white text-[11px] py-2 px-3 sm:px-4 border-b border-white/10"
+        className="w-full max-w-full overflow-hidden text-white text-[11px] py-1.5 px-3 sm:px-4 border-b border-white/10"
         style={{ backgroundColor: 'var(--hero-grad-from)' }}
       >
-        <div className="max-w-6xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 min-w-0">
-          <div className="flex items-center gap-2 text-white/80 min-w-0">
-            <span className="font-bold text-white truncate">Тест ролей и приватности:</span>
-            <span className="hidden sm:inline text-white/60 truncate">
-              Переключайте аккаунт, чтобы проверить скрытие адреса до одобрения заявки
-            </span>
-          </div>
+        <div className="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 min-w-0">
+          <span className="hidden md:inline font-semibold text-white/75 shrink-0">
+            Режим просмотра ролей:
+          </span>
 
-          <div className="w-full sm:w-auto max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <div className="w-full md:w-auto max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
             {availableUsers.map(u => (
               <button
                 key={u.id}
                 onClick={() => handleSwitchUser(u.id)}
-                className="px-2.5 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs transition-all shrink-0 cursor-pointer whitespace-nowrap"
+                className="px-2.5 py-1 rounded-lg text-[11px] transition-all shrink-0 cursor-pointer whitespace-nowrap"
                 style={{
-                  backgroundColor: u.id === currentUser.id ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)',
+                  backgroundColor: u.id === currentUser.id ? 'var(--accent-primary)' : 'rgba(255,255,255,0.09)',
                   color: '#FFFFFF',
                   fontWeight: u.id === currentUser.id ? 700 : 500,
                 }}
               >
-                {u.id === 'user-anna' ? 'Анна (Организатор)' : 
+                {u.id === 'user-anna' ? 'Анна (Орг.)' : 
                  u.id === 'user-mikhail' ? 'Михаил (Кандидат)' :
                  u.id === 'user-elena' ? 'Елена (Гость)' : 'Модератор'}
               </button>
@@ -545,11 +542,11 @@ export default function App() {
 
             <button
               onClick={() => setShowDemoShareModal(true)}
-              className="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-white bg-white/20 hover:bg-white/30 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ml-1 shadow-xs active:scale-95 whitespace-nowrap"
-              title="Поделиться демо с друзьями"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-white/15 hover:bg-white/25 transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-auto md:ml-1 active:scale-95 whitespace-nowrap"
+              title="Поделиться ссылкой и QR-кодом"
             >
-              <QrCode className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-              <span>Показать друзьям (QR)</span>
+              <QrCode className="w-3 h-3 text-amber-300 shrink-0" />
+              <span>QR-код</span>
             </button>
           </div>
         </div>
@@ -1322,21 +1319,15 @@ export default function App() {
                         layout
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="relative overflow-hidden p-4 sm:p-5 rounded-3xl border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-shadow hover:shadow-md"
+                        className="relative overflow-hidden p-4 sm:p-5 rounded-3xl border studio-card studio-card-hover flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                         style={{
                           backgroundColor: 'var(--bg-surface)',
                           borderColor: 'var(--border-subtle)',
                         }}
                       >
-                        {/* Left color-coded status indicator bar */}
-                        <div
-                          className={`absolute left-0 top-0 bottom-0 w-1.5 ${statusConfig.accentBarClass}`}
-                          aria-hidden="true"
-                        />
-
                         <div
                           onClick={() => setSelectedEventForDetail(ev)}
-                          className="flex items-start sm:items-center gap-3.5 cursor-pointer pl-1.5 min-w-0 flex-1"
+                          className="flex items-start sm:items-center gap-3.5 cursor-pointer min-w-0 flex-1"
                         >
                           <img
                             src={ev.imageUrl}

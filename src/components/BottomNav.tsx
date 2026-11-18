@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Compass,
   Flame,
-  PlusCircle,
+  Plus,
   MessageSquare,
   User,
   Bell,
@@ -24,6 +24,16 @@ interface BottomNavProps {
   onMarkAllRead?: () => void;
   lang?: AppLanguage;
 }
+
+const triggerHaptic = () => {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(6);
+    }
+  } catch {
+    // ignore
+  }
+};
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
@@ -63,7 +73,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     {
       id: 'create' as NavTab,
       label: t.createShortBtn,
-      icon: PlusCircle,
+      icon: Plus,
       isPrimary: true,
     },
     {
@@ -78,7 +88,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <div
       ref={popoverRef}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-lg"
+      className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.25rem)] max-w-lg pb-safe pointer-events-none"
     >
       {/* Floating Notifications Popover above BottomNav */}
       <AnimatePresence>
@@ -88,7 +98,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-3 rounded-3xl shadow-2xl border overflow-hidden backdrop-blur-xl"
+            className="mb-3 rounded-3xl shadow-2xl border overflow-hidden pointer-events-auto"
             style={{
               backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-subtle)',
@@ -191,10 +201,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Bottom Dock Pill */}
+      {/* Bottom Dock Bar */}
       <nav
         aria-label="Нижняя навигация"
-        className="w-full rounded-3xl border shadow-2xl px-2 py-1.5 transition-colors duration-300"
+        className="w-full rounded-3xl border shadow-2xl px-2 py-1.5 transition-colors duration-250 pointer-events-auto"
         style={{
           backgroundColor: 'var(--glass-bg)',
           backdropFilter: 'blur(20px)',
@@ -212,18 +222,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 <motion.button
                   key={tab.id}
                   whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.94 }}
+                  whileTap={{ scale: 0.93 }}
                   onClick={() => {
+                    triggerHaptic();
                     setShowNotifications(false);
                     onTabChange(tab.id);
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-white font-semibold text-xs shadow-md cursor-pointer"
+                  aria-label={tab.label}
+                  className="flex items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] px-4 py-2.5 rounded-2xl text-white font-display font-bold text-xs shadow-md cursor-pointer"
                   style={{
                     backgroundColor: 'var(--accent-primary)',
-                    boxShadow: '0 6px 18px -4px var(--badge-glow)',
                   }}
                 >
-                  <Icon className="w-4 h-4 stroke-[2.2]" />
+                  <Icon className="w-4 h-4 stroke-[2.5]" />
                   <span className="hidden xs:inline">{tab.label}</span>
                 </motion.button>
               );
@@ -234,20 +245,27 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 key={tab.id}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => {
+                  triggerHaptic();
                   setShowNotifications(false);
                   onTabChange(tab.id);
                 }}
-                className="relative flex flex-col items-center justify-center py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer"
+                className="relative flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2.5 rounded-2xl transition-colors cursor-pointer"
                 style={{
                   color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
                 }}
               >
-                <div className="relative">
+                {isActive && (
+                  <motion.div
+                    layoutId="bottom-nav-pill"
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    className="absolute inset-0 rounded-2xl"
+                    style={{ backgroundColor: 'var(--accent-soft)' }}
+                  />
+                )}
+                <div className="relative z-10">
                   <Icon
                     className={`w-5 h-5 transition-transform duration-200 ${
-                      isActive
-                        ? 'stroke-[2.4] scale-105'
-                        : 'stroke-[1.75] hover:scale-105'
+                      isActive ? 'stroke-[2.3]' : 'stroke-[1.8]'
                     }`}
                   />
                   {tab.badge && tab.badge > 0 ? (
@@ -260,20 +278,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   ) : null}
                 </div>
                 <span
-                  className={`text-[10px] mt-0.5 tracking-tight transition-all ${
+                  className={`relative z-10 text-[10px] mt-0.5 tracking-tight transition-all whitespace-nowrap ${
                     isActive ? 'font-bold' : 'font-medium'
                   }`}
                 >
                   {tab.label}
                 </span>
-                {isActive && (
-                  <motion.span
-                    layoutId="bottom-nav-indicator"
-                    transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                    className="w-1.5 h-1.5 rounded-full mt-0.5"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  />
-                )}
               </motion.button>
             );
           })}
@@ -282,22 +292,31 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           <motion.button
             type="button"
             whileTap={{ scale: 0.92 }}
-            onClick={() => setShowNotifications((prev) => !prev)}
+            onClick={() => {
+              triggerHaptic();
+              setShowNotifications((prev) => !prev);
+            }}
             aria-label={t.navNotifications}
             title={t.navNotifications}
-            className="relative flex flex-col items-center justify-center py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer"
+            className="relative flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2.5 rounded-2xl transition-colors cursor-pointer"
             style={{
               color: showNotifications
                 ? 'var(--accent-primary)'
                 : 'var(--text-muted)',
             }}
           >
-            <div className="relative">
+            {showNotifications && (
+              <motion.div
+                layoutId="bottom-nav-pill"
+                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                className="absolute inset-0 rounded-2xl"
+                style={{ backgroundColor: 'var(--accent-soft)' }}
+              />
+            )}
+            <div className="relative z-10">
               <Bell
                 className={`w-5 h-5 transition-transform duration-200 ${
-                  showNotifications
-                    ? 'stroke-[2.4] scale-105'
-                    : 'stroke-[1.75] hover:scale-105'
+                  showNotifications ? 'stroke-[2.3]' : 'stroke-[1.8]'
                 }`}
               />
               {computedUnreadNotifs > 0 && (
@@ -312,20 +331,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               )}
             </div>
             <span
-              className={`text-[10px] mt-0.5 tracking-tight transition-all ${
+              className={`relative z-10 text-[10px] mt-0.5 tracking-tight transition-all whitespace-nowrap ${
                 showNotifications ? 'font-bold' : 'font-medium'
               }`}
             >
               {t.navNotifications}
             </span>
-            {showNotifications && (
-              <motion.span
-                layoutId="bottom-nav-indicator"
-                transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                className="w-1.5 h-1.5 rounded-full mt-0.5"
-                style={{ backgroundColor: 'var(--accent-primary)' }}
-              />
-            )}
           </motion.button>
         </div>
       </nav>
