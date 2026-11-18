@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import {
   X,
-  LogIn,
   LogOut,
   CheckCircle2,
   ShieldCheck,
@@ -27,10 +26,8 @@ import {
 import { UserProfile } from '../types/index.ts';
 import {
   auth,
-  signInWithGooglePopup,
   signOutCloudUser,
   syncUserProfileToCloud,
-  fetchCloudUserProfile,
   FirebaseUser,
   sanitizeValidId,
 } from '../lib/firebase.ts';
@@ -359,7 +356,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     currentUser.openToInvitesNote || INVITE_NOTE_PRESETS[0]
   );
 
-  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -444,82 +440,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsLoadingAuth(true);
-    setErrorMessage('');
-    setStatusMessage('');
-    try {
-      const fbUser = await signInWithGooglePopup();
-      const uid = sanitizeValidId(fbUser.uid);
-
-      let existingCloud: Partial<UserProfile> | null = null;
-      try {
-        existingCloud = await fetchCloudUserProfile(uid);
-      } catch {
-        existingCloud = null;
-      }
-
-      const resolvedName =
-        existingCloud?.name || fbUser.displayName || name || 'Участник Kompa';
-      const resolvedAvatar =
-        existingCloud?.avatarUrl ||
-        fbUser.photoURL ||
-        avatarUrl ||
-        createInitialsAvatarDataUrl(resolvedName);
-
-      const mergedProfile: UserProfile = {
-        ...currentUser,
-        id: uid,
-        name: resolvedName,
-        age: existingCloud?.age || age || 27,
-        gender: existingCloud?.gender || gender || 'female',
-        city: existingCloud?.city || city || 'Москва',
-        occupation: existingCloud?.occupation || occupation || 'Участник Kompa',
-        avatarUrl: resolvedAvatar,
-        bio:
-          existingCloud?.bio ||
-          bio ||
-          'Ищу приятную компанию на вечер: настольные игры, гастро-ужины и концерты.',
-        interests:
-          existingCloud?.interests && existingCloud.interests.length > 0
-            ? existingCloud.interests
-            : interests,
-        openToInvites: existingCloud?.openToInvites ?? openToInvites,
-        openToInvitesNote: existingCloud?.openToInvitesNote || openToInvitesNote,
-        email: fbUser.email || currentUser.email || 'user@kompa.app',
-        phoneNumber: existingCloud?.phoneNumber || phoneNumber,
-        isEmailVerified: Boolean(fbUser.emailVerified),
-        isPhoneVerified: true,
-        isIdentityVerified: true,
-        onlineStatus: 'online',
-        lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
-      };
-
-      setName(mergedProfile.name);
-      setAge(mergedProfile.age);
-      setGender(mergedProfile.gender || 'female');
-      setCity(mergedProfile.city);
-      setOccupation(mergedProfile.occupation || '');
-      setAvatarUrl(mergedProfile.avatarUrl);
-      setBio(mergedProfile.bio);
-      setInterests(mergedProfile.interests);
-      setOpenToInvites(Boolean(mergedProfile.openToInvites));
-      setOpenToInvitesNote(mergedProfile.openToInvitesNote || '');
-
-      await syncUserProfileToCloud(mergedProfile);
-      onProfileRegistered(mergedProfile);
-      navigateToStep(1);
-      setStatusMessage(
-        isEn ? 'Google account connected' : 'Данные и личное фото из Google подключены'
-      );
-    } catch (err: any) {
-      setErrorMessage(
-        err?.message || (isEn ? 'Sign-in could not be completed.' : 'Не удалось выполнить вход через Google.')
-      );
-    } finally {
-      setIsLoadingAuth(false);
-    }
-  };
 
   const handleFinishRegistration = async () => {
     setIsSaving(true);
@@ -587,7 +507,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const stepMeta = [
     { num: '01', label: isEn ? 'Profile' : 'Образ' },
     { num: '02', label: isEn ? 'Interests' : 'Интересы' },
-    { num: '03', label: isEn ? 'Member Pass' : 'Пропуск' },
+    { num: '03', label: isEn ? 'Registration' : 'Регистрация' },
   ];
 
   return (
@@ -651,11 +571,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'Закрытый клуб вечерних встреч'
                     : wizardStep === 4
                     ? isEn
-                      ? 'Pass Activated'
-                      : 'Пропуск участника активирован'
+                      ? 'Registration Completed'
+                      : 'Регистрация завершена'
                     : isEn
                     ? `Step ${wizardStep} of 3`
-                    : `Этап ${wizardStep} из 3 · Создание пропуска`}
+                    : `Этап ${wizardStep} из 3 · Регистрация`}
                 </p>
               </div>
             </div>
@@ -820,8 +740,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       style={{ color: 'var(--text-secondary)' }}
                     >
                       {isEn
-                        ? 'Create your member pass in 30 seconds. Exact venue addresses and group chats unlock only after the host approves your request.'
-                        : 'Оформите пропуск участника за 30 секунд. Выбирайте проверенные компании по интересам — точный адрес и чат открываются только после одобрения организатором.'}
+                        ? 'Register in 30 seconds. Exact venue addresses and group chats unlock only after the host approves your request.'
+                        : 'Пройдите регистрацию за 30 секунд. Выбирайте проверенные компании по интересам — точный адрес и чат открываются только после одобрения организатором.'}
                     </p>
                   </motion.div>
 
@@ -912,7 +832,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     {[
                       { num: '01', label: 'Личное фото', sub: 'Имя и сфера' },
                       { num: '02', label: 'Интересы', sub: 'Вайб вечера' },
-                      { num: '03', label: 'Пропуск', sub: 'Доступ к встречам' },
+                      { num: '03', label: 'Регистрация', sub: 'Доступ к встречам' },
                     ].map(item => (
                       <motion.button
                         type="button"
@@ -1027,35 +947,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </motion.label>
                   </motion.div>
 
-                  {/* Quick Google Fill Option */}
-                  {!cloudUser && (
-                    <motion.button
-                      variants={fadeScaleItemVariants}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="button"
-                      disabled={isLoadingAuth}
-                      onClick={handleGoogleSignIn}
-                      className="w-full p-3 rounded-2xl border flex items-center justify-between gap-3 cursor-pointer transition-colors"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor: 'var(--border-subtle)',
-                      }}
-                    >
-                      <div className="flex items-center gap-2.5 text-left">
-                        <LogIn className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-primary)' }} />
-                        <div>
-                          <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                            {isLoadingAuth ? 'Подключение Google...' : 'Импортировать профиль из Google'}
-                          </span>
-                          <span className="text-[11px] block" style={{ color: 'var(--text-secondary)' }}>
-                            Имя и ваша личная фотография подтянутся в 1 клик
-                          </span>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
-                    </motion.button>
-                  )}
 
                   {/* Interactive Focus-Aware Name Input */}
                   <motion.div variants={fadeScaleItemVariants}>
@@ -1504,12 +1395,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           className="text-[11px] font-mono-num font-bold uppercase tracking-wider"
                           style={{ color: 'var(--accent-primary)' }}
                         >
-                          KOMPA PASS · #2026
+                          ПРОФИЛЬ УЧАСТНИКА · KOMPA
                         </span>
                       </div>
                       <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                         <ShieldCheck className="w-4 h-4" />
-                        Готов к активации
+                        Готов к регистрации
                       </span>
                     </div>
 
@@ -1661,7 +1552,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       className="text-xs font-mono-num font-bold uppercase tracking-wider block"
                       style={{ color: 'var(--accent-primary)' }}
                     >
-                      ПРОПУСК АКТИВИРОВАН
+                      РЕГИСТРАЦИЯ ЗАВЕРШЕНА
                     </span>
                     <h2
                       className="text-2xl font-display font-extrabold tracking-tight"
@@ -1727,7 +1618,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
           >
             {wizardStep === 0 ? (
-              <div className="space-y-2">
+              <div>
                 <motion.button
                   whileHover={{ scale: 1.015 }}
                   whileTap={{ scale: 0.98 }}
@@ -1736,26 +1627,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                   style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
-                  <span>{isEn ? 'Create My Pass (30 sec)' : 'Оформить пропуск за 30 секунд'}</span>
+                  <span>{isEn ? 'Registration' : 'Регистрация'}</span>
                   <ArrowRight className="w-4 h-4" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  disabled={isLoadingAuth}
-                  onClick={handleGoogleSignIn}
-                  className="w-full py-2.5 px-5 rounded-xl text-xs font-bold border flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <LogIn className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                  <span>
-                    {isLoadingAuth ? 'Вход...' : 'Быстрый вход через Google'}
-                  </span>
                 </motion.button>
               </div>
             ) : (
@@ -1788,7 +1661,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <span>
                       {wizardStep === 1
                         ? 'Далее: Интересы и формат вечера'
-                        : 'Далее: Проверить пропуск'}
+                        : 'Далее: Завершение регистрации'}
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </motion.button>
@@ -1804,7 +1677,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   >
                     <Users className="w-4 h-4" />
                     <span>
-                      {isSaving ? 'Активация...' : 'Активировать пропуск и войти'}
+                      {isSaving ? 'Сохранение...' : 'Завершить регистрацию'}
                     </span>
                   </motion.button>
                 )}
