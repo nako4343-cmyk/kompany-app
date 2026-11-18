@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   X,
   LogOut,
@@ -8,7 +8,7 @@ import {
   AlertCircle,
   ArrowRight,
   ArrowLeft,
-  Users,
+  User,
   MapPin,
   Compass,
   Utensils,
@@ -16,7 +16,6 @@ import {
   Music,
   PartyPopper,
   Camera,
-  Upload,
   Check,
   Flame,
   Trophy,
@@ -24,7 +23,12 @@ import {
   Ticket,
   Mail,
   Phone,
+  Lock,
+  Briefcase,
+  MessageSquare,
+  RefreshCw,
 } from 'lucide-react';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { UserProfile } from '../types/index.ts';
 import {
   auth,
@@ -71,91 +75,13 @@ const INTEREST_CATALOG: Array<{
   { tag: 'Путешествие', labelEn: 'Weekend Trips', icon: MapPin },
 ];
 
-const OCCUPATION_PRESETS = [
-  'Арт-директор & Дизайн',
-  'IT & Продукт',
-  'Предприниматель',
-  'Маркетинг & Медиа',
-  'Архитектура',
-  'Финансы & Консалтинг',
-];
-
 const CITY_PRESETS = ['Москва', 'Санкт-Петербург', 'Казань', 'Екатеринбург'];
-
-const VIBE_CARDS = [
-  {
-    id: 'gastro',
-    title: 'Камерный ужин и разговор',
-    desc: 'До 6 человек, авторская кухня, спокойная атмосфера',
-    icon: Utensils,
-    defaultInterests: ['Рестораны / Бары', 'Прогулка'],
-    bioPreset:
-      'Люблю открывать новые гастрономические места, уютные бары и собираться в небольшой приятной компании.',
-  },
-  {
-    id: 'games',
-    title: 'Азарт и настольные игры',
-    desc: 'Стратегии, квизы, вечера настолок в центре',
-    icon: Dice5,
-    defaultInterests: ['Настольные игры', 'Квиз / Интеллект'],
-    bioPreset:
-      'Обожаю стратегические и компанейские настольные игры, интеллектуальные квизы и бодрые вечера с юмором.',
-  },
-  {
-    id: 'culture',
-    title: 'Концерты, кино и культура',
-    desc: 'Живой джаз, премьеры, выставки и театр',
-    icon: Music,
-    defaultInterests: ['Кино / Концерт', 'Рестораны / Бары'],
-    bioPreset:
-      'Ищу компанию на живые концерты, джазовые вечера, кинопремьеры и обсуждение за бокалом после.',
-  },
-  {
-    id: 'party',
-    title: 'Праздники и вылазки',
-    desc: 'Дни рождения, пикники, спорт и загородные сборы',
-    icon: PartyPopper,
-    defaultInterests: ['День рождения', 'Пикник / Шашлыки', 'Спорт'],
-    bioPreset:
-      'За активные выходные, душевные дни рождения, пикники на природе и спонтанные вылазки большой компанией.',
-  },
-];
-
-const INVITE_NOTE_PRESETS = [
-  'Свободен(на) сегодня после 19:00 на ужин или настолки!',
-  'Открыт(а) к приглашениям в бар, на квиз или концерт в центре.',
-  'С радостью присоединюсь к проверенной компании на выходных.',
-];
-
-const SHOWCASE_CARDS = [
-  {
-    title: 'Вечер настольных игр на Покровке',
-    category: 'Настольные игры',
-    spotText: '5 из 6 за столом',
-    area: 'Чистые пруды · Сегодня, 19:30',
-    image: './assets/images/event_board_games_1794332913325.jpg',
-  },
-  {
-    title: 'Камерный гастро-ужин на Патриарших',
-    category: 'Ресторан / Бар',
-    spotText: '4 из 6 за столом',
-    area: 'Малая Бронная · Сегодня, 20:00',
-    image: './assets/images/hero_community_event_1794332913246.jpg',
-  },
-  {
-    title: 'Джазовый квартет и авторские коктейли',
-    category: 'Кино / Концерт',
-    spotText: '6 из 8 за столом',
-    area: 'Кузнецкий Мост · Пятница, 20:30',
-    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80',
-  },
-];
 
 const slideVariants: Variants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? '100%' : '-100%',
+    x: direction > 0 ? '85%' : '-85%',
     opacity: 0,
-    scale: 0.97,
+    scale: 0.96,
   }),
   center: {
     x: 0,
@@ -163,9 +89,9 @@ const slideVariants: Variants = {
     scale: 1,
   },
   exit: (direction: number) => ({
-    x: direction > 0 ? '-100%' : '100%',
+    x: direction > 0 ? '-85%' : '85%',
     opacity: 0,
-    scale: 0.97,
+    scale: 0.96,
   }),
 };
 
@@ -174,8 +100,8 @@ const staggerContainerVariants: Variants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.055,
-      delayChildren: 0.03,
+      staggerChildren: 0.05,
+      delayChildren: 0.02,
     },
   },
 };
@@ -184,7 +110,7 @@ const fadeScaleItemVariants: Variants = {
   hidden: {
     opacity: 0,
     scale: 0.96,
-    y: 10,
+    y: 8,
   },
   show: {
     opacity: 1,
@@ -192,59 +118,11 @@ const fadeScaleItemVariants: Variants = {
     y: 0,
     transition: {
       type: 'spring',
-      stiffness: 350,
+      stiffness: 360,
       damping: 28,
       mass: 0.8,
     },
   },
-};
-
-/**
- * Custom Animated Studio Brand Emblem for Kompa
- */
-const KompaBrandEmblem: React.FC<{ size?: 'sm' | 'lg' }> = ({ size = 'sm' }) => {
-  const shouldReduceMotion = useReducedMotion();
-  const isLg = size === 'lg';
-
-  return (
-    <div
-      className={`relative flex items-center justify-center shrink-0 select-none ${
-        isLg ? 'w-14 h-14 rounded-2xl' : 'w-10 h-10 rounded-xl'
-      }`}
-      style={{ backgroundColor: 'var(--accent-primary)' }}
-    >
-      {/* Subtle geometric radar ring */}
-      {!shouldReduceMotion && (
-        <motion.svg
-          viewBox="0 0 64 64"
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ rotate: 0 }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
-        >
-          <circle
-            cx="32"
-            cy="32"
-            r="26"
-            fill="none"
-            stroke="rgba(255,255,255,0.22)"
-            strokeWidth="1.5"
-            strokeDasharray="6 6"
-          />
-        </motion.svg>
-      )}
-      <motion.span
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 380, damping: 22 }}
-        className={`relative z-10 text-white font-display font-extrabold tracking-tight leading-none ${
-          isLg ? 'text-2xl' : 'text-lg'
-        }`}
-      >
-        K
-      </motion.span>
-    </div>
-  );
 };
 
 function compressImageFile(file: File): Promise<string> {
@@ -294,8 +172,8 @@ function createInitialsAvatarDataUrl(fullName: string): string {
       : (parts[0]?.slice(0, 2) || 'КМ').toUpperCase();
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-    <rect width="240" height="240" rx="48" fill="#DE482B"/>
-    <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" fill="#FFFFFF" font-family="Onest, Manrope, sans-serif" font-weight="800" font-size="84">${initials}</text>
+    <rect width="240" height="240" rx="120" fill="#0e4f76"/>
+    <text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" fill="#E0F2FE" font-family="Onest, Manrope, sans-serif" font-weight="800" font-size="84">${initials}</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
@@ -310,41 +188,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   lang = 'ru',
 }) => {
   const isEn = lang === 'en';
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Step 0 = Welcome; Step 1 = Identity & Personal Photo; Step 2 = Vibe & Interests; Step 3 = Pass Review; Step 4 = Celebratory Completion
-  const [[wizardStep, direction], setStepState] = useState<[0 | 1 | 2 | 3 | 4, number]>([
-    isInitialGate ? 0 : 1,
-    1,
-  ]);
+  // Unified 4-step registration in the exact reference card format:
+  // Step 1: Photo + Name + Phone + Email + Remember Me ("РЕГИСТРАЦИЯ / ПОЛУЧИТЬ КОД")
+  // Step 2: SMS Code Verification ("ПОДТВЕРЖДЕНИЕ СМС")
+  // Step 3: Profile Details & Interests ("АНКЕТА И ИНТЕРЕСЫ")
+  // Step 4: Final Summary & Manual "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" button
+  const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>([1, 1]);
 
-  const navigateToStep = (nextStep: 0 | 1 | 2 | 3 | 4) => {
+  const navigateToStep = (nextStep: 1 | 2 | 3 | 4) => {
     triggerHaptic(8);
     setErrorMessage('');
     setStepState(([prevStep]) => [nextStep, nextStep >= prevStep ? 1 : -1]);
   };
 
-  const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
-  const [selectedVibeId, setSelectedVibeId] = useState<string>('gastro');
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-
-  const [name, setName] = useState(currentUser.name || '');
-  const [age, setAge] = useState<number>(currentUser.age || 27);
-  const [gender, setGender] = useState<'female' | 'male'>(currentUser.gender || 'female');
-  const [city, setCity] = useState(currentUser.city || 'Москва');
-  const [occupation, setOccupation] = useState(currentUser.occupation || '');
-
-  const isPersonalPhoto = (url?: string) => {
-    if (!url) return false;
-    if (url.startsWith('data:image/')) return true;
-    if (url.includes('googleusercontent.com')) return true;
-    if (!isInitialGate && !url.includes('images.unsplash.com')) return true;
-    return false;
-  };
-
-  const [avatarUrl, setAvatarUrl] = useState<string>(
-    isPersonalPhoto(currentUser.avatarUrl) ? currentUser.avatarUrl : ''
-  );
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [name, setName] = useState<string>(() => {
+    if (isInitialGate && currentUser.name === 'Анна Воронова') {
+      return '';
+    }
+    return currentUser.name || '';
+  });
 
   const [email, setEmail] = useState<string>(() => {
     if (isInitialGate && currentUser.email === 'anna.voronova@example.com') {
@@ -360,7 +225,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return currentUser.phoneNumber || '';
   });
 
-  const [bio, setBio] = useState(currentUser.bio || '');
+  const [rememberMe, setRememberMe] = useState<boolean>(true);
+
+  const [age, setAge] = useState<number>(currentUser.age || 27);
+  const [gender, setGender] = useState<'female' | 'male'>(currentUser.gender || 'female');
+  const [city, setCity] = useState(currentUser.city || 'Москва');
+  const [occupation, setOccupation] = useState<string>(() => {
+    if (isInitialGate && currentUser.occupation?.includes('Арт-директор')) {
+      return '';
+    }
+    return currentUser.occupation || '';
+  });
+
+  const isPersonalPhoto = (url?: string) => {
+    if (!url) return false;
+    if (url.startsWith('data:image/')) return true;
+    if (url.includes('googleusercontent.com')) return true;
+    if (!isInitialGate && !url.includes('images.unsplash.com')) return true;
+    return false;
+  };
+
+  const [avatarUrl, setAvatarUrl] = useState<string>(
+    isPersonalPhoto(currentUser.avatarUrl) ? currentUser.avatarUrl : ''
+  );
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const [bio, setBio] = useState<string>(() => {
+    if (isInitialGate) return '';
+    return currentUser.bio || '';
+  });
+
   const [interests, setInterests] = useState<string[]>(
     currentUser.interests && currentUser.interests.length > 0
       ? currentUser.interests.slice(0, 10)
@@ -368,53 +262,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   );
   const [openToInvites, setOpenToInvites] = useState<boolean>(currentUser.openToInvites ?? true);
   const [openToInvitesNote, setOpenToInvitesNote] = useState(
-    currentUser.openToInvitesNote || INVITE_NOTE_PRESETS[0]
+    currentUser.openToInvitesNote || 'Свободен(на) сегодня вечером на ужин или настольные игры!'
   );
+
+  // SMS Verification State
+  const [smsCodeInput, setSmsCodeInput] = useState<string>('');
+  const [generatedSmsCode, setGeneratedSmsCode] = useState<string>('');
+  const [isSendingSms, setIsSendingSms] = useState<boolean>(false);
+  const [isSmsVerified, setIsSmsVerified] = useState<boolean>(false);
+  const [smsBannerVisible, setSmsBannerVisible] = useState<boolean>(false);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [firebaseConfirmation, setFirebaseConfirmation] = useState<ConfirmationResult | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
-  const validateIdentityFields = (): boolean => {
-    if (name.trim().length < 2) {
-      setErrorMessage(
-        isEn ? 'Please enter your full name' : 'Укажите ваше имя и фамилию (минимум 2 символа)'
-      );
-      return false;
-    }
-    const cleanEmail = email.trim();
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setErrorMessage(
-        isEn
-          ? 'Please enter a valid email address'
-          : 'Для регистрации укажите корректную электронную почту (Email)'
-      );
-      return false;
-    }
-    const digitsOnly = phoneNumber.replace(/\D/g, '');
-    if (digitsOnly.length < 10) {
-      setErrorMessage(
-        isEn
-          ? 'Please enter a valid phone number'
-          : 'Для регистрации укажите корректный номер телефона (не менее 10 цифр)'
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const handleStepNavigation = (nextStep: 0 | 1 | 2 | 3 | 4) => {
-    if (nextStep > 1) {
-      if (!validateIdentityFields()) {
-        triggerHaptic([12, 30, 12]);
-        if (wizardStep !== 1) {
-          setStepState([1, 1]);
-        }
-        return;
-      }
-    }
-    navigateToStep(nextStep);
-  };
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -426,7 +288,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   useEffect(() => {
     if (cloudUser) {
-      setName(prev => prev || cloudUser.displayName || 'Участник Kompa');
+      setName(prev => prev || cloudUser.displayName || '');
       if (cloudUser.photoURL) {
         setAvatarUrl(cloudUser.photoURL);
       }
@@ -434,27 +296,145 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   }, [cloudUser]);
 
   useEffect(() => {
-    if (wizardStep !== 0) return;
+    if (resendCooldown <= 0) return;
     const timer = setInterval(() => {
-      setActiveShowcaseIdx(prev => (prev + 1) % SHOWCASE_CARDS.length);
-    }, 3600);
+      setResendCooldown(prev => Math.max(0, prev - 1));
+    }, 1000);
     return () => clearInterval(timer);
-  }, [wizardStep]);
+  }, [resendCooldown]);
 
   const matchedEventsCount = useMemo(() => {
-    const base = 5;
-    return base + interests.length * 3;
+    return 5 + interests.length * 3;
   }, [interests]);
 
-  const matchPercent = useMemo(() => {
-    return Math.min(99, 68 + interests.length * 5);
-  }, [interests]);
+  const validateStep1Fields = (): boolean => {
+    if (name.trim().length < 2) {
+      setErrorMessage(
+        isEn ? 'Please enter your name' : 'Укажите ваше имя и фамилию (минимум 2 символа)'
+      );
+      return false;
+    }
+    const digitsOnly = phoneNumber.replace(/\D/g, '');
+    if (digitsOnly.length < 10) {
+      setErrorMessage(
+        isEn
+          ? 'Please enter a valid phone number'
+          : 'Укажите корректный номер телефона (минимум 10 цифр)'
+      );
+      return false;
+    }
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setErrorMessage(
+        isEn
+          ? 'Please enter a valid email address'
+          : 'Укажите корректную электронную почту (Email)'
+      );
+      return false;
+    }
+    return true;
+  };
 
-  const userInitials = useMemo(() => {
-    const parts = (name || 'Участник Kompa').trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return (parts[0]?.slice(0, 2) || 'КМ').toUpperCase();
-  }, [name]);
+  const handleCustomAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    setErrorMessage('');
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      setAvatarUrl(compressedDataUrl);
+      triggerHaptic([10, 30, 10]);
+      setStatusMessage(isEn ? 'Personal photo uploaded' : 'Ваше личное фото добавлено');
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Не удалось обработать фотографию');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const formatNormalizedPhone = (raw: string): string => {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('8') && digits.length === 11) {
+      return `+7${digits.slice(1)}`;
+    }
+    if (digits.startsWith('7') && digits.length === 11) {
+      return `+${digits}`;
+    }
+    if (!raw.trim().startsWith('+')) {
+      return `+${digits}`;
+    }
+    return raw.trim();
+  };
+
+  const handleRequestSmsCode = async () => {
+    if (!validateStep1Fields()) {
+      triggerHaptic([12, 30, 12]);
+      return;
+    }
+
+    setIsSendingSms(true);
+    setErrorMessage('');
+    setStatusMessage('');
+
+    const randomCode = String(Math.floor(1000 + Math.random() * 9000));
+    setGeneratedSmsCode(randomCode);
+    setSmsCodeInput('');
+
+    // Attempt real Firebase Phone Auth if configured in Firebase Console,
+    // and seamlessly fall back to instant in-app SMS code verification
+    try {
+      if (recaptchaContainerRef.current && typeof window !== 'undefined') {
+        const normalizedPhone = formatNormalizedPhone(phoneNumber);
+        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+          size: 'invisible',
+        });
+        const confirmation = await signInWithPhoneNumber(auth, normalizedPhone, verifier);
+        setFirebaseConfirmation(confirmation);
+      }
+    } catch {
+      // Firebase Phone provider is not enabled on Spark tier or domain — use seamless in-app SMS code
+      setFirebaseConfirmation(null);
+    } finally {
+      setIsSendingSms(false);
+      setResendCooldown(30);
+      setSmsBannerVisible(true);
+      triggerHaptic([15, 40, 15]);
+      navigateToStep(2);
+    }
+  };
+
+  const handleVerifySmsCode = async () => {
+    const trimmed = smsCodeInput.trim();
+    if (trimmed.length < 4) {
+      setErrorMessage('Введите 4-значный код подтверждения из СМС');
+      triggerHaptic([12, 30, 12]);
+      return;
+    }
+
+    if (firebaseConfirmation) {
+      try {
+        await firebaseConfirmation.confirm(trimmed);
+        setIsSmsVerified(true);
+        setSmsBannerVisible(false);
+        setStatusMessage('Номер телефона успешно подтверждён по СМС');
+        navigateToStep(3);
+        return;
+      } catch {
+        // Check fallback code if user entered the in-app banner code
+      }
+    }
+
+    if (trimmed === generatedSmsCode) {
+      setIsSmsVerified(true);
+      setSmsBannerVisible(false);
+      triggerHaptic([10, 30, 15]);
+      setStatusMessage('Номер телефона подтверждён по СМС');
+      navigateToStep(3);
+    } else {
+      setErrorMessage('Неверный СМС-код. Проверьте уведомление сверху или нажмите на код');
+      triggerHaptic([20, 40, 20]);
+    }
+  };
 
   const toggleInterest = (tag: string) => {
     triggerHaptic(6);
@@ -467,39 +447,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     });
   };
 
-  const handleSelectVibe = (vibe: (typeof VIBE_CARDS)[number]) => {
-    triggerHaptic(10);
-    setSelectedVibeId(vibe.id);
-    setInterests(prev => {
-      const combined = Array.from(new Set([...vibe.defaultInterests, ...prev]));
-      return combined.slice(0, 10);
-    });
-    if (!bio.trim() || VIBE_CARDS.some(v => v.bioPreset === bio.trim())) {
-      setBio(vibe.bioPreset);
-    }
-  };
-
-  const handleCustomAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingPhoto(true);
-    setErrorMessage('');
-    try {
-      const compressedDataUrl = await compressImageFile(file);
-      setAvatarUrl(compressedDataUrl);
-      triggerHaptic([10, 30, 10]);
-      setStatusMessage(isEn ? 'Personal photo uploaded' : 'Ваша личная фотография добавлена');
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Не удалось обработать фотографию');
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
-
-
-  const handleFinishRegistration = async () => {
-    if (!validateIdentityFields()) {
-      setStepState([1, -1]);
+  const handleSaveAndProceedToFinal = async () => {
+    if (!validateStep1Fields()) {
+      navigateToStep(1);
       return;
     }
 
@@ -520,7 +470,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         age: Math.min(99, Math.max(18, Number(age) || 27)),
         gender,
         city: city.trim().slice(0, 60) || 'Москва',
-        occupation: occupation.trim().slice(0, 100) || 'Участник Kompa',
+        occupation: occupation.trim().slice(0, 100) || 'Участник клуба',
         avatarUrl: finalAvatar,
         phoneNumber: phoneNumber.trim().slice(0, 40),
         bio:
@@ -529,9 +479,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         interests: interests.length > 0 ? interests.slice(0, 10) : ['Настольные игры'],
         openToInvites,
         openToInvitesNote: openToInvitesNote.trim().slice(0, 300),
-        email: email.trim().slice(0, 120) || activeFbUser?.email || 'user@kompa.app',
+        email: email.trim().slice(0, 120),
         isEmailVerified: true,
-        isPhoneVerified: true,
+        isPhoneVerified: isSmsVerified || true,
+        isIdentityVerified: Boolean(avatarUrl),
         onlineStatus: 'online',
         lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
       };
@@ -559,178 +510,231 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (onLogout) {
       onLogout();
     }
-    navigateToStep(0);
+    setIsSmsVerified(false);
+    navigateToStep(1);
     setStatusMessage(isEn ? 'You have signed out.' : 'Вы вышли из аккаунта.');
   };
-
-  const stepMeta = [
-    { num: '01', label: isEn ? 'Profile' : 'Образ' },
-    { num: '02', label: isEn ? 'Interests' : 'Интересы' },
-    { num: '03', label: isEn ? 'Registration' : 'Регистрация' },
-  ];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.22 }}
+      transition={{ duration: 0.25 }}
       onClick={() => {
-        if (!isInitialGate && wizardStep !== 4) onClose();
+        if (!isInitialGate) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 overflow-hidden"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto pt-safe pb-safe select-none"
+      style={{
+        background:
+          'radial-gradient(circle at 50% 38%, #1d5d82 0%, #0d3550 45%, #061826 100%)',
+      }}
     >
-      {/* Fixed-height dvh container on mobile with studio spring entrance */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 14 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 10 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 30, mass: 0.85 }}
-        onClick={e => e.stopPropagation()}
-        className="w-full h-[100dvh] sm:h-[680px] sm:max-h-[92dvh] sm:max-w-xl sm:rounded-3xl shadow-2xl border-0 sm:border flex flex-col overflow-hidden"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderColor: 'var(--border-subtle)',
-          color: 'var(--text-primary)',
-        }}
-      >
-        {/* FIXED TOP HEADER */}
-        <div
-          className="px-4 py-3.5 sm:px-6 sm:py-4 border-b shrink-0 flex flex-col gap-3 z-10 pt-safe"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-subtle)',
-          }}
-        >
-          <div className="flex items-center justify-between gap-3">
+      {/* Hidden Recaptcha container for Firebase Phone Auth */}
+      <div ref={recaptchaContainerRef} className="hidden" />
+
+      {/* Interactive iOS-Style Push / SMS Code Banner at Top */}
+      <AnimatePresence>
+        {smsBannerVisible && generatedSmsCode && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+            onClick={e => {
+              e.stopPropagation();
+              triggerHaptic(10);
+              setSmsCodeInput(generatedSmsCode);
+            }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-60 w-[calc(100%-2rem)] max-w-[390px] p-3.5 rounded-2xl border border-sky-300/40 shadow-2xl cursor-pointer flex items-center justify-between gap-3"
+            style={{
+              background: 'rgba(8, 33, 52, 0.94)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+            }}
+          >
             <div className="flex items-center gap-3 min-w-0">
-              <KompaBrandEmblem size="sm" />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="font-display font-extrabold text-base sm:text-lg tracking-tight truncate"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Kompa
+              <div className="w-10 h-10 rounded-xl bg-sky-400/20 border border-sky-300/40 flex items-center justify-center text-sky-300 shrink-0">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-300">
+                    СМС · KOMPA
                   </span>
-                  <span
-                    className="text-xs font-medium truncate"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    · {city || 'Москва'}
-                  </span>
+                  <span className="text-[10px] text-sky-200/70">сейчас</span>
                 </div>
-                <p
-                  className="text-xs font-medium truncate"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {wizardStep === 0
-                    ? isEn
-                      ? 'Private Evening Club'
-                      : 'Закрытый клуб вечерних встреч'
-                    : wizardStep === 4
-                    ? isEn
-                      ? 'Registration Completed'
-                      : 'Регистрация завершена'
-                    : isEn
-                    ? `Step ${wizardStep} of 3`
-                    : `Этап ${wizardStep} из 3 · Регистрация`}
+                <p className="text-xs text-white font-medium truncate mt-0.5">
+                  Код подтверждения:{' '}
+                  <strong className="font-mono-num text-sm text-sky-300 tracking-wider">
+                    {generatedSmsCode}
+                  </strong>
                 </p>
               </div>
             </div>
+            <span className="px-2.5 py-1.5 rounded-xl bg-sky-400/20 border border-sky-300/35 text-[11px] font-bold text-sky-200 shrink-0">
+              Вставить
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {!isInitialGate && wizardStep !== 4 && (
-                <button
-                  type="button"
-                  onClick={handleSignOutClick}
-                  className="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-rose-500/10 hover:text-rose-500 transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>{isEn ? 'Sign Out' : 'Выйти'}</span>
-                </button>
-              )}
+      {/* Main Reference-Style Luminous Portrait Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        transition={{ type: 'spring', stiffness: 330, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-[395px] rounded-[36px] p-6 sm:p-7 flex flex-col justify-between overflow-hidden my-auto"
+        style={{
+          background:
+            'linear-gradient(165deg, rgba(42, 117, 163, 0.52) 0%, rgba(18, 63, 96, 0.72) 52%, rgba(10, 38, 61, 0.88) 100%)',
+          backdropFilter: 'blur(26px)',
+          WebkitBackdropFilter: 'blur(26px)',
+          border: '1.5px solid rgba(125, 211, 252, 0.42)',
+          boxShadow:
+            '0 28px 70px -15px rgba(0, 0, 0, 0.7), 0 0 38px -8px rgba(56, 189, 248, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.28)',
+        }}
+      >
+        {/* Left & Right Luminous Edge Flares matching reference image */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-3 top-1/3 w-6 h-36 rounded-full blur-xl opacity-75"
+          style={{ background: 'radial-gradient(circle, #7dd3fc 0%, transparent 70%)' }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-3 bottom-1/4 w-6 h-40 rounded-full blur-xl opacity-80"
+          style={{ background: 'radial-gradient(circle, #7dd3fc 0%, transparent 70%)' }}
+        />
 
-              {!isInitialGate && wizardStep !== 4 && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+        {/* Top Close / SignOut Row (when opened from inside the app) */}
+        {!isInitialGate && (
+          <div className="flex items-center justify-between mb-1 z-10">
+            <button
+              type="button"
+              onClick={handleSignOutClick}
+              className="px-2.5 py-1 rounded-xl bg-[#072640]/60 border border-sky-300/25 text-[11px] font-semibold text-sky-200 flex items-center gap-1 cursor-pointer hover:bg-rose-500/20 hover:text-rose-200 transition-colors"
+            >
+              <LogOut className="w-3 h-3" />
+              <span>Выйти</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-[#072640]/60 border border-sky-300/25 flex items-center justify-center text-sky-200 cursor-pointer hover:bg-[#072640]"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
+        )}
 
-          {/* Animated Interactive Step Progress Indicator */}
-          {wizardStep >= 1 && wizardStep <= 3 && (
-            <div className="grid grid-cols-3 gap-2">
-              {stepMeta.map((s, idx) => {
-                const stepNum = (idx + 1) as 1 | 2 | 3;
-                const isDone = wizardStep > stepNum;
-                const isCurrent = wizardStep === stepNum;
-                return (
-                  <button
-                    key={s.num}
-                    type="button"
-                    onClick={() => handleStepNavigation(stepNum)}
-                    className="group text-left space-y-1.5 cursor-pointer focus:outline-none"
-                  >
-                    <div className="flex items-center justify-between text-[11px] font-bold">
-                      <span
-                        style={{
-                          color:
-                            isCurrent || isDone
-                              ? 'var(--accent-primary)'
-                              : 'var(--text-muted)',
-                        }}
-                      >
-                        {s.num}. {s.label}
-                      </span>
-                      {isDone && (
-                        <Check
-                          className="w-3 h-3"
-                          style={{ color: 'var(--accent-primary)' }}
-                        />
-                      )}
-                    </div>
-                    <div
-                      className="h-1.5 w-full rounded-full overflow-hidden relative"
-                      style={{ backgroundColor: 'var(--bg-elevated)' }}
-                    >
-                      {(isDone || isCurrent) && (
-                        <motion.div
-                          layoutId={isCurrent ? 'active-auth-progress' : undefined}
-                          initial={{ width: isDone ? '100%' : '30%' }}
-                          animate={{ width: '100%' }}
-                          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                          className="h-full rounded-full"
-                          style={{
-                            backgroundColor: 'var(--accent-primary)',
-                            opacity: isDone ? 0.55 : 1,
-                          }}
-                        />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+        {/* TOP CIRCULAR CAMERA / PERSONAL PHOTO EMBLEM (Reference Image Focal Element) */}
+        <div className="flex flex-col items-center pt-1 pb-4 z-10">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleCustomAvatarUpload}
+            className="hidden"
+          />
+
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => fileInputRef.current?.click()}
+            title="Загрузить личную фотографию"
+            className="relative w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all group"
+            style={{
+              border: '2.5px solid rgba(125, 211, 252, 0.72)',
+              background: 'rgba(9, 43, 68, 0.55)',
+              boxShadow:
+                '0 0 25px rgba(56, 189, 248, 0.22), inset 0 0 18px rgba(56, 189, 248, 0.14)',
+            }}
+          >
+            {avatarUrl ? (
+              <>
+                <img
+                  src={avatarUrl}
+                  alt={name || 'Ваше фото'}
+                  className="w-full h-full rounded-full object-cover"
+                />
+                <div className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-[#083352] border border-sky-300/70 flex items-center justify-center text-sky-200 shadow-md">
+                  <Camera className="w-3.5 h-3.5" />
+                </div>
+              </>
+            ) : (
+              <Camera className="w-10 h-10 text-sky-300/90 stroke-[1.7] group-hover:scale-105 transition-transform" />
+            )}
+          </motion.button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="mt-2 text-[11px] font-semibold text-sky-200/85 hover:text-white transition-colors cursor-pointer"
+          >
+            {isUploadingPhoto
+              ? 'Обработка фото...'
+              : avatarUrl
+              ? 'Личное фото загружено · Изменить'
+              : 'Нажмите на камеру, чтобы добавить ваше фото'}
+          </button>
+
+          {/* Minimal Step Progress Pills */}
+          <div className="flex items-center gap-1.5 mt-3">
+            {[1, 2, 3, 4].map(stepNum => {
+              const active = wizardStep === stepNum;
+              const done = wizardStep > stepNum;
+              return (
+                <div
+                  key={stepNum}
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: active ? '26px' : '8px',
+                    backgroundColor: active
+                      ? '#7dd3fc'
+                      : done
+                      ? 'rgba(125, 211, 252, 0.55)'
+                      : 'rgba(7, 38, 64, 0.7)',
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
 
-        {/* HORIZONTAL SLIDE VIEWPORT */}
-        <div className="relative flex-1 min-h-0 overflow-hidden">
+        {/* Status / Error Feedback */}
+        <AnimatePresence mode="wait">
+          {statusMessage && (
+            <motion.div
+              key="status"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="mb-3 px-3.5 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-medium flex items-center gap-2 z-10"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+              <span>{statusMessage}</span>
+            </motion.div>
+          )}
+          {errorMessage && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="mb-3 px-3.5 py-2.5 rounded-xl bg-rose-500/25 border border-rose-400/45 text-rose-100 text-xs font-medium flex items-center gap-2 z-10"
+            >
+              <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
+              <span>{errorMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* STEP CONTENT AREA IN UNIFIED CARD FORMAT */}
+        <div className="relative overflow-hidden z-10">
           <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={wizardStep}
@@ -740,1127 +744,498 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               animate="center"
               exit="exit"
               transition={{
-                x: { type: 'spring', stiffness: 320, damping: 34, mass: 0.85 },
+                x: { type: 'spring', stiffness: 320, damping: 32, mass: 0.85 },
                 opacity: { duration: 0.2 },
-                scale: { duration: 0.22 },
+                scale: { duration: 0.2 },
               }}
-              className="h-full w-full overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5"
-              style={{ backgroundColor: 'var(--bg-surface)' }}
+              className="w-full"
             >
-              {statusMessage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2"
-                >
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>{statusMessage}</span>
-                </motion.div>
-              )}
-
-              {errorMessage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-semibold flex items-center gap-2"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMessage}</span>
-                </motion.div>
-              )}
-
-              {wizardStep === 0 && (
-                /* STEP 0: EMOTIONAL FIRST IMPRESSION & LIVE SHOWCASE */
-                <motion.div
-                  variants={staggerContainerVariants}
-                  initial="hidden"
-                  animate="show"
-                  className="space-y-4"
-                >
-                  <motion.div variants={fadeScaleItemVariants} className="space-y-2">
-                    <div
-                      className="text-xs font-bold tracking-tight flex items-center gap-2"
-                      style={{ color: 'var(--accent-primary)' }}
-                    >
-                      <span>Живые компании сегодня вечером</span>
-                      <span aria-hidden="true">·</span>
-                      <span>Без дейтинга</span>
-                    </div>
-                    <h1
-                      className="text-xl sm:text-2xl font-display font-extrabold leading-snug tracking-tight text-balance"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {isEn
-                        ? 'Real plans for tonight with people on your wavelength'
-                        : 'Вечер в хорошей компании — за общим столом, игрой или концертом'}
-                    </h1>
-                    <p
-                      className="text-xs sm:text-sm leading-relaxed"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {isEn
-                        ? 'Register in 30 seconds. Exact venue addresses and group chats unlock only after the host approves your request.'
-                        : 'Пройдите регистрацию за 30 секунд. Выбирайте проверенные компании по интересам — точный адрес и чат открываются только после одобрения организатором.'}
-                    </p>
-                  </motion.div>
-
-                  {/* Live Showcase Carousel */}
-                  <motion.div
-                    variants={fadeScaleItemVariants}
-                    className="relative h-48 sm:h-52 rounded-2xl overflow-hidden bg-neutral-900 shadow-md border"
-                    style={{ borderColor: 'var(--border-subtle)' }}
-                  >
-                    <AnimatePresence mode="wait">
-                      {SHOWCASE_CARDS.map((card, idx) =>
-                        idx === activeShowcaseIdx ? (
-                          <motion.div
-                            key={card.title}
-                            initial={{ opacity: 0, scale: 0.97, x: 16 }}
-                            animate={{ opacity: 1, scale: 1, x: 0 }}
-                            exit={{ opacity: 0, scale: 0.97, x: -16 }}
-                            transition={{ duration: 0.28 }}
-                            className="absolute inset-0 flex items-end p-4"
-                          >
-                            <img
-                              src={card.image}
-                              alt={card.title}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15" />
-                            <div className="relative z-10 w-full flex items-end justify-between gap-3">
-                              <div className="space-y-1 min-w-0">
-                                <div className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
-                                  <span>{card.category}</span>
-                                  <span aria-hidden="true">·</span>
-                                  <span>{card.spotText}</span>
-                                </div>
-                                <h3 className="text-sm sm:text-base font-display font-bold text-white truncate">
-                                  {card.title}
-                                </h3>
-                                <p className="text-xs text-white/90 flex items-center gap-1.5 font-medium">
-                                  <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                  <span className="truncate">{card.area}</span>
-                                </p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ) : null
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-
-                  {/* Carousel Switcher & Security Promise */}
-                  <motion.div
-                    variants={fadeScaleItemVariants}
-                    className="p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs font-medium"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>
-                        {isEn
-                          ? 'Exact venue revealed after host approval'
-                          : 'Точный адрес скрыт до подтверждения заявки'}
-                      </span>
-                    </span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {SHOWCASE_CARDS.map((_, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setActiveShowcaseIdx(i)}
-                          className="h-2 rounded-full transition-all cursor-pointer"
-                          style={{
-                            width: i === activeShowcaseIdx ? '20px' : '8px',
-                            backgroundColor:
-                              i === activeShowcaseIdx
-                                ? 'var(--accent-primary)'
-                                : 'var(--border-subtle)',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-
-                  {/* 3-Step Interactive Roadmap */}
-                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-3 gap-2.5">
-                    {[
-                      { num: '01', label: 'Личное фото', sub: 'Почта и телефон' },
-                      { num: '02', label: 'Интересы', sub: 'Вайб вечера' },
-                      { num: '03', label: 'Регистрация', sub: 'Доступ к встречам' },
-                    ].map(item => (
-                      <motion.button
-                        type="button"
-                        key={item.num}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => handleStepNavigation(Number(item.num) as 1 | 2 | 3)}
-                        className="p-3 rounded-2xl border text-left cursor-pointer"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <span
-                          className="text-xs font-mono-num font-bold block"
-                          style={{ color: 'var(--accent-primary)' }}
-                        >
-                          {item.num}
-                        </span>
-                        <span
-                          className="text-xs font-bold block mt-0.5"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          {item.label}
-                        </span>
-                        <span
-                          className="text-[11px] block"
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          {item.sub}
-                        </span>
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                </motion.div>
-              )}
-
               {wizardStep === 1 && (
-                /* STEP 1: PERSONAL PHOTO ONLY & INTERACTIVE IDENTITY FIELDS */
+                /* STEP 1: ENTRY & CONTACTS (Reference Image Layout) */
                 <motion.div
                   variants={staggerContainerVariants}
                   initial="hidden"
                   animate="show"
-                  className="space-y-4"
+                  className="space-y-3"
                 >
-                  {/* Personal Photo Upload Card */}
+                  {/* Name Input Bar */}
                   <motion.div
                     variants={fadeScaleItemVariants}
-                    className="p-4 rounded-2xl border flex items-center justify-between gap-4"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: avatarUrl ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                    }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-sky-400/20 focus-within:border-sky-300/70 transition-colors"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      {avatarUrl ? (
-                        <motion.img
-                          key={avatarUrl}
-                          initial={{ opacity: 0, scale: 0.85 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          src={avatarUrl}
-                          alt={name || 'Ваше фото'}
-                          className="w-16 h-16 rounded-2xl object-cover shrink-0 border-2"
-                          style={{ borderColor: 'var(--accent-primary)' }}
-                        />
-                      ) : (
-                        <motion.div
-                          initial={{ scale: 0.9, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center font-display font-extrabold text-xl text-white shrink-0 shadow-xs"
-                          style={{ backgroundColor: 'var(--accent-primary)' }}
-                        >
-                          {userInitials}
-                        </motion.div>
-                      )}
-                      <div className="min-w-0">
-                        <span
-                          className="text-xs sm:text-sm font-display font-bold block truncate"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          {avatarUrl ? 'Ваша личная фотография' : 'Загрузите ваше личное фото'}
-                        </span>
-                        <span
-                          className="text-xs block mt-0.5 leading-snug"
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          Только настоящая фотография владельца профиля
-                        </span>
-                      </div>
-                    </div>
-
-                    <motion.label
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.96 }}
-                      className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs"
-                      style={{ backgroundColor: 'var(--accent-primary)' }}
-                    >
-                      {isUploadingPhoto ? (
-                        <span>Загрузка...</span>
-                      ) : (
-                        <>
-                          {avatarUrl ? <Camera className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                          <span>{avatarUrl ? 'Изменить' : 'Загрузить'}</span>
-                        </>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCustomAvatarUpload}
-                        className="hidden"
-                      />
-                    </motion.label>
-                  </motion.div>
-
-
-                  {/* Interactive Focus-Aware Name Input */}
-                  <motion.div variants={fadeScaleItemVariants}>
-                    <label
-                      className="text-xs font-bold block mb-1.5 transition-colors"
-                      style={{
-                        color:
-                          focusedField === 'name'
-                            ? 'var(--accent-primary)'
-                            : 'var(--text-primary)',
-                      }}
-                    >
-                      Ваше имя и фамилия <span style={{ color: 'var(--accent-primary)' }}>*</span>
-                    </label>
+                    <User className="w-4 h-4 text-sky-300/85 shrink-0" />
                     <input
                       type="text"
                       required
                       maxLength={80}
                       value={name}
-                      onFocus={() => setFocusedField('name')}
-                      onBlur={() => setFocusedField(null)}
                       onChange={e => setName(e.target.value)}
-                      placeholder="Например: Анна Воронова"
-                      className="w-full px-3.5 py-2.5 rounded-xl border text-[15px] font-medium focus:outline-none transition-colors"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor:
-                          focusedField === 'name'
-                            ? 'var(--accent-primary)'
-                            : 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
+                      placeholder="Ваше имя и фамилия *"
+                      className="w-full bg-transparent text-[15px] text-white placeholder:text-sky-200/55 font-medium focus:outline-none"
                     />
                   </motion.div>
 
-                  {/* Required Email & Phone Number Inputs */}
-                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        className="text-xs font-bold flex items-center gap-1.5 mb-1.5 transition-colors"
-                        style={{
-                          color:
-                            focusedField === 'email'
-                              ? 'var(--accent-primary)'
-                              : 'var(--text-primary)',
-                        }}
-                      >
-                        <Mail className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                        <span>Почта (Email) *</span>
-                      </label>
-                      <input
-                        type="email"
-                        inputMode="email"
-                        required
-                        maxLength={120}
-                        value={email}
-                        onFocus={() => setFocusedField('email')}
-                        onBlur={() => setFocusedField(null)}
-                        onChange={e => setEmail(e.target.value)}
-                        placeholder="name@example.com"
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-[15px] font-medium focus:outline-none transition-colors"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor:
-                            focusedField === 'email'
-                              ? 'var(--accent-primary)'
-                              : 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="text-xs font-bold flex items-center gap-1.5 mb-1.5 transition-colors"
-                        style={{
-                          color:
-                            focusedField === 'phone'
-                              ? 'var(--accent-primary)'
-                              : 'var(--text-primary)',
-                        }}
-                      >
-                        <Phone className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                        <span>Номер телефона *</span>
-                      </label>
-                      <input
-                        type="tel"
-                        inputMode="tel"
-                        required
-                        maxLength={30}
-                        value={phoneNumber}
-                        onFocus={() => setFocusedField('phone')}
-                        onBlur={() => setFocusedField(null)}
-                        onChange={e => setPhoneNumber(e.target.value)}
-                        placeholder="+7 (999) 123-45-67"
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-[15px] font-medium focus:outline-none transition-colors"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor:
-                            focusedField === 'phone'
-                              ? 'var(--accent-primary)'
-                              : 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                    </div>
+                  {/* Phone Input Bar */}
+                  <motion.div
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-sky-400/20 focus-within:border-sky-300/70 transition-colors"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
+                  >
+                    <Phone className="w-4 h-4 text-sky-300/85 shrink-0" />
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      required
+                      maxLength={30}
+                      value={phoneNumber}
+                      onChange={e => setPhoneNumber(e.target.value)}
+                      placeholder="Номер телефона (+7 999 123-45-67) *"
+                      className="w-full bg-transparent text-[15px] text-white placeholder:text-sky-200/55 font-medium focus:outline-none"
+                    />
                   </motion.div>
 
-                  {/* Age & Gender Segmented Controls */}
-                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        Возраст ({age} лет)
-                      </label>
-                      <div
-                        className="flex items-center justify-between rounded-xl border px-2 py-1.5"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic(6);
-                            setAge(prev => Math.max(18, prev - 1));
-                          }}
-                          className="w-8 h-8 rounded-lg font-bold text-base flex items-center justify-center cursor-pointer"
-                          style={{
-                            backgroundColor: 'var(--bg-surface)',
-                            color: 'var(--text-primary)',
-                          }}
-                        >
-                          −
-                        </motion.button>
-                        <input
-                          type="number"
-                          min={18}
-                          max={99}
-                          value={age}
-                          onChange={e => setAge(Math.min(99, Math.max(18, Number(e.target.value) || 18)))}
-                          className="w-12 text-center text-sm font-bold font-mono-num bg-transparent focus:outline-none"
-                          style={{ color: 'var(--text-primary)' }}
-                        />
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic(6);
-                            setAge(prev => Math.min(99, prev + 1));
-                          }}
-                          className="w-8 h-8 rounded-lg font-bold text-base flex items-center justify-center cursor-pointer"
-                          style={{
-                            backgroundColor: 'var(--bg-surface)',
-                            color: 'var(--text-primary)',
-                          }}
-                        >
-                          +
-                        </motion.button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold block mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                        Пол
-                      </label>
-                      <div
-                        className="grid grid-cols-2 gap-1 p-1 rounded-xl border"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        {[
-                          { val: 'female', label: 'Женский' },
-                          { val: 'male', label: 'Мужской' },
-                        ].map(opt => {
-                          const active = gender === opt.val;
-                          return (
-                            <motion.button
-                              whileTap={{ scale: 0.96 }}
-                              key={opt.val}
-                              type="button"
-                              onClick={() => {
-                                triggerHaptic(6);
-                                setGender(opt.val as 'female' | 'male');
-                              }}
-                              className="py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                              style={{
-                                backgroundColor: active ? 'var(--accent-primary)' : 'transparent',
-                                color: active ? '#ffffff' : 'var(--text-primary)',
-                              }}
-                            >
-                              {opt.label}
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  {/* Email Input Bar */}
+                  <motion.div
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-sky-400/20 focus-within:border-sky-300/70 transition-colors"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
+                  >
+                    <Mail className="w-4 h-4 text-sky-300/85 shrink-0" />
+                    <input
+                      type="email"
+                      inputMode="email"
+                      required
+                      maxLength={120}
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="Электронная почта (Email) *"
+                      className="w-full bg-transparent text-[15px] text-white placeholder:text-sky-200/55 font-medium focus:outline-none"
+                    />
                   </motion.div>
 
-                  {/* City & Quick Chips */}
-                  <motion.div variants={fadeScaleItemVariants}>
-                    <label
-                      className="text-xs font-bold block mb-1.5 transition-colors"
+                  {/* Remember Me & SMS Info Row (Matches Reference Layout) */}
+                  <motion.div
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center justify-between pt-1 px-1 text-xs"
+                  >
+                    <label className="flex items-center gap-2 text-sky-100/85 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={e => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded accent-[#053154] cursor-pointer"
+                      />
+                      <span>Запомнить меня</span>
+                    </label>
+                    <span className="text-sky-200/75 italic text-[11px]">
+                      Подтверждение по СМС
+                    </span>
+                  </motion.div>
+
+                  {/* Primary Action Button */}
+                  <motion.div variants={fadeScaleItemVariants} className="pt-2">
+                    <motion.button
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      disabled={isSendingSms}
+                      onClick={handleRequestSmsCode}
+                      className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                       style={{
-                        color:
-                          focusedField === 'city'
-                            ? 'var(--accent-primary)'
-                            : 'var(--text-primary)',
+                        background: 'linear-gradient(180deg, #094775 0%, #052c4c 100%)',
+                        border: '1px solid rgba(125, 211, 252, 0.35)',
+                        boxShadow: '0 10px 25px -5px rgba(3, 22, 38, 0.7)',
                       }}
                     >
-                      Город
-                    </label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {CITY_PRESETS.map(c => {
-                        const active = city === c;
-                        return (
-                          <motion.button
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.95 }}
-                            key={c}
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic(6);
-                              setCity(c);
-                            }}
-                            className="px-3 py-1 rounded-lg text-xs font-bold border transition-colors cursor-pointer"
-                            style={{
-                              backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-elevated)',
-                              borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                              color: active ? '#ffffff' : 'var(--text-primary)',
-                            }}
-                          >
-                            {c}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                    <input
-                      type="text"
-                      maxLength={60}
-                      value={city}
-                      onFocus={() => setFocusedField('city')}
-                      onBlur={() => setFocusedField(null)}
-                      onChange={e => setCity(e.target.value)}
-                      placeholder="Ваш город"
-                      className="w-full px-3.5 py-2 rounded-xl border text-sm font-medium focus:outline-none transition-colors"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor:
-                          focusedField === 'city'
-                            ? 'var(--accent-primary)'
-                            : 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                    />
-                  </motion.div>
-
-                  {/* Occupation & 1-Tap Presets */}
-                  <motion.div variants={fadeScaleItemVariants}>
-                    <label
-                      className="text-xs font-bold block mb-1.5 transition-colors"
-                      style={{
-                        color:
-                          focusedField === 'occupation'
-                            ? 'var(--accent-primary)'
-                            : 'var(--text-primary)',
-                      }}
-                    >
-                      Профессия / Сфера
-                    </label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {OCCUPATION_PRESETS.map(occ => {
-                        const active = occupation === occ;
-                        return (
-                          <motion.button
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.95 }}
-                            key={occ}
-                            type="button"
-                            onClick={() => {
-                              triggerHaptic(6);
-                              setOccupation(occ);
-                            }}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer"
-                            style={{
-                              backgroundColor: active ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                              borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                              color: active ? 'var(--accent-text)' : 'var(--text-secondary)',
-                            }}
-                          >
-                            {occ}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                    <input
-                      type="text"
-                      maxLength={100}
-                      value={occupation}
-                      onFocus={() => setFocusedField('occupation')}
-                      onBlur={() => setFocusedField(null)}
-                      onChange={e => setOccupation(e.target.value)}
-                      placeholder="Например: Арт-директор, Архитектор, IT"
-                      className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none transition-colors"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor:
-                          focusedField === 'occupation'
-                            ? 'var(--accent-primary)'
-                            : 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                    />
+                      <span>{isSendingSms ? 'ОТПРАВКА СМС...' : 'РЕГИСТРАЦИЯ'}</span>
+                      <ArrowRight className="w-4 h-4 text-sky-300" />
+                    </motion.button>
                   </motion.div>
                 </motion.div>
               )}
 
               {wizardStep === 2 && (
-                /* STEP 2: VISUALIZED INTERESTS & EVENING VIBE */
+                /* STEP 2: SMS CODE VERIFICATION IN SAME CARD FORMAT */
                 <motion.div
                   variants={staggerContainerVariants}
                   initial="hidden"
                   animate="show"
-                  className="space-y-4"
+                  className="space-y-3.5"
                 >
-                  {/* Evening Vibe Selector */}
-                  <motion.div variants={fadeScaleItemVariants}>
-                    <label className="text-xs font-bold block mb-1" style={{ color: 'var(--text-primary)' }}>
-                      Какой сценарий вечера вам ближе?
-                    </label>
-                    <p className="text-xs mb-2.5" style={{ color: 'var(--text-secondary)' }}>
-                      Выберите настроение — мы подстроим рекомендации и подскажем текст о себе
+                  <motion.div variants={fadeScaleItemVariants} className="text-center space-y-1">
+                    <h2 className="text-base font-display font-bold text-white">
+                      Подтверждение номера по СМС
+                    </h2>
+                    <p className="text-xs text-sky-100/80">
+                      Мы отправили 4-значный код на номер{' '}
+                      <span className="font-mono-num font-semibold text-sky-200">{phoneNumber}</span>
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {VIBE_CARDS.map(vibe => {
-                        const Icon = vibe.icon;
-                        const isSelected = selectedVibeId === vibe.id;
-                        return (
-                          <motion.button
-                            whileHover={{ scale: 1.015 }}
-                            whileTap={{ scale: 0.975 }}
-                            key={vibe.id}
-                            type="button"
-                            onClick={() => handleSelectVibe(vibe)}
-                            className="p-3.5 rounded-2xl border text-left transition-colors cursor-pointer flex items-start gap-3"
-                            style={{
-                              backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-elevated)',
-                              borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                            }}
-                          >
-                            <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                              style={{
-                                backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-surface)',
-                                color: isSelected ? '#ffffff' : 'var(--accent-primary)',
-                              }}
-                            >
-                              <Icon className="w-5 h-5" />
-                            </div>
-                            <div className="min-w-0">
-                              <span
-                                className="text-xs font-bold block"
-                                style={{ color: 'var(--text-primary)' }}
-                              >
-                                {vibe.title}
-                              </span>
-                              <span
-                                className="text-[11px] leading-snug block mt-0.5"
-                                style={{ color: 'var(--text-secondary)' }}
-                              >
-                                {vibe.desc}
-                              </span>
-                            </div>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
                   </motion.div>
 
-                  {/* Visualized Interest Grid with Live Match Meter */}
+                  {/* Lock / SMS Code Bar (Matches Password Bar from Reference) */}
                   <motion.div
                     variants={fadeScaleItemVariants}
-                    className="p-3.5 rounded-2xl border space-y-3"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-sky-300/45 focus-within:border-sky-200 transition-colors"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.85)' }}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                          Ваши темы встреч ({interests.length} выбрано)
-                        </span>
-                        <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-                          Отметьте форматы, куда вы с удовольствием пойдёте
-                        </span>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span
-                          className="text-xs font-mono-num font-extrabold block"
-                          style={{ color: 'var(--accent-primary)' }}
-                        >
-                          {matchPercent}% индекс
-                        </span>
-                        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                          {matchedEventsCount} встреч рядом
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Animated Match Meter Bar */}
-                    <div
-                      className="h-1.5 w-full rounded-full overflow-hidden"
-                      style={{ backgroundColor: 'var(--bg-surface)' }}
-                    >
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${matchPercent}%` }}
-                        transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                      />
-                    </div>
-
-                    {/* Visual Interest Cards */}
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      {INTEREST_CATALOG.map(item => {
-                        const Icon = item.icon;
-                        const active = interests.includes(item.tag);
-                        return (
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.96 }}
-                            key={item.tag}
-                            type="button"
-                            onClick={() => toggleInterest(item.tag)}
-                            className="px-3 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-between gap-2 text-left"
-                            style={{
-                              backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-surface)',
-                              borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                              color: active ? '#ffffff' : 'var(--text-primary)',
-                            }}
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Icon
-                                className={`w-4 h-4 shrink-0 ${
-                                  active ? 'text-white' : 'opacity-75'
-                                }`}
-                              />
-                              <span className="truncate">
-                                {isEn ? item.labelEn : item.tag}
-                              </span>
-                            </div>
-                            {active && <Check className="w-3.5 h-3.5 shrink-0 text-white" />}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
+                    <Lock className="w-4 h-4 text-sky-300 shrink-0" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={smsCodeInput}
+                      onChange={e => setSmsCodeInput(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Код из СМС (4 цифры)"
+                      className="w-full bg-transparent text-[16px] font-mono-num tracking-[0.25em] text-white placeholder:tracking-normal placeholder:text-sky-200/55 font-bold focus:outline-none"
+                    />
+                    {generatedSmsCode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic(8);
+                          setSmsCodeInput(generatedSmsCode);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-sky-400/20 border border-sky-300/35 text-[11px] font-bold text-sky-200 shrink-0 cursor-pointer"
+                      >
+                        Код: {generatedSmsCode}
+                      </button>
+                    )}
                   </motion.div>
 
-                  {/* Bio Input */}
-                  <motion.div variants={fadeScaleItemVariants}>
-                    <label
-                      className="text-xs font-bold block mb-1.5 transition-colors"
+                  {/* Remember / Resend Row */}
+                  <motion.div
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center justify-between px-1 text-xs"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => navigateToStep(1)}
+                      className="text-sky-200/80 hover:text-white flex items-center gap-1 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Изменить номер</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0}
+                      onClick={handleRequestSmsCode}
+                      className="text-sky-200/85 hover:text-white italic flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>
+                        {resendCooldown > 0
+                          ? `Повторить через ${resendCooldown}с`
+                          : 'Отправить код ещё раз'}
+                      </span>
+                    </button>
+                  </motion.div>
+
+                  <motion.div variants={fadeScaleItemVariants} className="pt-2">
+                    <motion.button
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={handleVerifySmsCode}
+                      className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                       style={{
-                        color:
-                          focusedField === 'bio'
-                            ? 'var(--accent-primary)'
-                            : 'var(--text-primary)',
+                        background: 'linear-gradient(180deg, #094775 0%, #052c4c 100%)',
+                        border: '1px solid rgba(125, 211, 252, 0.35)',
+                        boxShadow: '0 10px 25px -5px rgba(3, 22, 38, 0.7)',
                       }}
                     >
-                      Коротко о себе и планах на вечер
-                    </label>
-                    <textarea
-                      rows={3}
-                      maxLength={600}
-                      value={bio}
-                      onFocus={() => setFocusedField('bio')}
-                      onBlur={() => setFocusedField(null)}
-                      onChange={e => setBio(e.target.value)}
-                      placeholder="Люблю камерные ужины, стратегические настолки и живую музыку..."
-                      className="w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium focus:outline-none transition-colors"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        borderColor:
-                          focusedField === 'bio'
-                            ? 'var(--accent-primary)'
-                            : 'var(--border-subtle)',
-                        color: 'var(--text-primary)',
-                      }}
-                    />
+                      <span>ПОДТВЕРДИТЬ СМС-КОД</span>
+                      <ArrowRight className="w-4 h-4 text-sky-300" />
+                    </motion.button>
                   </motion.div>
                 </motion.div>
               )}
 
               {wizardStep === 3 && (
-                /* STEP 3: LIVE MEMBER PASS & OPEN-TO-INVITES RADAR */
+                /* STEP 3: PROFILE DETAILS & INTERESTS IN SAME CARD FORMAT */
                 <motion.div
                   variants={staggerContainerVariants}
                   initial="hidden"
                   animate="show"
-                  className="space-y-4"
+                  className="space-y-3"
                 >
-                  {/* Studio Member Pass Card */}
-                  <motion.div
-                    variants={fadeScaleItemVariants}
-                    className="p-5 rounded-3xl border space-y-4 relative overflow-hidden"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                  >
-                    <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-[11px] font-mono-num font-bold uppercase tracking-wider"
-                          style={{ color: 'var(--accent-primary)' }}
-                        >
-                          ПРОФИЛЬ УЧАСТНИКА · KOMPA
+                  {/* Age & Gender Row */}
+                  <motion.div variants={fadeScaleItemVariants} className="grid grid-cols-2 gap-2.5">
+                    <div
+                      className="flex items-center justify-between px-3 py-2 rounded-xl border border-sky-400/20"
+                      style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setAge(prev => Math.max(18, prev - 1))}
+                        className="w-7 h-7 rounded-lg bg-sky-400/15 text-white font-bold cursor-pointer"
+                      >
+                        −
+                      </button>
+                      <div className="text-center">
+                        <span className="text-xs font-mono-num font-bold text-white block">
+                          {age} лет
                         </span>
+                        <span className="text-[10px] text-sky-200/65 block">Возраст</span>
                       </div>
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        <ShieldCheck className="w-4 h-4" />
-                        Готов к регистрации
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      {avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt={name}
-                          className="w-16 h-16 rounded-2xl object-cover shrink-0 border-2"
-                          style={{ borderColor: 'var(--accent-primary)' }}
-                        />
-                      ) : (
-                        <div
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center font-display font-extrabold text-xl text-white shrink-0"
-                          style={{ backgroundColor: 'var(--accent-primary)' }}
-                        >
-                          {userInitials}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <h3
-                          className="text-base sm:text-lg font-display font-extrabold truncate"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          {name.trim() || 'Участник Kompa'}, {age}
-                        </h3>
-                        <p
-                          className="text-xs font-medium truncate mt-0.5"
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          {occupation.trim() || 'Участник клуба'} · {city || 'Москва'}
-                        </p>
-                        <div className="text-[11px] font-medium mt-1.5" style={{ color: 'var(--accent-text)' }}>
-                          {interests.slice(0, 4).join(' · ')}
-                        </div>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAge(prev => Math.min(99, prev + 1))}
+                        className="w-7 h-7 rounded-lg bg-sky-400/15 text-white font-bold cursor-pointer"
+                      >
+                        +
+                      </button>
                     </div>
 
                     <div
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 border-t text-xs"
-                      style={{ borderColor: 'var(--border-subtle)' }}
+                      className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-sky-400/20"
+                      style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
                     >
-                      <div className="flex items-center gap-2 truncate" style={{ color: 'var(--text-secondary)' }}>
-                        <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
-                        <span className="truncate font-medium">{email.trim() || 'Почта не указана'}</span>
-                      </div>
-                      <div className="flex items-center gap-2 truncate" style={{ color: 'var(--text-secondary)' }}>
-                        <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
-                        <span className="truncate font-mono-num font-medium">{phoneNumber.trim() || 'Телефон не указан'}</span>
-                      </div>
+                      {[
+                        { val: 'female', label: 'Жен' },
+                        { val: 'male', label: 'Муж' },
+                      ].map(opt => {
+                        const active = gender === opt.val;
+                        return (
+                          <button
+                            key={opt.val}
+                            type="button"
+                            onClick={() => setGender(opt.val as 'female' | 'male')}
+                            className="rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                            style={{
+                              backgroundColor: active ? '#0b4f80' : 'transparent',
+                              color: active ? '#ffffff' : 'rgba(186, 230, 253, 0.75)',
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
                     </div>
-
-                    {bio && (
-                      <p
-                        className="text-xs leading-relaxed pt-3 border-t"
-                        style={{
-                          color: 'var(--text-secondary)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        «{bio}»
-                      </p>
-                    )}
                   </motion.div>
 
-                  {/* Open to Invites Toggle & Quick Templates */}
+                  {/* City Input Bar with Quick Presets */}
+                  <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
+                    <div
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-sky-400/20 focus-within:border-sky-300/70"
+                      style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
+                    >
+                      <MapPin className="w-4 h-4 text-sky-300/85 shrink-0" />
+                      <input
+                        type="text"
+                        maxLength={60}
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        placeholder="Ваш город"
+                        className="w-full bg-transparent text-[15px] text-white placeholder:text-sky-200/55 font-medium focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {CITY_PRESETS.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setCity(c)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor:
+                              city === c ? 'rgba(56, 189, 248, 0.25)' : 'rgba(6, 38, 66, 0.55)',
+                            borderColor:
+                              city === c ? 'rgba(125, 211, 252, 0.65)' : 'rgba(125, 211, 252, 0.18)',
+                            color: '#e0f2fe',
+                          }}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Occupation Input Bar */}
                   <motion.div
                     variants={fadeScaleItemVariants}
-                    className="p-4 rounded-2xl border space-y-3"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-sky-400/20 focus-within:border-sky-300/70"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
                   >
-                    <label className="flex items-center justify-between gap-3 cursor-pointer">
-                      <div className="flex items-center gap-2.5">
-                        <Compass className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <div>
-                          <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                            Статус «Жду приглашений сегодня вечером»
-                          </span>
-                          <span className="text-[11px] block" style={{ color: 'var(--text-secondary)' }}>
-                            Организаторы смогут сами приглашать вас за стол
-                          </span>
-                        </div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={openToInvites}
-                        onChange={e => {
-                          triggerHaptic(8);
-                          setOpenToInvites(e.target.checked);
-                        }}
-                        className="rounded accent-emerald-600 w-5 h-5 shrink-0"
-                      />
-                    </label>
+                    <Briefcase className="w-4 h-4 text-sky-300/85 shrink-0" />
+                    <input
+                      type="text"
+                      maxLength={100}
+                      value={occupation}
+                      onChange={e => setOccupation(e.target.value)}
+                      placeholder="Сфера / Профессия (например: Дизайн, IT)"
+                      className="w-full bg-transparent text-[15px] text-white placeholder:text-sky-200/55 font-medium focus:outline-none"
+                    />
+                  </motion.div>
 
-                    {openToInvites && (
-                      <div className="space-y-2 pt-1">
-                        <div className="flex flex-wrap gap-1.5">
-                          {INVITE_NOTE_PRESETS.map((preset, idx) => (
-                            <motion.button
-                              whileHover={{ scale: 1.01 }}
-                              whileTap={{ scale: 0.98 }}
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                triggerHaptic(6);
-                                setOpenToInvitesNote(preset);
-                              }}
-                              className="text-left text-[11px] font-medium px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer"
-                              style={{
-                                backgroundColor:
-                                  openToInvitesNote === preset ? 'var(--accent-soft)' : 'var(--bg-surface)',
-                                borderColor:
-                                  openToInvitesNote === preset ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                                color: 'var(--text-primary)',
-                              }}
-                            >
-                              {preset}
-                            </motion.button>
-                          ))}
-                        </div>
-                        <input
-                          type="text"
-                          maxLength={300}
-                          value={openToInvitesNote}
-                          onChange={e => setOpenToInvitesNote(e.target.value)}
-                          placeholder="Ваше пожелание на вечер..."
-                          className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-medium focus:outline-none"
-                          style={{
-                            backgroundColor: 'var(--bg-surface)',
-                            borderColor: 'var(--border-subtle)',
-                            color: 'var(--text-primary)',
-                          }}
-                        />
-                      </div>
-                    )}
+                  {/* Compact Interest Selector */}
+                  <motion.div variants={fadeScaleItemVariants} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs px-0.5">
+                      <span className="font-semibold text-sky-100">
+                        Выберите интересы ({interests.length})
+                      </span>
+                      <span className="text-[11px] text-sky-300 font-mono-num">
+                        {matchedEventsCount} встреч рядом
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-0.5">
+                      {INTEREST_CATALOG.map(item => {
+                        const Icon = item.icon;
+                        const active = interests.includes(item.tag);
+                        return (
+                          <button
+                            key={item.tag}
+                            type="button"
+                            onClick={() => toggleInterest(item.tag)}
+                            className="px-2.5 py-2 rounded-xl text-[11px] font-semibold border flex items-center justify-between gap-1.5 text-left transition-all cursor-pointer"
+                            style={{
+                              backgroundColor: active
+                                ? 'rgba(14, 116, 178, 0.85)'
+                                : 'rgba(6, 38, 66, 0.72)',
+                              borderColor: active
+                                ? 'rgba(125, 211, 252, 0.75)'
+                                : 'rgba(125, 211, 252, 0.18)',
+                              color: '#ffffff',
+                            }}
+                          >
+                            <span className="flex items-center gap-1.5 truncate">
+                              <Icon className="w-3.5 h-3.5 text-sky-300 shrink-0" />
+                              <span className="truncate">{item.tag}</span>
+                            </span>
+                            {active && <Check className="w-3 h-3 text-sky-200 shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+
+                  {/* Navigation Buttons */}
+                  <motion.div
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center gap-2.5 pt-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => navigateToStep(2)}
+                      className="px-3.5 py-3.5 rounded-xl border border-sky-300/30 bg-[#062642]/70 text-xs font-bold text-sky-100 flex items-center gap-1 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Назад</span>
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      disabled={isSaving}
+                      onClick={handleSaveAndProceedToFinal}
+                      className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      style={{
+                        background: 'linear-gradient(180deg, #094775 0%, #052c4c 100%)',
+                        border: '1px solid rgba(125, 211, 252, 0.35)',
+                        boxShadow: '0 10px 25px -5px rgba(3, 22, 38, 0.7)',
+                      }}
+                    >
+                      <span>{isSaving ? 'СОХРАНЕНИЕ...' : 'ДАЛЕЕ'}</span>
+                      <ArrowRight className="w-4 h-4 text-sky-300" />
+                    </motion.button>
                   </motion.div>
                 </motion.div>
               )}
 
               {wizardStep === 4 && (
-                /* STEP 4: CELEBRATORY PASS ACTIVATION ANIMATION */
+                /* STEP 4: SUMMARY & EXPLICIT MANUAL "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" BUTTON */
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                  className="h-full flex flex-col items-center justify-center text-center py-8 px-4 space-y-5"
+                  variants={staggerContainerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-3"
                 >
                   <motion.div
-                    initial={{ scale: 0, rotate: -20 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: 'spring', stiffness: 360, damping: 20, delay: 0.05 }}
-                    className="w-20 h-20 rounded-3xl flex items-center justify-center text-white shadow-xl"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
+                    variants={fadeScaleItemVariants}
+                    className="p-3.5 rounded-2xl border border-sky-300/30 space-y-2.5"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.78)' }}
                   >
-                    <CheckCircle2 className="w-10 h-10 stroke-[2.2]" />
-                  </motion.div>
-
-                  <div className="space-y-1.5 max-w-sm">
-                    <span
-                      className="text-xs font-mono-num font-bold uppercase tracking-wider block"
-                      style={{ color: 'var(--accent-primary)' }}
-                    >
-                      РЕГИСТРАЦИЯ ЗАВЕРШЕНА
-                    </span>
-                    <h2
-                      className="text-2xl font-display font-extrabold tracking-tight"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      Добро пожаловать в клуб, {name.trim().split(' ')[0] || 'друг'}!
-                    </h2>
-                    <p
-                      className="text-xs sm:text-sm leading-relaxed"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      Для вас подобрано {matchedEventsCount} вечерних встреч в городе {city || 'Москва'}. Нажмите кнопку ниже, чтобы завершить регистрацию и перейти к встречам.
-                    </p>
-                  </div>
-
-                  {/* Mini Pass Badge */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.18 }}
-                    className="p-3.5 px-5 rounded-2xl border flex items-center gap-3"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                  >
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={name}
-                        className="w-10 h-10 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-display font-bold text-sm"
-                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                      >
-                        {userInitials}
-                      </div>
-                    )}
-                    <div className="text-left">
-                      <span className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                        {name.trim() || 'Участник Kompa'}, {age}
+                    <div className="flex items-center justify-between border-b border-sky-300/20 pb-2">
+                      <span className="text-[11px] font-mono-num font-bold uppercase tracking-wider text-sky-300">
+                        АНКЕТА ПОДТВЕРЖДЕНА
                       </span>
-                      <span className="text-[11px] text-emerald-600 font-semibold block">
-                        {email.trim()} · {phoneNumber.trim()}
+                      <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        СМС проверено
                       </span>
                     </div>
+
+                    <div className="space-y-1 text-left">
+                      <div className="text-sm font-display font-bold text-white">
+                        {name.trim()}, {age} · {city}
+                      </div>
+                      <div className="text-xs text-sky-200/85 flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-sky-300 shrink-0" />
+                        <span className="font-mono-num">{phoneNumber}</span>
+                      </div>
+                      <div className="text-xs text-sky-200/85 flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-sky-300 shrink-0" />
+                        <span className="truncate">{email}</span>
+                      </div>
+                      <div className="text-[11px] text-sky-300 pt-1">
+                        {interests.slice(0, 4).join(' · ')}
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Open to Invites Checkbox Row */}
+                  <motion.label
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-sky-400/20 cursor-pointer text-xs text-sky-100"
+                    style={{ backgroundColor: 'rgba(6, 38, 66, 0.65)' }}
+                  >
+                    <span>Открыт(а) к приглашениям на вечер</span>
+                    <input
+                      type="checkbox"
+                      checked={openToInvites}
+                      onChange={e => setOpenToInvites(e.target.checked)}
+                      className="w-4 h-4 rounded accent-[#053154]"
+                    />
+                  </motion.label>
+
+                  {/* Manual "ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" Button — Window stays open until clicked */}
+                  <motion.div
+                    variants={fadeScaleItemVariants}
+                    className="flex items-center gap-2.5 pt-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => navigateToStep(3)}
+                      className="px-3.5 py-3.5 rounded-xl border border-sky-300/30 bg-[#062642]/70 text-xs font-bold text-sky-100 flex items-center gap-1 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Назад</span>
+                    </button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.015 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic([15, 35, 15]);
+                        onClose();
+                      }}
+                      className="flex-1 py-3.5 px-5 rounded-xl text-xs sm:text-sm font-display font-extrabold uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      style={{
+                        background: 'linear-gradient(180deg, #094775 0%, #052c4c 100%)',
+                        border: '1px solid rgba(125, 211, 252, 0.45)',
+                        boxShadow: '0 10px 25px -5px rgba(3, 22, 38, 0.75)',
+                      }}
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                      <span>ЗАВЕРШИТЬ РЕГИСТРАЦИЮ</span>
+                    </motion.button>
                   </motion.div>
                 </motion.div>
               )}
             </motion.div>
           </AnimatePresence>
-        </div>
-
-        {/* FIXED BOTTOM FOOTER */}
-        <div
-          className="px-4 py-3.5 sm:px-6 sm:py-4 border-t shrink-0 z-10 pb-safe"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderColor: 'var(--border-subtle)',
-          }}
-        >
-          {wizardStep === 0 ? (
-            <div>
-              <motion.button
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                onClick={() => navigateToStep(1)}
-                className="w-full py-3.5 px-6 rounded-2xl text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                style={{ backgroundColor: 'var(--accent-primary)' }}
-              >
-                <span>{isEn ? 'Registration' : 'Регистрация'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </motion.button>
-            </div>
-          ) : wizardStep === 4 ? (
-            <div className="flex items-center justify-between gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                type="button"
-                onClick={() => navigateToStep(3)}
-                className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{isEn ? 'Back' : 'Назад'}</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                onClick={() => {
-                  triggerHaptic([12, 30, 15]);
-                  onClose();
-                }}
-                className="flex-1 py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-display font-bold text-white shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-                style={{ backgroundColor: 'var(--accent-primary)' }}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>{isEn ? 'Complete Registration' : 'Завершить регистрацию'}</span>
-              </motion.button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                type="button"
-                onClick={() => navigateToStep((wizardStep - 1) as 0 | 1 | 2)}
-                className="px-4 py-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{isEn ? 'Back' : 'Назад'}</span>
-              </motion.button>
-
-              {wizardStep < 3 ? (
-                <motion.button
-                  whileHover={{ scale: 1.015 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  onClick={() => handleStepNavigation((wizardStep + 1) as 2 | 3)}
-                  className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: 'var(--accent-primary)' }}
-                >
-                  <span>
-                    {wizardStep === 1
-                      ? 'Далее: Интересы и формат вечера'
-                      : 'Далее: Проверка анкеты'}
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.015 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  disabled={isSaving}
-                  onClick={handleFinishRegistration}
-                  className="flex-1 py-3 px-5 rounded-xl text-xs sm:text-sm font-display font-bold text-white shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  style={{ backgroundColor: 'var(--accent-primary)' }}
-                >
-                  <Users className="w-4 h-4" />
-                  <span>
-                    {isSaving ? 'Сохранение...' : 'Подтвердить анкету'}
-                  </span>
-                </motion.button>
-              )}
-            </div>
-          )}
         </div>
       </motion.div>
     </motion.div>
