@@ -191,13 +191,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Animated Logo Splash Screen at App Entry
+  // Animated Logo Splash Screen at App Entry (2.9s choreographed logo trajectory)
   const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLogoSplash(false);
-    }, 2100);
+    }, 2900);
     return () => clearTimeout(timer);
   }, []);
 
@@ -627,103 +627,208 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {showLogoSplash ? (
-          /* STAGE 0: ANIMATED KOMPA LOGO SPLASH SCREEN STYLED FOR THE APP */
+          /* STAGE 0: CHOREOGRAPHED MOVING KOMPA LOGO SPLASH SCREEN */
           <motion.div
             key="kompa-logo-splash"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.06, filter: 'blur(6px)' }}
-            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-12"
           >
-            {/* Expanding Radar Pulse Waves Behind Logo */}
-            <div className="relative flex items-center justify-center w-36 h-36">
+            {/* Stage Arena for the Moving Logo & Comet Trails */}
+            <div className="relative flex items-center justify-center w-52 h-48">
+              {/* Expanding Radar Pulse Waves */}
               {[0, 1, 2].map(idx => (
                 <motion.div
                   key={idx}
-                  initial={{ scale: 0.7, opacity: 0.65 }}
-                  animate={{ scale: [0.75, 1.85], opacity: [0.55, 0] }}
+                  initial={{ scale: 0.65, opacity: 0.6 }}
+                  animate={{ scale: [0.7, 2.05], opacity: [0.5, 0] }}
                   transition={{
-                    duration: 2.2,
+                    duration: 2.3,
                     repeat: Infinity,
-                    delay: idx * 0.65,
+                    delay: idx * 0.68,
                     ease: 'easeOut',
                   }}
-                  className="absolute inset-4 rounded-[34px] border"
-                  style={{ borderColor: 'rgba(222, 72, 43, 0.55)' }}
+                  className="absolute w-28 h-28 rounded-[34px] border"
+                  style={{ borderColor: 'rgba(222, 72, 43, 0.5)' }}
                 />
               ))}
 
-              {/* Rotating Geometric Orbit Ring */}
+              {/* Rotating Geometric Orbit Rings (Counter-Rotating Pair) */}
               <motion.svg
-                viewBox="0 0 120 120"
-                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 160 160"
+                className="absolute inset-0 w-full h-full pointer-events-none"
                 animate={{ rotate: 360 }}
-                transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 9, repeat: Infinity, ease: 'linear' }}
               >
                 <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
+                  cx="80"
+                  cy="80"
+                  r="68"
                   fill="none"
-                  stroke="rgba(255, 138, 108, 0.38)"
-                  strokeWidth="1.5"
-                  strokeDasharray="10 8"
+                  stroke="rgba(255, 138, 108, 0.35)"
+                  strokeWidth="1.4"
+                  strokeDasharray="12 9"
                 />
+                <circle cx="80" cy="12" r="4" fill="#FF8A6C" />
+                <circle cx="148" cy="80" r="3" fill="#F59E0B" />
+                <circle cx="80" cy="148" r="3.5" fill="#DE482B" />
               </motion.svg>
 
-              {/* Main Animated Kompa Emblem */}
+              <motion.svg
+                viewBox="0 0 160 160"
+                className="absolute inset-3 w-[calc(100%-1.5rem)] h-[calc(100%-1.5rem)] pointer-events-none"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 13, repeat: Infinity, ease: 'linear' }}
+              >
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="52"
+                  fill="none"
+                  stroke="rgba(251, 191, 36, 0.25)"
+                  strokeWidth="1.2"
+                  strokeDasharray="6 10"
+                />
+                <circle cx="28" cy="80" r="3" fill="#FBBF24" />
+              </motion.svg>
+
+              {/* Comet Afterglow Trail #2 (Farthest ghost following the logo trajectory) */}
               <motion.div
-                initial={{ scale: 0.5, rotate: -14 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                aria-hidden="true"
+                animate={{
+                  x: [0, 42, -38, 28, -20, 0],
+                  y: [34, -28, -10, -34, 14, 0],
+                  rotate: [-22, 16, -14, 10, -6, 0],
+                  scale: [0.48, 0.98, 0.84, 0.94, 0.88, 0.9],
+                }}
+                transition={{
+                  duration: 2.6,
+                  delay: 0.14,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute w-24 h-24 rounded-[30px] blur-md opacity-30 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(145deg, #F59E0B 0%, #DE482B 100%)',
+                }}
+              />
+
+              {/* Comet Afterglow Trail #1 (Closer ghost following the logo trajectory) */}
+              <motion.div
+                aria-hidden="true"
+                animate={{
+                  x: [0, 42, -38, 28, -20, 0],
+                  y: [34, -28, -10, -34, 14, 0],
+                  rotate: [-22, 16, -14, 10, -6, 0],
+                  scale: [0.52, 1.05, 0.9, 1.02, 0.94, 0.96],
+                }}
+                transition={{
+                  duration: 2.6,
+                  delay: 0.07,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute w-24 h-24 rounded-[30px] blur-[3px] opacity-45 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(145deg, #FF8A6C 0%, #DE482B 100%)',
+                }}
+              />
+
+              {/* Main Choreographed Moving Kompa Emblem */}
+              <motion.div
+                layoutId="kompa-flying-logo"
+                animate={{
+                  x: [0, 42, -38, 28, -20, 0],
+                  y: [34, -28, -10, -34, 14, 0],
+                  rotate: [-22, 16, -14, 10, -6, 0],
+                  scale: [0.58, 1.14, 0.94, 1.1, 0.97, 1.04],
+                }}
+                transition={{
+                  duration: 2.6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
                 className="relative w-24 h-24 rounded-[30px] flex items-center justify-center overflow-hidden shadow-2xl"
                 style={{
                   background: 'linear-gradient(145deg, #F05637 0%, #DE482B 55%, #A92D16 100%)',
-                  border: '1.5px solid rgba(255, 190, 170, 0.55)',
+                  border: '1.5px solid rgba(255, 195, 175, 0.65)',
                   boxShadow:
-                    '0 20px 50px -10px rgba(222, 72, 43, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.45)',
+                    '0 22px 55px -8px rgba(222, 72, 43, 0.78), inset 0 2px 3px rgba(255, 255, 255, 0.48)',
                 }}
               >
                 {/* Moving Shimmer Sweep Across Logo */}
                 <motion.div
-                  animate={{ x: ['-140%', '160%'] }}
-                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                  animate={{ x: ['-150%', '170%'] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                   className="absolute inset-y-0 w-12 -skew-x-12 pointer-events-none"
                   style={{
                     background:
-                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.38), transparent)',
+                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)',
                   }}
                 />
-                <span className="relative z-10 font-display font-extrabold text-5xl text-white tracking-tight">
+                {/* Parallax Bouncing 'K' Monogram */}
+                <motion.span
+                  animate={{
+                    y: [0, -4, 3, -3, 0],
+                    rotate: [0, -8, 7, -4, 0],
+                    scale: [0.9, 1.1, 0.96, 1.06, 1],
+                  }}
+                  transition={{
+                    duration: 2.6,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  className="relative z-10 font-display font-extrabold text-5xl text-white tracking-tight"
+                >
                   K
-                </span>
+                </motion.span>
               </motion.div>
             </div>
 
-            {/* Brand Title & Subtitle */}
+            {/* Animated Wave Wordmark & Subtitle */}
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18, duration: 0.35 }}
-              className="mt-5 space-y-1.5"
+              transition={{ delay: 0.12, duration: 0.35 }}
+              className="mt-3 space-y-1.5"
             >
-              <div className="font-display font-extrabold text-3xl tracking-tight text-white">
-                Kompa
-              </div>
-              <p className="text-xs sm:text-sm font-medium text-[#ffbfa9]/80">
+              <motion.div
+                layoutId="kompa-flying-wordmark"
+                className="inline-flex items-center justify-center font-display font-extrabold text-3xl tracking-tight text-white"
+              >
+                {['K', 'o', 'm', 'p', 'a'].map((char, i) => (
+                  <motion.span
+                    key={i}
+                    animate={{
+                      y: [0, -6, 0],
+                    }}
+                    transition={{
+                      duration: 1.4,
+                      repeat: Infinity,
+                      delay: i * 0.1,
+                      ease: 'easeInOut',
+                    }}
+                    className="inline-block"
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </motion.div>
+              <p className="text-xs sm:text-sm font-medium text-[#ffbfa9]/85">
                 Живые компании и вечерние встречи в твоём городе
               </p>
             </motion.div>
 
             {/* Animated Loading Progress Bar */}
-            <div className="mt-7 w-44 h-1.5 rounded-full bg-white/10 overflow-hidden p-0.5">
+            <div className="mt-7 w-48 h-1.5 rounded-full bg-white/10 overflow-hidden p-0.5">
               <motion.div
-                initial={{ width: '8%' }}
+                initial={{ width: '6%' }}
                 animate={{ width: '100%' }}
-                transition={{ duration: 1.85, ease: 'easeInOut' }}
+                transition={{ duration: 2.7, ease: 'easeInOut' }}
                 className="h-full rounded-full"
                 style={{
                   background: 'linear-gradient(90deg, #DE482B 0%, #FF8A6C 50%, #F59E0B 100%)',
@@ -732,34 +837,56 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </motion.div>
         ) : (
-          /* STAGE 1: REFERENCE-STYLE PORTRAIT REGISTRATION CARD WITH MOVING GLOW */
+          /* STAGE 1: REFERENCE-STYLE PORTRAIT REGISTRATION CARD WITH MOVING LOGO & GLOW */
           <motion.div
             key="kompa-auth-card"
-            initial={{ opacity: 0, scale: 0.93, y: 18 }}
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
             onClick={e => e.stopPropagation()}
             className="relative z-10 w-full max-w-[395px] my-auto flex flex-col items-center"
           >
-            {/* Compact Animated Brand Header Above Card */}
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2.5 mb-3.5"
-            >
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-display font-extrabold text-base shadow-lg"
+            {/* Compact Living Brand Header Above Card (Receives Flying Logo via layoutId) */}
+            <motion.div className="flex items-center gap-2.5 mb-3.5">
+              <motion.div
+                layoutId="kompa-flying-logo"
+                animate={{
+                  x: [0, 5, -5, 3, 0],
+                  y: [0, -4, 1, -3, 0],
+                  rotate: [0, 6, -6, 3, 0],
+                }}
+                transition={{
+                  layout: { type: 'spring', stiffness: 260, damping: 26 },
+                  duration: 4.2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="relative w-9 h-9 rounded-xl flex items-center justify-center text-white font-display font-extrabold text-base shadow-lg overflow-hidden"
                 style={{
                   background: 'linear-gradient(145deg, #F05637 0%, #DE482B 100%)',
-                  border: '1px solid rgba(255, 180, 160, 0.45)',
+                  border: '1px solid rgba(255, 180, 160, 0.55)',
+                  boxShadow: '0 8px 20px -4px rgba(222, 72, 43, 0.6)',
                 }}
               >
-                K
-              </div>
-              <span className="font-display font-extrabold text-lg text-white tracking-tight">
+                <motion.div
+                  animate={{ x: ['-150%', '180%'] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute inset-y-0 w-5 -skew-x-12 pointer-events-none"
+                  style={{
+                    background:
+                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                  }}
+                />
+                <span className="relative z-10">K</span>
+              </motion.div>
+              <motion.span
+                layoutId="kompa-flying-wordmark"
+                transition={{ layout: { type: 'spring', stiffness: 260, damping: 26 } }}
+                className="font-display font-extrabold text-lg text-white tracking-tight"
+              >
                 Kompa
-              </span>
+              </motion.span>
               <span className="text-xs text-[#ffbfa9]/70 font-medium">
                 · {city || 'Москва'}
               </span>
