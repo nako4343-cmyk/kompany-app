@@ -133,13 +133,40 @@ body {
   box-shadow: var(--shadow-elevated);
 }
 
-/* Accessible Focus Rings */
+/* Clean Focus Handling — avoid ugly inner rectangles inside custom input bars */
+input:focus,
 input:focus-visible,
+textarea:focus,
 textarea:focus-visible,
-select:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 button:focus-visible {
   outline: 2px solid var(--accent-primary);
-  outline-offset: 1px;
+  outline-offset: 2px;
+}
+
+/* Prevent iOS Safari / Chrome autofill from painting an opaque rectangle inside inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: currentColor;
+  transition: background-color 9999s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px transparent !important;
+}
+
+@keyframes kompa-border-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Custom scrollbar for mobile drawers & horizontal feeds */
