@@ -1913,7 +1913,7 @@ export const initialData = {
           "senderId": "user-elena",
           "senderName": "Елена Кузнецова",
           "senderAvatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
-          "text": "Супер! С днем рождения заранее 🎂 Буду ровно вовремя!",
+          "text": "Супер! С днем рождения заранее! Буду ровно вовремя.",
           "timestamp": "15:25",
           "isSystemMessage": false
         },
@@ -1921,9 +1921,9 @@ export const initialData = {
           "id": "msg-3",
           "eventId": "ev-1",
           "senderId": "system",
-          "senderName": "Kompany Safety",
+          "senderName": "Kompa Safety",
           "senderAvatar": "",
-          "text": "Напоминание о безопасности: точный адрес открыт только вам. Пожалуйста, не передавайте контакты третьим лицам.",
+          "text": "Напоминание о безопасности: точный адрес открыт только подтверждённым участникам встречи.",
           "timestamp": "15:26",
           "isSystemMessage": true
         }

@@ -148,9 +148,44 @@ export default function App() {
   const [editOccupation, setEditOccupation] = useState<string>('');
   const [editCompanyOrIndustry, setEditCompanyOrIndustry] = useState<string>('');
   const [editPhotos, setEditPhotos] = useState<string[]>([]);
-  const [newPhotoUrl, setNewPhotoUrl] = useState<string>('');
   const [activeProfilePhotoIndex, setActiveProfilePhotoIndex] = useState<number | null>(null);
   const [editInterests, setEditInterests] = useState<string[]>([]);
+  const profilePhotoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleProfilePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const rawUrl = ev.target?.result as string;
+      if (!rawUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSide = 640;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxSide || height > maxSide) {
+          const ratio = Math.min(maxSide / width, maxSide / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.84);
+          setEditPhotos(prev => [compressed, ...prev]);
+        } else {
+          setEditPhotos(prev => [rawUrl, ...prev]);
+        }
+      };
+      img.src = rawUrl;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   // Modals state
   const [selectedEventForDetail, setSelectedEventForDetail] = useState<EventItem | null>(null);
@@ -337,7 +372,6 @@ export default function App() {
     setEditOccupation(currentUser.occupation || '');
     setEditCompanyOrIndustry(currentUser.companyOrIndustry || '');
     setEditPhotos(currentUser.photos && currentUser.photos.length > 0 ? currentUser.photos : [currentUser.avatarUrl]);
-    setNewPhotoUrl('');
     setEditInterests(currentUser.interests || []);
     setIsEditingProfile(true);
   };
@@ -349,6 +383,7 @@ export default function App() {
         city: editCity,
         occupation: editOccupation,
         companyOrIndustry: editCompanyOrIndustry,
+        avatarUrl: editPhotos[0] || currentUser.avatarUrl,
         photos: editPhotos,
         interests: editInterests,
       });
@@ -514,7 +549,7 @@ export default function App() {
       {/* 1. SLEEK STUDIO ROLE SWITCHER BAR FOR TESTING */}
       <aside
         aria-label="Панель переключения ролей"
-        className="w-full max-w-full overflow-hidden text-white text-[11px] py-1.5 px-3 sm:px-4 border-b border-white/10"
+        className="w-full max-w-full overflow-hidden text-white text-[11px] py-1.5 px-3 sm:px-4 pt-safe border-b border-white/10"
         style={{ backgroundColor: 'var(--hero-grad-from)' }}
       >
         <div className="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 min-w-0">
@@ -1954,36 +1989,27 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Edit Photos Manager */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-semibold block" style={{ color: 'var(--text-secondary)' }}>
-                      Фотографии профиля ({editPhotos.length})
-                    </label>
-
-                    <div className="flex gap-2">
+                  {/* Edit Personal Photos Manager */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-[11px] font-semibold block" style={{ color: 'var(--text-secondary)' }}>
+                        Личные фотографии профиля ({editPhotos.length})
+                      </label>
                       <input
-                        type="url"
-                        value={newPhotoUrl}
-                        onChange={e => setNewPhotoUrl(e.target.value)}
-                        placeholder="Вставьте ссылку на фото (https://...)"
-                        className="flex-1 p-2.5 rounded-xl border text-xs"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--text-primary)',
-                        }}
+                        ref={profilePhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePhotoFileChange}
+                        className="hidden"
                       />
                       <button
                         type="button"
-                        onClick={() => {
-                          if (!newPhotoUrl.trim()) return;
-                          setEditPhotos(prev => [...prev, newPhotoUrl.trim()]);
-                          setNewPhotoUrl('');
-                        }}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer transition-transform active:scale-95"
+                        onClick={() => profilePhotoInputRef.current?.click()}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer transition-transform active:scale-95 flex items-center gap-1.5 shadow-2xs"
                         style={{ backgroundColor: 'var(--accent-primary)' }}
                       >
-                        + Добавить
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>Загрузить своё фото</span>
                       </button>
                     </div>
 
@@ -1996,14 +2022,19 @@ export default function App() {
                         >
                           <img
                             src={photo}
-                            alt={`Фото ${idx + 1}`}
+                            alt={`Моё фото ${idx + 1}`}
                             className="w-full h-full object-cover"
                           />
+                          {idx === 0 && (
+                            <span className="absolute bottom-0.5 inset-x-0.5 text-[8px] font-bold text-center py-0.5 rounded bg-black/65 text-white">
+                              Аватар
+                            </span>
+                          )}
                           {editPhotos.length > 1 && (
                             <button
                               type="button"
                               onClick={() => setEditPhotos(prev => prev.filter((_, i) => i !== idx))}
-                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
                               title="Удалить фото"
                             >
                               <X className="w-3 h-3" />
@@ -2032,7 +2063,7 @@ export default function App() {
 
                   <div>
                     <label className="text-[11px] font-semibold block mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-                      Выберите интересы (влияют на AI-подбор):
+                      Выберите интересы (влияют на персональный подбор компаний):
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {ALL_INTEREST_OPTIONS.map(opt => {

@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, QrCode, Copy, Check, Share2, Send, 
-  Smartphone, ShieldCheck, ExternalLink, Download, 
-  Globe, AlertCircle, HelpCircle, Layers
+import { motion } from 'framer-motion';
+import {
+  X,
+  QrCode,
+  Copy,
+  Check,
+  Share2,
+  Send,
+  ShieldCheck,
+  Users,
+  MapPin,
+  Star,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 
@@ -15,15 +23,13 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
   onClose,
   sharedUrl: propUrl,
 }) => {
-  const [activeTab, setActiveTab] = useState<'qr' | 'deploy'>('qr');
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-  // Default shared URL pointing to the live GitHub Pages site
-  const demoUrl = propUrl || 'https://nako4343-cmyk.github.io/kompany-app/';
+  const shareUrl = propUrl || 'https://nako4343-cmyk.github.io/kompany-app/';
 
   useEffect(() => {
-    QRCode.toDataURL(demoUrl, {
+    QRCode.toDataURL(shareUrl, {
       width: 280,
       margin: 2,
       color: {
@@ -34,15 +40,15 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
     })
       .then(url => setQrDataUrl(url))
       .catch(err => console.error('Failed to generate QR code:', err));
-  }, [demoUrl]);
+  }, [shareUrl]);
 
   const handleCopy = async () => {
     try {
       if (navigator.clipboard) {
-        await navigator.clipboard.writeText(demoUrl);
+        await navigator.clipboard.writeText(shareUrl);
       } else {
         const input = document.createElement('input');
-        input.value = demoUrl;
+        input.value = shareUrl;
         document.body.appendChild(input);
         input.select();
         document.execCommand('copy');
@@ -59,11 +65,11 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Kompa — Компания — найди с кем пойти сегодня вечером (без дейтинга)',
-          text: 'Закрытый поиск компании в бар, на настолки, концерты и дни рождения. Точный адрес и чат открываются только после одобрения организатором.',
-          url: demoUrl,
+          title: 'Kompa — закрытый клуб городских встреч и компаний',
+          text: 'Присоединяйся к Kompa: камерные ужины, настольные игры, концерты и спорт в проверенной компании.',
+          url: shareUrl,
         });
-      } catch (err) {
+      } catch {
         // user cancelled
       }
     } else {
@@ -71,50 +77,75 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
     }
   };
 
-  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(demoUrl)}&text=${encodeURIComponent(
-    'Kompa — найди с кем пойти сегодня вечером (без дейтинга)! Закрытый поиск компании в бар, на настолки, концерты и дни рождения.'
+  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(
+    shareUrl
+  )}&text=${encodeURIComponent(
+    'Kompa — закрытый клуб городских встреч! Камерные ужины, настолки, концерты и дни рождения в проверенной компании.'
   )}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-150">
-      <div
-        className="w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[92vh] overflow-hidden"
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 28, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.98 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 360 }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-[28px] sm:rounded-[28px] shadow-2xl border flex flex-col max-h-[92dvh] overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
           color: 'var(--text-primary)',
         }}
       >
+        {/* iOS Sheet Grabber */}
+        <div className="pt-2 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div
+            className="w-9 h-1 rounded-full opacity-20"
+            style={{ backgroundColor: 'var(--text-primary)' }}
+          />
+        </div>
+
         {/* Header */}
         <div
-          className="p-4 sm:p-5 border-b flex items-center justify-between shrink-0"
+          className="px-5 py-4 border-b flex items-center justify-between shrink-0"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{
                 backgroundColor: 'var(--accent-soft)',
                 color: 'var(--accent-primary)',
               }}
             >
-              <Smartphone className="w-5 h-5" />
+              <QrCode className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-display font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-                Демо сайт для друзей
+              <h2
+                className="text-sm sm:text-base font-display font-bold leading-tight"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Пригласить друзей в Kompa
               </h2>
-              <span className="text-[11px] block" style={{ color: 'var(--text-secondary)' }}>
-                Доступ по ссылке, QR-коду и развертывание на внешнем хостинге
+              <span
+                className="text-[11px] block"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Личное приглашение по QR-коду или прямой ссылке
               </span>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-xl border flex items-center justify-center transition-colors cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-elevated)',
+              borderColor: 'var(--border-subtle)',
               color: 'var(--text-secondary)',
             }}
           >
@@ -122,348 +153,156 @@ export const DemoShareModal: React.FC<DemoShareModalProps> = ({
           </button>
         </div>
 
-        {/* Segmented Mode Switcher */}
-        <div className="p-3 pb-0 px-5 sm:px-6 shrink-0">
+        {/* Body */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 pb-safe">
+          {/* QR Pass Card */}
           <div
-            className="flex items-center p-1 rounded-2xl border text-xs font-bold"
+            className="p-5 rounded-3xl border text-center space-y-3.5 flex flex-col items-center justify-center studio-card"
             style={{
               backgroundColor: 'var(--bg-elevated)',
               borderColor: 'var(--border-subtle)',
             }}
           >
-            <button
-              type="button"
-              onClick={() => setActiveTab('qr')}
-              className="flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider"
               style={{
-                backgroundColor: activeTab === 'qr' ? 'var(--bg-surface)' : 'transparent',
-                color: activeTab === 'qr' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: activeTab === 'qr' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--accent-text)',
               }}
             >
-              <QrCode className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-              <span>Ссылка и QR-код</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('deploy')}
-              className="flex-1 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+              <span>Kompa Club Pass</span>
+            </div>
+
+            <div className="p-3.5 bg-white rounded-2xl shadow-sm border border-slate-200/80">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="QR-код приглашения Kompa"
+                  className="w-44 h-44 sm:w-48 sm:h-48 object-contain"
+                />
+              ) : (
+                <div className="w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center text-xs text-slate-400">
+                  Генерация QR-кода...
+                </div>
+              )}
+            </div>
+
+            <p
+              className="text-xs max-w-xs leading-relaxed"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Наведите камеру смартфона, чтобы мгновенно открыть клубную ленту встреч Kompa.
+            </p>
+          </div>
+
+          {/* Direct Link & Copy */}
+          <div className="space-y-1.5">
+            <label
+              className="text-[11px] font-bold uppercase tracking-wider block"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Прямая ссылка на приложение
+            </label>
+            <div
+              className="p-2 rounded-2xl border flex items-center justify-between gap-2"
               style={{
-                backgroundColor: activeTab === 'deploy' ? 'var(--bg-surface)' : 'transparent',
-                color: activeTab === 'deploy' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: activeTab === 'deploy' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                backgroundColor: 'var(--bg-elevated)',
+                borderColor: 'var(--border-subtle)',
               }}
             >
-              <Globe className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-              <span>Другие хостинги (Vercel / Netlify)</span>
+              <span
+                className="text-xs font-mono-num truncate px-2 select-all"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {shareUrl}
+              </span>
+              <motion.button
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={handleCopy}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shrink-0 flex items-center gap-1.5 shadow-xs"
+                style={{
+                  backgroundColor: copied ? '#10b981' : 'var(--accent-primary)',
+                }}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Скопировано</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Копировать</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Quick Share Actions */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <a
+              href={telegramShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-3 px-3.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-95 text-white"
+              style={{ backgroundColor: '#229ED9' }}
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>В Telegram</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              className="py-3 px-3.5 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              style={{
+                backgroundColor: 'var(--bg-elevated)',
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              <Share2
+                className="w-3.5 h-3.5"
+                style={{ color: 'var(--accent-primary)' }}
+              />
+              <span>Поделиться</span>
             </button>
           </div>
-        </div>
 
-        {/* Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-5">
-          {activeTab === 'qr' ? (
-            <>
-              {/* Important Explanation Note */}
-              <div
-                className="p-3.5 rounded-2xl border text-xs flex items-start gap-3"
-                style={{
-                  backgroundColor: 'var(--accent-soft)',
-                  borderColor: 'var(--border-subtle)',
-                  color: 'var(--accent-text)',
-                }}
-              >
-                <AlertCircle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
-                <div className="space-y-1">
-                  <span className="font-bold block">Почему у друга ссылка могла не открыться?</span>
-                  <p className="text-[11px] leading-relaxed opacity-90">
-                    Ссылка <code>ais-dev</code> открывается <b>только в вашем аккаунте</b>. Чтобы публичная ссылка заработала для всех, нажмите кнопку <b>«Share» (Поделиться)</b> в правом верхнем углу интерфейса Google AI Studio!
-                  </p>
-                </div>
-              </div>
-
-              {/* QR Code Card */}
-              <div
-                className="p-5 rounded-3xl border text-center space-y-3.5 flex flex-col items-center justify-center"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-                  <QrCode className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                  <span>Сканирование с камеры смартфона (Android & iOS)</span>
-                </span>
-
-                <div className="p-3 bg-white rounded-2xl shadow-md border border-slate-200">
-                  {qrDataUrl ? (
-                    <img
-                      src={qrDataUrl}
-                      alt="QR-код для демонстрации"
-                      className="w-48 h-48 sm:w-52 sm:h-52 object-contain"
-                    />
-                  ) : (
-                    <div className="w-48 h-48 sm:w-52 sm:h-52 flex items-center justify-center text-xs text-slate-400">
-                      Генерация QR-кода...
-                    </div>
-                  )}
-                </div>
-
-                <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Друг может просто открыть камеру на своем <b>Android</b> или <b>iPhone</b> и навести на этот QR-код — сайт откроется в браузере.
-                </p>
-              </div>
-
-              {/* Direct Link & Copy */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold block" style={{ color: 'var(--text-primary)' }}>
-                  Прямая публичная ссылка для отправки:
-                </label>
-                <div
-                  className="p-2 sm:p-2.5 rounded-2xl border flex items-center justify-between gap-2"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                >
-                  <span className="text-xs font-mono truncate px-2 select-all" style={{ color: 'var(--text-secondary)' }}>
-                    {demoUrl}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shrink-0 flex items-center gap-1.5 shadow-xs active:scale-95"
-                    style={{ backgroundColor: copied ? '#10b981' : 'var(--accent-primary)' }}
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Скопировано!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Копировать</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick Share Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <a
-                  href={telegramShareUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer hover:opacity-95"
-                  style={{
-                    backgroundColor: '#229ED9',
-                    borderColor: '#229ED9',
-                    color: '#FFFFFF',
-                  }}
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Отправить ссылку в Telegram</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  className="p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer hover:opacity-95"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <Share2 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                  <span>Поделиться через меню смартфона</span>
-                </button>
-              </div>
-            </>
-          ) : (
-            /* External Hosting Tab */
-            <div className="space-y-4">
-              <div
-                className="p-4 rounded-2xl border space-y-2"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs"
-                    style={{
-                      backgroundColor: 'var(--accent-soft)',
-                      color: 'var(--accent-primary)',
-                    }}
-                  >
-                    1
-                  </div>
-                  <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                    Netlify Drop — Самый быстрый бесплатный способ (10 секунд без консоли)
-                  </h3>
-                </div>
-
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Готовая скомпилированная сборка сайта уже сформирована. Вы можете скачать её в 1 клик и перетащить в бесплатный сервис Netlify Drop:
-                </p>
-
-                <div className="pt-2 flex flex-wrap gap-2">
-                  <a
-                    href="/api/download/build"
-                    download="kompany-build.zip"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs cursor-pointer active:scale-95"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Скачать архив сайта (.ZIP, 275 KB)</span>
-                  </a>
-
-                  <a
-                    href="https://app.netlify.com/drop"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border cursor-pointer hover:opacity-95"
-                    style={{
-                      backgroundColor: 'var(--bg-surface)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Открыть Netlify Drop</span>
-                  </a>
-                </div>
-
-                <span className="text-[11px] block pt-1" style={{ color: 'var(--text-muted)' }}>
-                  Шаг: скачайте архив <code>kompany-build.zip</code>, распакуйте его и просто перетащите полученную папку на страницу Netlify Drop — через 5 секунд получите бесплатную постоянную ссылку, доступную с любых телефонов!
-                </span>
-              </div>
-
-              {/* Vercel Option */}
-              <div
-                className="p-4 rounded-2xl border space-y-2"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs"
-                    style={{
-                      backgroundColor: 'var(--accent-soft)',
-                      color: 'var(--accent-primary)',
-                    }}
-                  >
-                    2
-                  </div>
-                  <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                    Ваш GitHub Репозиторий и GitHub Pages
-                  </h3>
-                </div>
-
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Проект успешно выгружен в ваш личный GitHub! Включена автоматическая публикация на <b>GitHub Pages</b>:
-                </p>
-
-                <div className="pt-2 flex flex-wrap gap-2">
-                  <a
-                    href="https://nako4343-cmyk.github.io/kompany-app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer active:scale-95"
-                    style={{ backgroundColor: 'var(--accent-primary)' }}
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>Открыть демо на GitHub Pages</span>
-                    <ExternalLink className="w-3 h-3 opacity-80" />
-                  </a>
-
-                  <a
-                    href="https://github.com/nako4343-cmyk/kompany-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border cursor-pointer hover:opacity-95"
-                    style={{
-                      backgroundColor: 'var(--bg-surface)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Репозиторий на GitHub</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* AI Studio Official Share Option */}
-              <div
-                className="p-4 rounded-2xl border space-y-2"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs"
-                    style={{
-                      backgroundColor: 'var(--accent-soft)',
-                      color: 'var(--accent-primary)',
-                    }}
-                  >
-                    3
-                  </div>
-                  <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                    Публикация прямо в Google AI Studio (без сторонних сайтов)
-                  </h3>
-                </div>
-
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  В верхнем правом углу Google AI Studio нажмите кнопку <b>«Share»</b> и выберите <b>«Publish app»</b>. Ссылка сразу станет активной для всех устройств без логина!
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Interactive Walkthrough Tips for Friends */}
+          {/* Club Highlights */}
           <div
             className="p-4 rounded-2xl border space-y-2.5"
             style={{
-              backgroundColor: 'var(--accent-soft)',
+              backgroundColor: 'var(--bg-elevated)',
               borderColor: 'var(--border-subtle)',
             }}
           >
-            <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--accent-text)' }}>
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Что показать друзьям в демо:</span>
-            </span>
-
-            <ul className="text-xs space-y-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-500 font-bold shrink-0">1.</span>
-                <span><b>Защита приватности</b>: точный адрес и телефон скрыты плашкой «Адрес скрыт» до одобрения заявки организатором.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-500 font-bold shrink-0">2.</span>
-                <span><b>Переключение ролей</b>: в верхней панели переключайтесь между Анной, Михаилом и Еленой в 1 клик, чтобы увидеть сервис с обеих сторон.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-500 font-bold shrink-0">3.</span>
-                <span><b>Быстрые фильтры</b>: над лентой можно включить «Только поблизости», «Самые популярные» или «По интересам».</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-500 font-bold shrink-0">4.</span>
-                <span><b>Фотогалереи и отзывы</b>: в профилях участников можно листать фотографии в полноэкранном лайтбоксе и читать отзывы о совместных встречах.</span>
-              </li>
-            </ul>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                <MapPin className="w-4 h-4 mx-auto mb-1" style={{ color: 'var(--accent-primary)' }} />
+                <span className="text-[10px] font-bold block" style={{ color: 'var(--text-primary)' }}>
+                  Приватный адрес
+                </span>
+              </div>
+              <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                <Users className="w-4 h-4 mx-auto mb-1" style={{ color: 'var(--accent-primary)' }} />
+                <span className="text-[10px] font-bold block" style={{ color: 'var(--text-primary)' }}>
+                  4–8 человек
+                </span>
+              </div>
+              <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-surface)' }}>
+                <Star className="w-4 h-4 mx-auto mb-1 text-amber-500" />
+                <span className="text-[10px] font-bold block" style={{ color: 'var(--text-primary)' }}>
+                  Индекс явки
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

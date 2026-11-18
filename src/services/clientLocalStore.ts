@@ -17,7 +17,7 @@ import {
   syncChatMessageToCloud,
 } from '../lib/firebase.ts';
 
-const LOCAL_STORAGE_KEY = 'kompany_client_store_v12';
+const LOCAL_STORAGE_KEY = 'kompany_client_store_v14';
 
 export class ClientLocalStore {
   users: Map<string, UserProfile> = new Map();
@@ -39,6 +39,7 @@ export class ClientLocalStore {
     try {
       if (typeof window !== 'undefined') {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem('kompany_client_store_v12');
         localStorage.removeItem('kompany_client_store_v7');
         localStorage.removeItem('kompany_client_store_v6');
         localStorage.removeItem('kompany_client_store_v5');

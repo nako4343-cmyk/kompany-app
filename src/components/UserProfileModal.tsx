@@ -101,13 +101,21 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         exit={{ opacity: 0, y: 24, scale: 0.97 }}
         transition={{ type: 'spring', damping: 28, stiffness: 320 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden"
+        className="w-full max-w-xl rounded-t-[28px] sm:rounded-[28px] shadow-2xl border flex flex-col max-h-[92dvh] sm:max-h-[88vh] overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
           color: 'var(--text-primary)',
         }}
       >
+        {/* iOS Sheet Grabber */}
+        <div className="pt-2 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div
+            className="w-9 h-1 rounded-full opacity-20"
+            style={{ backgroundColor: 'var(--text-primary)' }}
+          />
+        </div>
+
         {/* 1. TOP PROFILE HEADER */}
         <div
           className="p-5 sm:p-6 border-b shrink-0 space-y-4"
@@ -270,7 +278,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         </div>
 
         {/* 2. SCROLLABLE BODY */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6 pb-safe">
           {blockSuccess && (
             <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs rounded-2xl">
               Пользователь заблокирован. Его события больше не будут отображаться в вашей ленте.

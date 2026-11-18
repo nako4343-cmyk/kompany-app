@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   ChevronRight,
@@ -535,23 +536,39 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     `https://yandex.ru/maps/?text=${encodeURIComponent(`${city}, ${exactAddress || exactVenue || approximateArea}`)}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs">
-      <div
-        className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in slide-in-from-bottom duration-200"
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 28, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.98 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 360 }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-lg rounded-t-[28px] sm:rounded-[28px] shadow-2xl border flex flex-col max-h-[92dvh] overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
           color: 'var(--text-primary)',
         }}
       >
+        {/* iOS Sheet Grabber */}
+        <div className="pt-2 pb-0.5 flex justify-center sm:hidden shrink-0">
+          <div
+            className="w-9 h-1 rounded-full opacity-20"
+            style={{ backgroundColor: 'var(--text-primary)' }}
+          />
+        </div>
+
         {/* Header */}
         <div
-          className="p-4 sm:p-5 border-b flex items-center justify-between"
+          className="px-5 py-4 border-b flex items-center justify-between shrink-0"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
           <div>
             <span
-              className="text-[10px] font-bold uppercase tracking-wider block tabular-nums"
+              className="text-[10px] font-bold uppercase tracking-wider block font-mono-num"
               style={{ color: 'var(--accent-text)' }}
             >
               Шаг {step} из 6
@@ -562,9 +579,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-xl border flex items-center justify-center transition-colors cursor-pointer"
             style={{
               backgroundColor: 'var(--bg-elevated)',
+              borderColor: 'var(--border-subtle)',
               color: 'var(--text-secondary)',
             }}
           >
@@ -573,11 +591,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full h-1" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-          <div
-            className="h-1 transition-all duration-300"
+        <div className="w-full h-1 shrink-0" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+          <motion.div
+            animate={{ width: `${(step / 6) * 100}%` }}
+            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+            className="h-1"
             style={{
-              width: `${(step / 6) * 100}%`,
               backgroundColor: 'var(--accent-primary)',
             }}
           />
@@ -592,6 +611,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             </div>
           )}
 
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`create-step-${step}`}
+              initial={{ opacity: 0, x: 18, scale: 0.99 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -18, scale: 0.99 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+            >
           {/* STEP 1: Category, Title, Guest Count & Event Background (Standard or Custom) */}
           {step === 1 && (
             <div className="space-y-4">
@@ -1519,11 +1546,13 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               </div>
             </div>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Footer Navigation */}
         <div
-          className="p-4 border-t flex items-center justify-between gap-3"
+          className="p-4 pb-safe border-t flex items-center justify-between gap-3 shrink-0"
           style={{
             backgroundColor: 'var(--bg-elevated)',
             borderColor: 'var(--border-subtle)',
@@ -1566,7 +1595,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             )}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -208,7 +208,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         exit={{ opacity: 0, y: 24, scale: 0.97 }}
         transition={{ type: 'spring', damping: 28, stiffness: 320 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[93vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col overflow-hidden"
+        className="w-full max-w-2xl max-h-[94dvh] sm:max-h-[88vh] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border flex flex-col overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
@@ -217,6 +217,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       >
         {/* 1. HERO MEDIA HEADER */}
         <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-slate-900 shrink-0">
+          {/* iOS Sheet Grabber on Hero */}
+          <div className="absolute top-2 inset-x-0 flex justify-center sm:hidden z-20 pointer-events-none">
+            <div className="w-9 h-1 rounded-full bg-white/45" />
+          </div>
           <motion.img
             initial={{ scale: 1.08 }}
             animate={{ scale: 1 }}
@@ -1103,7 +1107,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
         {/* 4. STICKY BOTTOM ACTION BAR */}
         <div
-          className="p-4 sm:px-6 border-t shrink-0"
+          className="p-4 sm:px-6 pb-safe border-t shrink-0"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderColor: 'var(--border-subtle)',
