@@ -31,10 +31,10 @@ export interface PaletteOption {
 export const PALETTE_OPTIONS: PaletteOption[] = [
   {
     id: 'sunset',
-    name: 'Iris Violet',
-    subtitle: 'Светлый фиолетовый',
-    swatchBg: '#F7F6FB',
-    swatchAccent: '#5E3AEF',
+    name: 'Sunset Coral',
+    subtitle: 'Тёплый коралл и сливочный песок',
+    swatchBg: '#FAF7F2',
+    swatchAccent: '#E4482A',
   },
   {
     id: 'cobalt',
@@ -108,28 +108,6 @@ export const Header: React.FC<HeaderProps> = ({
   const activeLangObj =
     LANGUAGE_OPTIONS.find((l) => l.id === lang) || LANGUAGE_OPTIONS[0];
 
-  const [logoConcept, setLogoConcept] = useState<'knot' | 'circle' | 'compass' | 'dialogue' | 'prism'>(() => {
-    try {
-      const saved = localStorage.getItem('kompa_brand_logo_concept') as any;
-      return saved || 'knot';
-    } catch {
-      return 'knot';
-    }
-  });
-
-  useEffect(() => {
-    const handleBrandUpdate = () => {
-      try {
-        const saved = localStorage.getItem('kompa_brand_logo_concept') as any;
-        if (saved) setLogoConcept(saved);
-      } catch {
-        // ignore
-      }
-    };
-    window.addEventListener('kompa-brand-updated', handleBrandUpdate);
-    return () => window.removeEventListener('kompa-brand-updated', handleBrandUpdate);
-  }, []);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -166,14 +144,14 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-6xl w-full mx-auto px-2.5 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-3 min-w-0">
         {/* Left Zone: Brand Identity */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
-          <KompaLogoMark size={36} concept={logoConcept} variant="brand" />
+          <KompaLogoMark size={38} variant="badge" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span
                 className="font-display font-extrabold text-base sm:text-lg tracking-[-0.03em] truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
-                kompa
+                Kompa
               </span>
               <span
                 className="hidden sm:inline-block text-xs font-medium shrink-0"

@@ -204,14 +204,14 @@ export default function App() {
   const [showDemoShareModal, setShowDemoShareModal] = useState<boolean>(false);
   const [isAuthCompleted, setIsAuthCompleted] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('kompa_auth_completed_v9') === 'true';
+      return localStorage.getItem('kompa_auth_completed_v10') === 'true';
     } catch {
       return false;
     }
   });
   const [showAuthModal, setShowAuthModal] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('kompa_auth_completed_v9') !== 'true';
+      return localStorage.getItem('kompa_auth_completed_v10') !== 'true';
     } catch {
       return true;
     }
@@ -220,7 +220,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      localStorage.removeItem('kompa_auth_completed_v9');
+      localStorage.removeItem('kompa_auth_completed_v10');
     } catch {
       // ignore storage errors
     }
@@ -2347,7 +2347,7 @@ export default function App() {
           isInitialGate={!isAuthCompleted}
           onClose={() => {
             try {
-              localStorage.setItem('kompa_auth_completed_v9', 'true');
+              localStorage.setItem('kompa_auth_completed_v10', 'true');
             } catch {
               // ignore storage errors
             }
@@ -2357,7 +2357,7 @@ export default function App() {
           onLogout={handleLogout}
           onProfileRegistered={updatedProfile => {
             try {
-              localStorage.setItem('kompa_auth_completed_v9', 'true');
+              localStorage.setItem('kompa_auth_completed_v10', 'true');
             } catch {
               // ignore storage errors
             }
