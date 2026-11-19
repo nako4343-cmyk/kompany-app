@@ -283,8 +283,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Launch Splash Screen (3.2s duration -> smooth transition into the Login screen)
-  const [showLogoSplash, setShowLogoSplash] = useState<boolean>(true);
+  // Lock whether the modal was opened as initial registration gate vs editing "Моя анкета"
+  const [isEditProfileMode, setIsEditProfileMode] = useState<boolean>(() => !isInitialGate);
+
+  // Launch Splash Screen (3.2s duration on initial gate; instant open when editing "Моя анкета")
+  const [showLogoSplash, setShowLogoSplash] = useState<boolean>(() => isInitialGate);
 
   useEffect(() => {
     if (!showLogoSplash) return;
@@ -295,10 +298,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   }, [showLogoSplash]);
 
   // Auth Flow Mode:
-  // 'login' = Sunset Coral Login Screen (Kompa logo at top, Login + Password, bottom "Войти" & right "Регистрация")
-  // 'register' = 4-Step Registration Flow (with Personal Photo Upload at top)
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>([1, 1]);
+  // 'login' = Sunset Coral Login Screen (initial gate)
+  // 'register' = 4-Step Registration Flow OR direct Step 3 Questionnaire Editor when !isInitialGate
+  const [authMode, setAuthMode] = useState<'login' | 'register'>(() =>
+    isInitialGate ? 'login' : 'register'
+  );
+  const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>(() =>
+    isInitialGate ? [1, 1] : [3, 1]
+  );
 
   const navigateToStep = (nextStep: 1 | 2 | 3 | 4) => {
     triggerHaptic(8);
@@ -520,6 +527,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setErrorMessage(err?.message || 'Не удалось обработать фотографию');
     } finally {
       setIsUploadingPhoto(false);
+      e.target.value = '';
     }
   };
 
@@ -616,7 +624,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const handleSaveAndProceedToFinal = async () => {
-    if (!validateStep1Fields()) {
+    if (isEditProfileMode) {
+      if (name.trim().length < 2) {
+        setErrorMessage('Укажите ваше имя и фамилию');
+        return;
+      }
+    } else if (!validateStep1Fields()) {
       navigateToStep(1);
       return;
     }
@@ -678,6 +691,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (onLogout) {
       onLogout();
     }
+    setIsEditProfileMode(false);
     setIsSmsVerified(false);
     setAuthMode('login');
     navigateToStep(1);
@@ -703,13 +717,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: STUDIO_EASE }}
-      onClick={() => {
-        if (showLogoSplash) {
-          return;
-        }
-        if (!isInitialGate) onClose();
-      }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto pt-safe pb-safe select-none"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-start p-4 sm:p-6 overflow-y-auto pt-safe pb-safe select-none"
       style={{
         backgroundColor: PALETTE.canvasBg,
         backgroundImage: PALETTE.canvasAura,
@@ -717,15 +725,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     >
       {/* Hidden Recaptcha container for Firebase Phone Auth */}
       <div ref={recaptchaContainerRef} className="hidden" />
-
-      {/* Hidden File Input for Personal Photo in Registration */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleCustomAvatarUpload}
-        className="hidden"
-      />
 
       {/* iOS-Style Top Notification Banner for SMS Verification Code */}
       <AnimatePresence>
@@ -858,7 +857,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             className="relative z-10 w-full max-w-[408px] my-auto"
           >
             <div
-              className="relative w-full rounded-[32px] p-6 sm:p-8 flex flex-col justify-between overflow-hidden"
+              className="relative w-full rounded-[32px] p-6 sm:p-8 flex flex-col justify-between overflow-visible"
               style={{
                 backgroundColor: PALETTE.cardBg,
                 border: `1px solid ${PALETTE.cardBorder}`,
@@ -866,8 +865,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   '0 24px 60px -16px rgba(24, 19, 16, 0.08), 0 4px 16px -2px rgba(24, 19, 16, 0.04)',
               }}
             >
+              {/* Hidden File Input placed INSIDE the card so clicks never bubble outside */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onClick={e => e.stopPropagation()}
+                onChange={handleCustomAvatarUpload}
+                className="hidden"
+              />
+
               {/* Top Close / SignOut Row (only when opened manually from inside the app) */}
-              {!isInitialGate && (
+              {isEditProfileMode && (
                 <div className="flex items-center justify-between mb-3">
                   <button
                     type="button"
@@ -934,52 +943,63 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </p>
                   </motion.div>
                 ) : (
-                  /* REGISTRATION HEADER: Personal Photo Upload + Step Progress */
+                  /* REGISTRATION / PROFILE EDIT HEADER: Personal Photo Upload + Step Progress */
                   <div className="w-full flex flex-col items-center">
-                    <div className="w-full flex items-center justify-between mb-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic(6);
-                          setErrorMessage('');
-                          if (wizardStep > 1) {
-                            navigateToStep((wizardStep - 1) as 1 | 2 | 3 | 4);
-                          } else {
-                            setAuthMode('login');
-                          }
-                        }}
-                        className="min-h-[36px] px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-                        style={{
-                          backgroundColor: PALETTE.fieldBg,
-                          color: PALETTE.textSecondary,
-                        }}
-                      >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        <span>{wizardStep > 1 ? 'Назад' : 'Ко входу'}</span>
-                      </button>
-
-                      {/* Clean Step Progress Bar */}
-                      <div className="flex items-center gap-1.5">
-                        {[1, 2, 3, 4].map(stepNum => {
-                          const active = wizardStep === stepNum;
-                          const done = wizardStep > stepNum;
-                          return (
-                            <div
-                              key={stepNum}
-                              className="h-1.5 rounded-full transition-all duration-300"
-                              style={{
-                                width: active ? '24px' : '7px',
-                                backgroundColor: active
-                                  ? PALETTE.accentPrimary
-                                  : done
-                                  ? '#F59E8B'
-                                  : PALETTE.fieldBorder,
-                              }}
-                            />
-                          );
-                        })}
+                    {isEditProfileMode ? (
+                      <div className="w-full flex items-center justify-center mb-3">
+                        <span
+                          className="text-sm font-display font-extrabold"
+                          style={{ color: PALETTE.textNavy }}
+                        >
+                          {wizardStep === 4 ? 'Анкета обновлена' : 'Редактирование анкеты'}
+                        </span>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="w-full flex items-center justify-between mb-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic(6);
+                            setErrorMessage('');
+                            if (wizardStep > 1) {
+                              navigateToStep((wizardStep - 1) as 1 | 2 | 3 | 4);
+                            } else {
+                              setAuthMode('login');
+                            }
+                          }}
+                          className="min-h-[36px] px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                          style={{
+                            backgroundColor: PALETTE.fieldBg,
+                            color: PALETTE.textSecondary,
+                          }}
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                          <span>{wizardStep > 1 ? 'Назад' : 'Ко входу'}</span>
+                        </button>
+
+                        {/* Clean Step Progress Bar */}
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4].map(stepNum => {
+                            const active = wizardStep === stepNum;
+                            const done = wizardStep > stepNum;
+                            return (
+                              <div
+                                key={stepNum}
+                                className="h-1.5 rounded-full transition-all duration-300"
+                                style={{
+                                  width: active ? '24px' : '7px',
+                                  backgroundColor: active
+                                    ? PALETTE.accentPrimary
+                                    : done
+                                    ? '#F59E8B'
+                                    : PALETTE.fieldBorder,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Personal Photo Uploader inside Registration */}
                     <motion.button
@@ -1487,6 +1507,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           animate="show"
                           className="space-y-3"
                         >
+                          {isEditProfileMode && (
+                            <motion.div variants={fadeItemVariants}>
+                              <div
+                                className="flex items-center gap-2.5 px-3.5 min-h-[48px] rounded-2xl transition-all duration-150"
+                                style={getFieldStyle('editName')}
+                              >
+                                <User
+                                  className="w-4 h-4 shrink-0"
+                                  style={{ color: PALETTE.textMuted }}
+                                />
+                                <input
+                                  type="text"
+                                  value={name}
+                                  onFocus={() => setFocusedField('editName')}
+                                  onBlur={() => setFocusedField(null)}
+                                  onChange={e => setName(e.target.value)}
+                                  placeholder="Имя и фамилия"
+                                  style={{ color: PALETTE.textPrimary }}
+                                  className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[14px] placeholder:text-[#A3968D] font-medium appearance-none"
+                                />
+                              </div>
+                            </motion.div>
+                          )}
+
                           <motion.div variants={fadeItemVariants} className="grid grid-cols-12 gap-2">
                             <div
                               className="col-span-5 flex items-center justify-between px-2 min-h-[48px] rounded-2xl"
@@ -1825,7 +1869,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 boxShadow: `0 10px 24px -6px ${PALETTE.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                               }}
                             >
-                              <span>{isSaving ? 'Сохранение анкеты...' : 'Продолжить'}</span>
+                              <span>
+                                {isSaving
+                                  ? 'Сохранение анкеты...'
+                                  : isEditProfileMode
+                                  ? 'Сохранить изменения'
+                                  : 'Продолжить'}
+                              </span>
                               <ArrowRight className="w-4 h-4" />
                             </motion.button>
                           </motion.div>
@@ -1923,7 +1973,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               }}
                             >
                               <Check className="w-4 h-4 stroke-[2.5]" />
-                              <span>Завершить регистрацию</span>
+                              <span>
+                                {isEditProfileMode ? 'Готово' : 'Завершить регистрацию'}
+                              </span>
                             </motion.button>
 
                             <button

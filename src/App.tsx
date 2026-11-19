@@ -398,7 +398,7 @@ export default function App() {
         photos: editPhotos,
         interests: editInterests,
       });
-      setCurrentUser(updated);
+      setCurrentUser({ ...updated });
       setIsEditingProfile(false);
       api.aiGetRecommendations().then(recs => setAiRecommendations(recs)).catch(() => {});
     } catch (err) {
