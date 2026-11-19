@@ -225,7 +225,14 @@ export const MapView: React.FC<MapViewProps> = ({
         style={{ borderColor: 'var(--border-subtle)' }}
       >
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-bold uppercase tracking-wider mb-1.5">
+          <div
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider mb-1.5 border"
+            style={{
+              backgroundColor: 'var(--accent-soft)',
+              borderColor: 'rgba(228, 72, 42, 0.22)',
+              color: 'var(--accent-primary)',
+            }}
+          >
             <Compass className="w-3.5 h-3.5" />
             <span>{t.mapBadge}</span>
           </div>
@@ -261,12 +268,10 @@ export const MapView: React.FC<MapViewProps> = ({
             <button
               type="button"
               onClick={() => setRadarMode('yandex')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                radarMode === 'yandex' ? 'bg-red-500 text-white shadow-xs' : ''
-              }`}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
               style={
                 radarMode === 'yandex'
-                  ? undefined
+                  ? { backgroundColor: 'var(--accent-primary)', color: '#FFFFFF' }
                   : { color: 'var(--text-secondary)' }
               }
             >
@@ -276,12 +281,10 @@ export const MapView: React.FC<MapViewProps> = ({
             <button
               type="button"
               onClick={() => setRadarMode('schematic')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                radarMode === 'schematic' ? 'text-white shadow-xs' : ''
-              }`}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
               style={
                 radarMode === 'schematic'
-                  ? { backgroundColor: 'var(--accent-primary)', color: '#FFFFFF' }
+                  ? { backgroundColor: '#162946', color: '#FFFFFF' }
                   : { color: 'var(--text-secondary)' }
               }
             >
@@ -294,14 +297,14 @@ export const MapView: React.FC<MapViewProps> = ({
             href={yandexMapState.externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl border text-xs font-bold transition-colors hover:border-red-500/40"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl border text-xs font-bold transition-colors"
             style={{
               backgroundColor: 'var(--bg-elevated)',
               borderColor: 'var(--border-subtle)',
               color: 'var(--text-primary)',
             }}
           >
-            <Navigation className="w-3.5 h-3.5 text-red-500" />
+            <Navigation className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
             <span>{t.mapOpenExternal}</span>
             <ExternalLink className="w-3 h-3 opacity-60" />
           </a>
@@ -360,8 +363,8 @@ export const MapView: React.FC<MapViewProps> = ({
               style={
                 isSelected
                   ? {
-                      backgroundColor: '#EF4444',
-                      borderColor: '#EF4444',
+                      backgroundColor: '#162946',
+                      borderColor: '#162946',
                       color: '#FFFFFF',
                     }
                   : {
@@ -372,9 +375,8 @@ export const MapView: React.FC<MapViewProps> = ({
               }
             >
               <MapPin
-                className={`w-3.5 h-3.5 ${
-                  isSelected ? 'text-white' : 'text-red-500'
-                }`}
+                className="w-3.5 h-3.5"
+                style={{ color: isSelected ? '#FFFFFF' : 'var(--accent-primary)' }}
               />
               <span>{translateDistrict(areaName, lang)}</span>
               <span
@@ -522,7 +524,7 @@ export const MapView: React.FC<MapViewProps> = ({
             }}
           >
             <span className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <Shield className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
               <span>{t.mapPrivacyNotice}</span>
             </span>
           </div>
@@ -577,8 +579,8 @@ export const MapView: React.FC<MapViewProps> = ({
                   >
                     {activeItem.event.exactAddress ? (
                       <>
-                        <Unlock className="w-3 h-3 text-emerald-500 shrink-0" />
-                        <span className="text-emerald-500 font-semibold truncate">
+                        <Unlock className="w-3 h-3 shrink-0" style={{ color: 'var(--accent-primary)' }} />
+                        <span className="font-semibold truncate" style={{ color: 'var(--accent-primary)' }}>
                           {activeItem.event.exactAddress}
                         </span>
                       </>
@@ -598,7 +600,7 @@ export const MapView: React.FC<MapViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectEvent(activeItem.event)}
-                  className="flex-1 py-2 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer transition-opacity hover:opacity-95"
+                  className="flex-1 min-h-[42px] py-2 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer transition-opacity hover:opacity-95"
                   style={{ backgroundColor: 'var(--accent-primary)' }}
                 >
                   <span>{t.detailsBtn}</span>
@@ -608,14 +610,14 @@ export const MapView: React.FC<MapViewProps> = ({
                   href={yandexMapState.externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-2 px-3 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-colors hover:border-red-500/40"
+                  className="min-h-[42px] py-2 px-3 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
                     color: 'var(--text-primary)',
                   }}
                 >
-                  <Navigation className="w-3.5 h-3.5 text-red-500" />
+                  <Navigation className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                   <span>Яндекс</span>
                 </a>
               </div>

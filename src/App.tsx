@@ -4,7 +4,9 @@ import {
   Search, Flame, Plus, Compass, ShieldCheck, Briefcase,
   MapPin, MessageSquare, CheckCircle2, RefreshCw, Star, Palette, Lock,
   Camera, Eye, ChevronLeft, ChevronRight, X, MessageSquareQuote, QrCode, Share2,
-  Clock, XCircle, Navigation, UserPlus, Archive, CalendarCheck, LogOut
+  Clock, XCircle, Navigation, UserPlus, Archive, CalendarCheck, LogOut,
+  SlidersHorizontal, RotateCcw, LayoutGrid, Map as MapIcon, Bookmark,
+  Utensils, PartyPopper, Trees, Film, Dice5, Sparkles
 } from 'lucide-react';
 import { Header, ColorPaletteId } from './components/Header.tsx';
 import { BottomNav, NavTab } from './components/BottomNav.tsx';
@@ -16,7 +18,6 @@ import { ChatModal } from './components/ChatModal.tsx';
 import { UserProfileModal } from './components/UserProfileModal.tsx';
 import { ReviewModal } from './components/ReviewModal.tsx';
 import { MeetingReviewsSection } from './components/MeetingReviewsSection.tsx';
-import { QuickFiltersBar, QuickFilterType } from './components/QuickFiltersBar.tsx';
 import { DemoShareModal } from './components/DemoShareModal.tsx';
 import { ReportModal } from './components/ReportModal.tsx';
 import { SafetyGuideModal } from './components/SafetyGuideModal.tsx';
@@ -25,10 +26,20 @@ import { MapView } from './components/MapView.tsx';
 import { OnlineStatusBadge } from './components/OnlineStatusBadge.tsx';
 import { InviteUsersModal } from './components/InviteUsersModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
+import { FeedFiltersSheet } from './components/FeedFiltersSheet.tsx';
+import { RecommendedSlider } from './components/RecommendedSlider.tsx';
 import { EventItem, UserProfile, AppNotification, UserReview } from './types/index.ts';
 import { api } from './services/api.ts';
 import { clientLocalStore } from './services/clientLocalStore.ts';
 import { AppLanguage, UI_TEXT, translateCategory } from './i18n/translations.ts';
+import {
+  FeedFiltersState,
+  DEFAULT_FEED_FILTERS,
+  QuickCategoryId,
+  applyFeedFilters,
+  countActiveFeedFilters,
+  computeSmartRecommendations,
+} from './utils/eventMatching.ts';
 import {
   auth,
   onAuthStateChanged,
@@ -39,19 +50,22 @@ import {
   signOutCloudUser,
 } from './lib/firebase.ts';
 
-const CATEGORIES: Array<{ id: string; label: string }> = [
-  { id: 'Все', label: 'Все события' },
-  { id: 'Сегодня', label: 'Сегодня вечером' },
-  { id: 'Сохраненные', label: 'Сохраненные' },
-  { id: 'День рождения', label: 'День рождения' },
-  { id: 'Свадьба', label: 'Свадьба' },
-  { id: 'Ресторан / Бар', label: 'Ресторан / Бар' },
-  { id: 'Настольные игры', label: 'Настольные игры' },
-  { id: 'Кино / Концерт', label: 'Кино / Концерт' },
-  { id: 'Пикник / Шашлыки', label: 'Пикник / Шашлыки' },
-  { id: 'Спорт', label: 'Спорт' },
-  { id: 'Прогулка', label: 'Прогулка' },
-  { id: 'Путешествие', label: 'Путешествие' },
+const QUICK_CATEGORIES: Array<{
+  id: QuickCategoryId;
+  labelRu: string;
+  labelEn: string;
+  icon: React.FC<{ className?: string }>;
+}> = [
+  { id: 'all', labelRu: 'Все', labelEn: 'All', icon: LayoutGrid },
+  { id: 'today', labelRu: 'Сегодня', labelEn: 'Today', icon: Flame },
+  { id: 'nearby', labelRu: 'Рядом', labelEn: 'Nearby', icon: Navigation },
+  { id: 'restaurants', labelRu: 'Рестораны', labelEn: 'Dining', icon: Utensils },
+  { id: 'parties', labelRu: 'Вечеринки', labelEn: 'Parties', icon: PartyPopper },
+  { id: 'walks', labelRu: 'Прогулки', labelEn: 'Walks', icon: Trees },
+  { id: 'cinema', labelRu: 'Кино', labelEn: 'Cinema', icon: Film },
+  { id: 'games', labelRu: 'Игры', labelEn: 'Games', icon: Dice5 },
+  { id: 'saved', labelRu: 'Сохранённые', labelEn: 'Saved', icon: Bookmark },
+  { id: 'other', labelRu: 'Другое', labelEn: 'Other', icon: Sparkles },
 ];
 
 const ALL_INTEREST_OPTIONS = [
@@ -126,8 +140,9 @@ export default function App() {
 
   // Navigation & Filters
   const [activeTab, setActiveTab] = useState<NavTab>('feed');
-  const [selectedCategory, setSelectedCategory] = useState<string>('Все');
-  const [quickFilter, setQuickFilter] = useState<QuickFilterType>('all');
+  const [quickCategory, setQuickCategory] = useState<QuickCategoryId>('all');
+  const [feedFilters, setFeedFilters] = useState<FeedFiltersState>(DEFAULT_FEED_FILTERS);
+  const [showFiltersSheet, setShowFiltersSheet] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [feedViewMode, setFeedViewMode] = useState<'cards' | 'map'>('cards');
   const [participationStatusFilter, setParticipationStatusFilter] = useState<'all' | 'accepted' | 'pending' | 'rejected'>('all');
@@ -292,11 +307,7 @@ export default function App() {
         api.getUserProfile(me.id).then(res => setMyReviews(res.reviews || [])).catch(() => {});
       }
 
-      const evList = await api.getEvents({
-        category: (selectedCategory === 'Сегодня' || selectedCategory === 'Сохраненные') ? undefined : selectedCategory,
-        onlyToday: selectedCategory === 'Сегодня' || activeTab === 'today',
-        query: searchQuery || undefined,
-      });
+      const evList = await api.getEvents();
       if (Array.isArray(evList)) setEvents(evList);
       setSeekers(clientLocalStore.getSeekers());
 
@@ -312,7 +323,7 @@ export default function App() {
 
   useEffect(() => {
     loadData();
-  }, [selectedCategory, activeTab, searchQuery]);
+  }, [activeTab]);
 
   const handleToggleSaveEvent = async (eventId: string) => {
     try {
@@ -432,83 +443,163 @@ export default function App() {
   const archivedEvents = useMemo(() => events.filter(e => e.isArchived), [events]);
 
   const todayEvents = useMemo(() => activeEvents.filter(e => e.isToday), [activeEvents]);
-  const savedEvents = useMemo(
-    () => activeEvents.filter(e => currentUser?.savedEventIds?.includes(e.id)),
-    [activeEvents, currentUser?.savedEventIds]
+
+  const effectiveQuickCategory: QuickCategoryId =
+    activeTab === 'today' ? 'today' : quickCategory;
+
+  const activeFiltersCount = useMemo(
+    () => countActiveFeedFilters(feedFilters),
+    [feedFilters]
   );
-  
-  const baseFeedEvents = useMemo(() => {
-    if (activeTab === 'today') return todayEvents;
-    if (selectedCategory === 'Сохраненные') return savedEvents;
-    return activeEvents;
-  }, [activeTab, selectedCategory, todayEvents, savedEvents, activeEvents]);
 
-  // Pre-calculate counts for quick filters
-  const quickFilterCounts = useMemo(() => {
-    const nearbyCount = baseFeedEvents.filter(e => e.distanceKm <= 3.0).length;
-    const popularCount = baseFeedEvents.filter(e => e.occupiedSpots >= 2).length;
-    const interestsCount = baseFeedEvents.filter(e => isEventInterestMatch(e, currentUser)).length;
+  const hasAnyActiveFilter =
+    activeFiltersCount > 0 ||
+    effectiveQuickCategory !== 'all' ||
+    searchQuery.trim().length > 0;
 
-    return {
-      all: baseFeedEvents.length,
-      nearby: nearbyCount > 0 ? nearbyCount : baseFeedEvents.length,
-      popular: popularCount > 0 ? popularCount : baseFeedEvents.length,
-      interests: interestsCount > 0 ? interestsCount : baseFeedEvents.length,
-    };
-  }, [baseFeedEvents, currentUser]);
+  const handleResetAllFeedFilters = () => {
+    setFeedFilters(DEFAULT_FEED_FILTERS);
+    setQuickCategory('all');
+    setSearchQuery('');
+    if (activeTab === 'today') setActiveTab('feed');
+  };
 
-  // Filtered and sorted displayEvents according to quickFilter
-  const displayEvents = useMemo(() => {
-    let list = [...baseFeedEvents];
+  // Multi-signal real smart recommendations computed over live active events
+  const smartRecommendations = useMemo(
+    () => computeSmartRecommendations(activeEvents, currentUser, lang),
+    [activeEvents, currentUser, lang]
+  );
 
-    if (quickFilter === 'nearby') {
-      const nearbyList = list.filter(e => e.distanceKm <= 3.0);
-      const target = nearbyList.length > 0 ? nearbyList : list;
-      return target.sort((a, b) => a.distanceKm - b.distanceKm);
+  const recommendationReasonMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const rec of smartRecommendations) {
+      map.set(rec.event.id, rec.reason);
     }
+    return map;
+  }, [smartRecommendations]);
 
-    if (quickFilter === 'popular') {
-      return list.sort((a, b) => {
-        const rateA = a.occupiedSpots / (a.totalSpots || 1);
-        const rateB = b.occupiedSpots / (b.totalSpots || 1);
-        if (b.occupiedSpots !== a.occupiedSpots) {
-          return b.occupiedSpots - a.occupiedSpots;
-        }
-        return rateB - rateA;
+  // Filtered events according to Quick Category + Search + all 8 Bottom Sheet Filters
+  const displayEvents = useMemo(
+    () =>
+      applyFeedFilters(
+        activeEvents,
+        feedFilters,
+        currentUser,
+        effectiveQuickCategory,
+        searchQuery
+      ),
+    [activeEvents, feedFilters, currentUser, effectiveQuickCategory, searchQuery]
+  );
+
+  // Active filter summary chips for one-tap removal
+  const activeFilterSummaryChips = useMemo(() => {
+    const chips: Array<{ id: string; label: string; onRemove: () => void }> = [];
+    if (feedFilters.date !== 'all') {
+      const dateLabels = {
+        today: lang === 'en' ? 'Today' : 'Сегодня',
+        tomorrow: lang === 'en' ? 'Tomorrow' : 'Завтра',
+        weekend: lang === 'en' ? 'Weekend' : 'Выходные',
+        week: lang === 'en' ? 'This week' : 'Эта неделя',
+      };
+      chips.push({
+        id: 'date',
+        label: dateLabels[feedFilters.date],
+        onRemove: () => setFeedFilters(prev => ({ ...prev, date: 'all' })),
       });
     }
-
-    if (quickFilter === 'interests') {
-      const userInterests = (currentUser?.interests || []).map(i => i.toLowerCase());
-
-      const getScore = (ev: EventItem): number => {
-        let score = 0;
-        const cat = (ev.category || '').toLowerCase();
-        const title = (ev.title || '').toLowerCase();
-        const desc = (ev.description || '').toLowerCase();
-        const vibe = (ev.vibe || '').toLowerCase();
-
-        for (const interest of userInterests) {
-          if (cat.includes(interest) || interest.includes(cat)) score += 10;
-          if (title.includes(interest) || desc.includes(interest)) score += 4;
-          if (vibe.includes(interest)) score += 3;
-        }
-
-        const rec = aiRecommendations.find(r => r.eventId === ev.id);
-        if (rec) score += 8;
-
-        return score;
+    if (feedFilters.time !== 'all') {
+      const timeLabels = {
+        morning: lang === 'en' ? 'Morning' : 'Утро',
+        day: lang === 'en' ? 'Day' : 'День',
+        evening: lang === 'en' ? 'Evening' : 'Вечер',
+        night: lang === 'en' ? 'Night' : 'Ночь',
       };
-
-      const matched = list.filter(e => isEventInterestMatch(e, currentUser));
-      const target = matched.length > 0 ? matched : list;
-      return target.sort((a, b) => getScore(b) - getScore(a));
+      chips.push({
+        id: 'time',
+        label: timeLabels[feedFilters.time],
+        onRemove: () => setFeedFilters(prev => ({ ...prev, time: 'all' })),
+      });
     }
+    if (feedFilters.maxDistanceKm !== null) {
+      chips.push({
+        id: 'dist',
+        label: lang === 'en' ? `≤ ${feedFilters.maxDistanceKm} km` : `До ${feedFilters.maxDistanceKm} км`,
+        onRemove: () => setFeedFilters(prev => ({ ...prev, maxDistanceKm: null })),
+      });
+    }
+    if (feedFilters.category !== 'Все') {
+      chips.push({
+        id: 'cat',
+        label: translateCategory(feedFilters.category, lang),
+        onRemove: () => setFeedFilters(prev => ({ ...prev, category: 'Все' })),
+      });
+    }
+    if (feedFilters.budget !== 'all') {
+      const budgetLabels = {
+        free: lang === 'en' ? 'Free' : 'Бесплатно',
+        up_to_1000: lang === 'en' ? '≤ 1 000 ₽' : 'До 1 000 ₽',
+        '1000_3000': '1 000–3 000 ₽',
+        '3000_plus': '3 000+ ₽',
+      };
+      chips.push({
+        id: 'budget',
+        label: budgetLabels[feedFilters.budget],
+        onRemove: () => setFeedFilters(prev => ({ ...prev, budget: 'all' })),
+      });
+    }
+    if (feedFilters.ageRange !== 'all') {
+      const ageLabels = {
+        my_age: lang === 'en' ? 'Fits my age' : 'Под мой возраст',
+        '18_25': '18–25 лет',
+        '25_35': '25–35 лет',
+        '35_plus': '35+ лет',
+      };
+      chips.push({
+        id: 'age',
+        label: ageLabels[feedFilters.ageRange],
+        onRemove: () => setFeedFilters(prev => ({ ...prev, ageRange: 'all' })),
+      });
+    }
+    if (feedFilters.groupSize !== 'all') {
+      const groupLabels = {
+        small: lang === 'en' ? '2–4 people' : '2–4 чел.',
+        medium: lang === 'en' ? '5–8 people' : '5–8 чел.',
+        large: lang === 'en' ? '9+ people' : '9+ чел.',
+      };
+      chips.push({
+        id: 'group',
+        label: groupLabels[feedFilters.groupSize],
+        onRemove: () => setFeedFilters(prev => ({ ...prev, groupSize: 'all' })),
+      });
+    }
+    if (feedFilters.format !== 'all') {
+      chips.push({
+        id: 'format',
+        label: feedFilters.format,
+        onRemove: () => setFeedFilters(prev => ({ ...prev, format: 'all' })),
+      });
+    }
+    if (feedFilters.onlyOpenSpots) {
+      chips.push({
+        id: 'spots',
+        label: lang === 'en' ? 'Open spots' : 'Есть места',
+        onRemove: () => setFeedFilters(prev => ({ ...prev, onlyOpenSpots: false })),
+      });
+    }
+    return chips;
+  }, [feedFilters, lang]);
 
-    return list;
-  }, [baseFeedEvents, quickFilter, currentUser, aiRecommendations]);
+  const userFirstName = useMemo(() => {
+    const clean = (currentUser?.name || '').trim();
+    if (!clean) return lang === 'en' ? 'friend' : 'друг';
+    return clean.split(/\s+/)[0];
+  }, [currentUser?.name, lang]);
 
   const activeUser = currentUser || clientLocalStore.getMe();
+  const savedEvents = useMemo(
+    () => activeEvents.filter(e => (activeUser.savedEventIds || []).includes(e.id)),
+    [activeEvents, activeUser.savedEventIds]
+  );
   const myOrganizedEvents = activeEvents.filter(e => e.organizerId === activeUser.id);
   const myParticipationEvents = activeEvents.filter(
     e =>
@@ -607,417 +698,436 @@ export default function App() {
         onChangeLang={handleChangeLang}
       />
 
-      <main className="max-w-6xl mx-auto px-4 pt-5 sm:pt-7">
+      <main className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6 pb-8">
         <AnimatePresence mode="wait">
-          {/* VIEW 1: FEED OR TODAY TAB */}
+          {/* VIEW 1: REDESIGNED FEED («ЛЕНТА») */}
           {(activeTab === 'feed' || activeTab === 'today') && (
             <motion.div
               key="feed-tab"
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="space-y-7"
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="space-y-4 sm:space-y-5"
             >
-            {/* MODERN EDITORIAL BENTO HERO */}
-            <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-              {/* Left 8-col Main Hero Visual Card */}
-              <div
-                className="lg:col-span-8 relative rounded-3xl overflow-hidden text-white shadow-xl min-h-[300px] sm:min-h-[340px] flex flex-col justify-between p-6 sm:p-9"
-                style={{
-                  background: `linear-gradient(135deg, var(--hero-grad-from) 0%, var(--hero-grad-via) 100%)`,
-                }}
-              >
-                <img
-                  src="./assets/images/hero_community_event_1794332913246.jpg"
-                  alt="Дружеская компания за ужином"
-                  className="absolute inset-0 w-full h-full object-cover opacity-45 mix-blend-luminosity"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/20" />
-
-                <div className="relative z-10 flex items-center justify-between gap-2">
-                  <div className="text-xs font-semibold text-white/90 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-[#F06A4B]" />
-                    <span>{t.heroKicker}</span>
-                  </div>
-                </div>
-
-                <div className="relative z-10 max-w-xl space-y-4 my-auto pt-6">
-                  <h1 className="text-2xl sm:text-4xl font-display font-bold tracking-tight text-white leading-[1.15] text-balance">
-                    {t.heroTitleLine1} {t.heroTitleHighlight}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-lg">
-                    {t.heroDescription}
-                  </p>
-
-                  {/* Primary Action Bar */}
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <button
-                      onClick={() => setShowWizardModal(true)}
-                      className="px-5 py-3.5 rounded-2xl text-white text-xs sm:text-sm font-bold shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
-                      style={{
-                        backgroundColor: 'var(--accent-primary)',
-                        boxShadow: '0 10px 25px -5px var(--badge-glow)',
-                      }}
-                    >
-                      <Search className="w-4 h-4" />
-                      <span>{t.heroFindMatchBtn}</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShowCreateModal(true)}
-                      className="px-5 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/20 text-xs sm:text-sm font-bold active:scale-95 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{t.heroCreateBtn}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right 4-col Bento Side Card: Tonight Spotlight & Yandex Maps Radar Quick Card */}
-              <div className="lg:col-span-4 flex flex-col gap-4 justify-between">
-                {/* Tonight Card */}
-                <div
-                  onClick={() => setActiveTab('today')}
-                  className="flex-1 p-6 rounded-3xl border cursor-pointer transition-all hover:shadow-lg flex flex-col justify-between"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
-                      style={{ color: 'var(--accent-primary)' }}
-                    >
-                      <Flame className="w-4 h-4" />
-                      <span>{t.heroStatTonight}</span>
-                    </span>
-                    <span
-                      className="text-xs font-bold tabular-nums"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {todayEvents.length}
-                    </span>
-                  </div>
-
-                  <div className="my-3">
-                    <h2
-                      className="text-lg font-display font-bold leading-snug"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {lang === 'en' ? 'Free tonight?' : 'Свободны сегодня вечером?'}
-                    </h2>
-                    <p
-                      className="text-xs mt-1 leading-relaxed"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {lang === 'en'
-                        ? 'Check out spontaneous bar hangouts, board game nights, and dinners starting in the next few hours.'
-                        : 'Посмотрите спонтанные сборы в бары, на настолки и ужины, которые начнутся в ближайшие часы.'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t text-xs font-bold" style={{ borderColor: 'var(--border-subtle)' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>
-                      {lang === 'en' ? 'Explore tonight’s plans' : 'Смотреть планы на вечер'}
-                    </span>
-                    <span style={{ color: 'var(--accent-primary)' }}>→</span>
-                  </div>
-                </div>
-
-                {/* Interactive Yandex Maps Radar Quick-Launch Card */}
-                <div
-                  onClick={() => setFeedViewMode('map')}
-                  className="p-5 rounded-3xl border space-y-2.5 cursor-pointer transition-all hover:shadow-lg group"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-wider">
-                      <Navigation className="w-3 h-3" />
-                      <span>{t.radarCardBadge}</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-red-500 group-hover:translate-x-0.5 transition-transform">
-                      →
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3
-                      className="text-sm font-display font-bold"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {t.radarCardTitle}
-                    </h3>
-                    <p
-                      className="text-xs mt-1 leading-relaxed"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {t.radarCardDesc}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* AI SMART MATCHES */}
-            {aiRecommendations.length > 0 && activeTab === 'feed' && (
-              <section
-                aria-labelledby="ai-recommendations-heading"
-                className="p-5 sm:p-6 rounded-3xl border shadow-xs"
-                style={{
-                  backgroundColor: 'var(--bg-surface)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-8 h-8 rounded-2xl text-white flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: 'var(--accent-primary)' }}
-                    >
-                      <Compass className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2
-                        id="ai-recommendations-heading"
-                        className="text-sm font-display font-bold"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        Персональный подбор для вас
-                      </h2>
-                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        На основе ваших интересов: {currentUser.interests.join(' · ')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                  {aiRecommendations.map(rec => {
-                    const matchedEvent = events.find(e => e.id === rec.eventId);
-                    if (!matchedEvent) return null;
-                    return (
-                      <div
-                        key={rec.eventId}
-                        onClick={() => setSelectedEventForDetail(matchedEvent)}
-                        className="p-3.5 rounded-2xl border cursor-pointer transition-all hover:shadow-md flex items-center gap-3.5"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <img
-                          src={matchedEvent.imageUrl}
-                          alt={matchedEvent.title}
-                          referrerPolicy="no-referrer"
-                          className="w-16 h-16 rounded-2xl object-cover shrink-0"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div
-                            className="text-xs font-bold truncate"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
-                            {matchedEvent.title}
-                          </div>
-                          <div
-                            className="text-[11px] font-medium line-clamp-1 mt-0.5"
-                            style={{ color: 'var(--accent-primary)' }}
-                          >
-                            {rec.matchReason}
-                          </div>
-                          <div
-                            className="text-[11px] mt-1 tabular-nums"
-                            style={{ color: 'var(--text-muted)' }}
-                          >
-                            {matchedEvent.approximateArea} · {matchedEvent.budget}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* SEARCH & INTERACTIVE FILTER SEGMENT BAR */}
-            <div className="space-y-3.5">
-              <div className="relative">
-                <Search
-                  className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--text-muted)' }}
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder={t.heroSearchPlaceholder}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl border text-xs font-medium focus:outline-none transition-colors shadow-xs"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-              </div>
-
-              {/* Interactive Category Filter Buttons */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {CATEGORIES.map(cat => {
-                  const isSelected = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        if (cat.id === 'Сегодня') setActiveTab('today');
-                        else if (activeTab === 'today') setActiveTab('feed');
-                      }}
-                      className="px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer border"
-                      style={{
-                        backgroundColor: isSelected ? 'var(--accent-primary)' : 'var(--bg-surface)',
-                        color: isSelected ? '#FFFFFF' : 'var(--text-secondary)',
-                        borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                      }}
-                    >
-                      {translateCategory(cat.label, lang)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* EVENTS GRID / MAP VIEW */}
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-                <div className="flex items-center gap-2.5">
-                  <h2
-                    className="text-lg font-display font-bold"
+              {/* 1. COMPACT TOP BAR: GREETING + LOCATION + OBVIOUS FEED / MAP SWITCHER */}
+              <section className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h1
+                    className="text-lg sm:text-2xl font-display font-extrabold tracking-tight leading-tight truncate"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {activeTab === 'today' ? t.feedTodayTitle : t.feedAllTitle}
-                  </h2>
-                  <span
-                    className="text-xs font-semibold tabular-nums"
+                    {lang === 'en' ? `Hi, ${userFirstName}` : `Привет, ${userFirstName}`}
+                  </h1>
+                  <div
+                    className="mt-0.5 flex items-center gap-1.5 text-xs font-medium truncate"
                     style={{ color: 'var(--text-muted)' }}
                   >
-                    · {displayEvents.length}
-                  </span>
+                    <MapPin
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={{ color: 'var(--accent-primary)' }}
+                    />
+                    <span className="truncate font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                      {currentUser.city || 'Москва'}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span className="tabular-nums shrink-0">
+                      {todayEvents.length > 0
+                        ? lang === 'en'
+                          ? `${todayEvents.length} tonight`
+                          : `${todayEvents.length} сегодня`
+                        : lang === 'en'
+                        ? `${activeEvents.length} active`
+                        : `${activeEvents.length} встреч`}
+                    </span>
+                  </div>
                 </div>
 
-                {/* View Mode Segmented Switcher */}
+                {/* Clear Segmented Switcher: Cards Feed vs Dedicated Yandex Map */}
                 <div
-                  className="flex items-center p-1 rounded-2xl border"
+                  className="flex items-center p-1 rounded-2xl border shrink-0"
                   style={{
                     backgroundColor: 'var(--bg-elevated)',
                     borderColor: 'var(--border-subtle)',
                   }}
                 >
                   <button
+                    type="button"
                     onClick={() => setFeedViewMode('cards')}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-                    style={{
-                      backgroundColor: feedViewMode === 'cards' ? 'var(--bg-surface)' : 'transparent',
-                      color: 'var(--text-primary)',
-                    }}
+                    className="min-h-[38px] px-3 sm:px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                    style={
+                      feedViewMode === 'cards'
+                        ? {
+                            backgroundColor: '#162946',
+                            color: '#FFFFFF',
+                            boxShadow: '0 4px 10px -4px rgba(22, 41, 70, 0.35)',
+                          }
+                        : {
+                            backgroundColor: 'transparent',
+                            color: 'var(--text-secondary)',
+                          }
+                    }
                   >
-                    {t.viewCards}
+                    <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                    <span>{lang === 'en' ? 'Feed' : 'Лента'}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setFeedViewMode('map')}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                    style={{
-                      backgroundColor: feedViewMode === 'map' ? 'var(--bg-surface)' : 'transparent',
-                      color: 'var(--text-primary)',
-                    }}
+                    className="min-h-[38px] px-3 sm:px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                    style={
+                      feedViewMode === 'map'
+                        ? {
+                            backgroundColor: '#162946',
+                            color: '#FFFFFF',
+                            boxShadow: '0 4px 10px -4px rgba(22, 41, 70, 0.35)',
+                          }
+                        : {
+                            backgroundColor: 'transparent',
+                            color: 'var(--text-secondary)',
+                          }
+                    }
                   >
-                    <MapPin className="w-3.5 h-3.5 text-red-500" />
-                    <span>{t.viewRadar}</span>
+                    <MapIcon
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={{
+                        color: feedViewMode === 'map' ? '#F06A4B' : 'var(--accent-primary)',
+                      }}
+                    />
+                    <span>{lang === 'en' ? 'Map' : 'Карта'}</span>
                   </button>
                 </div>
-              </div>
+              </section>
 
-              {/* Quick Filters Bar directly above events grid */}
-              <QuickFiltersBar
-                activeFilter={quickFilter}
-                onChangeFilter={setQuickFilter}
-                counts={quickFilterCounts}
-                currentUserInterests={currentUser.interests}
-                totalEventsCount={baseFeedEvents.length}
-                filteredCount={displayEvents.length}
-                lang={lang}
-              />
-
-              {feedViewMode === 'map' ? (
-                <MapView
-                  events={displayEvents}
-                  onSelectEvent={setSelectedEventForDetail}
-                  lang={lang}
-                />
-              ) : displayEvents.length === 0 ? (
+              {/* 2. SEARCH BAR + FILTERS BOTTOM SHEET TRIGGER */}
+              <section className="flex items-center gap-2">
                 <div
-                  className="p-12 text-center rounded-3xl border"
+                  className="relative flex-1 flex items-center rounded-2xl border transition-colors shadow-xs"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
                   }}
                 >
-                  <p className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    {t.emptyEventsTitle}
-                  </p>
-                  <p className="text-xs max-w-sm mx-auto mb-5" style={{ color: 'var(--text-secondary)' }}>
-                    {t.emptyEventsDesc}
-                  </p>
-                  <div className="flex items-center justify-center gap-2">
-                    {quickFilter !== 'all' && (
-                      <button
-                        onClick={() => setQuickFilter('all')}
-                        className="px-4 py-2.5 rounded-2xl text-xs font-bold border transition-colors cursor-pointer"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
+                  <Search
+                    className="w-4 h-4 ml-3.5 shrink-0"
+                    style={{ color: 'var(--text-muted)' }}
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder={
+                      lang === 'en'
+                        ? 'Search events, districts, venues...'
+                        : 'Поиск мероприятий, районов, форматов...'
+                    }
+                    className="w-full min-h-[46px] pl-2.5 pr-9 bg-transparent border-0 outline-none text-[14px] font-medium placeholder:text-[#9A8D84]"
+                    style={{ color: 'var(--text-primary)' }}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Очистить поиск"
+                      className="absolute right-2.5 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--bg-elevated)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filters Bottom Sheet Button (46x46+ touch target) */}
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setShowFiltersSheet(true)}
+                  aria-label={lang === 'en' ? 'Open filters' : 'Открыть фильтры'}
+                  className="relative min-h-[46px] min-w-[46px] px-3.5 rounded-2xl border flex items-center justify-center gap-2 cursor-pointer transition-all shrink-0 shadow-xs"
+                  style={
+                    activeFiltersCount > 0
+                      ? {
+                          backgroundColor: '#162946',
+                          borderColor: '#162946',
+                          color: '#FFFFFF',
+                        }
+                      : {
+                          backgroundColor: 'var(--bg-surface)',
                           borderColor: 'var(--border-subtle)',
                           color: 'var(--text-primary)',
-                        }}
-                      >
-                        {t.resetFilter}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setShowCreateModal(true)}
-                      className="px-5 py-2.5 text-white text-xs font-bold rounded-2xl cursor-pointer"
+                        }
+                  }
+                >
+                  <SlidersHorizontal
+                    className="w-4 h-4 shrink-0"
+                    style={{
+                      color: activeFiltersCount > 0 ? '#F06A4B' : 'var(--text-primary)',
+                    }}
+                  />
+                  <span className="hidden sm:inline text-xs font-bold">
+                    {lang === 'en' ? 'Filters' : 'Фильтры'}
+                  </span>
+                  {activeFiltersCount > 0 && (
+                    <span
+                      className="absolute -top-1.5 -right-1.5 sm:static min-w-[19px] h-[19px] px-1 rounded-full text-[10px] font-extrabold text-white flex items-center justify-center tabular-nums"
                       style={{ backgroundColor: 'var(--accent-primary)' }}
                     >
-                      {t.createEventAction}
-                    </button>
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </motion.button>
+              </section>
+
+              {/* 3. HORIZONTAL QUICK CATEGORIES STRIP */}
+              <section className="space-y-2.5">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+                  {QUICK_CATEGORIES.map(cat => {
+                    const IconComp = cat.icon;
+                    const isSelected = effectiveQuickCategory === cat.id;
+                    const savedCount =
+                      cat.id === 'saved' ? (currentUser.savedEventIds || []).length : 0;
+
+                    return (
+                      <motion.button
+                        key={cat.id}
+                        type="button"
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => {
+                          setQuickCategory(cat.id);
+                          if (cat.id === 'today') setActiveTab('today');
+                          else if (activeTab === 'today') setActiveTab('feed');
+                        }}
+                        className="min-h-[40px] px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer border flex items-center gap-1.5"
+                        style={
+                          isSelected
+                            ? {
+                                backgroundColor: 'var(--accent-primary)',
+                                color: '#FFFFFF',
+                                borderColor: 'var(--accent-primary)',
+                                boxShadow: '0 6px 16px -6px rgba(228, 72, 42, 0.45)',
+                              }
+                            : {
+                                backgroundColor: 'var(--bg-surface)',
+                                color: 'var(--text-secondary)',
+                                borderColor: 'var(--border-subtle)',
+                              }
+                        }
+                      >
+                        <IconComp
+                          className="w-3.5 h-3.5 shrink-0"
+                        />
+                        <span>{lang === 'en' ? cat.labelEn : cat.labelRu}</span>
+                        {cat.id === 'saved' && savedCount > 0 && (
+                          <span
+                            className="text-[10px] font-extrabold tabular-nums opacity-85"
+                          >
+                            {savedCount}
+                          </span>
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                {/* Active Filters Indicator & 1-Tap Reset */}
+                <AnimatePresence initial={false}>
+                  {activeFilterSummaryChips.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+                        {activeFilterSummaryChips.map(chip => (
+                          <button
+                            key={chip.id}
+                            type="button"
+                            onClick={chip.onRemove}
+                            className="min-h-[32px] px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 shrink-0 cursor-pointer border transition-opacity hover:opacity-80"
+                            style={{
+                              backgroundColor: 'var(--accent-soft)',
+                              borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                              color: 'var(--accent-text)',
+                            }}
+                          >
+                            <span>{chip.label}</span>
+                            <X className="w-3 h-3" />
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={handleResetAllFeedFilters}
+                          className="min-h-[32px] px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1 shrink-0 cursor-pointer transition-opacity hover:opacity-80"
+                          style={{ color: 'var(--accent-primary)' }}
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>{lang === 'en' ? 'Reset all' : 'Сбросить'}</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+
+              {/* 4. COMPACT HORIZONTAL SLIDER: «ПОДОБРАЛИ ДЛЯ ВАС» (only in Cards mode) */}
+              {feedViewMode === 'cards' &&
+                !hasAnyActiveFilter &&
+                smartRecommendations.length > 0 && (
+                  <RecommendedSlider
+                    recommendations={smartRecommendations}
+                    onSelectEvent={setSelectedEventForDetail}
+                    lang={lang}
+                  />
+                )}
+
+              {/* 5. MAIN FEED CONTENT: CARDS OR DEDICATED YANDEX MAPS MODE */}
+              <section className="space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <h2
+                      className="text-base sm:text-lg font-display font-extrabold tracking-tight truncate"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {feedViewMode === 'map'
+                        ? lang === 'en'
+                          ? 'Events on Map'
+                          : 'Мероприятия на карте'
+                        : effectiveQuickCategory === 'today'
+                        ? lang === 'en'
+                          ? 'Happening Today'
+                          : 'События сегодня'
+                        : effectiveQuickCategory === 'nearby'
+                        ? lang === 'en'
+                          ? 'Events Nearby'
+                          : 'Рядом с вами'
+                        : effectiveQuickCategory === 'saved'
+                        ? lang === 'en'
+                          ? 'Saved Events'
+                          : 'Сохранённые события'
+                        : lang === 'en'
+                        ? 'Upcoming Events'
+                        : 'Афиша встреч'}
+                    </h2>
+                    <span
+                      className="text-xs font-bold tabular-nums shrink-0"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      · {displayEvents.length}
+                    </span>
                   </div>
+
+                  {/* Subtle Smart Wizard Trigger (preserves existing FindCompanyWizardModal) */}
+                  <button
+                    type="button"
+                    onClick={() => setShowWizardModal(true)}
+                    className="min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-85 shrink-0 border"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <Compass className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                    <span>{lang === 'en' ? 'Quick Match' : 'Подобрать'}</span>
+                  </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {displayEvents.map(event => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      currentUser={currentUser}
-                      onOpenDetails={setSelectedEventForDetail}
-                      onToggleSave={handleToggleSaveEvent}
-                      lang={lang}
-                      isRecommended={quickFilter === 'interests' && isEventInterestMatch(event, currentUser)}
-                      matchReason={
-                        quickFilter === 'interests' && isEventInterestMatch(event, currentUser)
-                          ? `${t.quickInterestsDesc} ${translateCategory(event.category, lang)}`
-                          : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
+
+                <AnimatePresence mode="wait">
+                  {feedViewMode === 'map' ? (
+                    <motion.div
+                      key="map-mode"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-3"
+                    >
+                      <MapView
+                        events={displayEvents}
+                        onSelectEvent={setSelectedEventForDetail}
+                        lang={lang}
+                      />
+                    </motion.div>
+                  ) : displayEvents.length === 0 ? (
+                    <motion.div
+                      key="empty-state"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-8 sm:p-12 text-center rounded-3xl border"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      <p className="text-sm font-display font-bold mb-1.5" style={{ color: 'var(--text-primary)' }}>
+                        {t.emptyEventsTitle}
+                      </p>
+                      <p className="text-xs max-w-sm mx-auto mb-5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        {t.emptyEventsDesc}
+                      </p>
+                      <div className="flex flex-wrap items-center justify-center gap-2.5">
+                        {hasAnyActiveFilter && (
+                          <button
+                            type="button"
+                            onClick={handleResetAllFeedFilters}
+                            className="min-h-[44px] px-4 py-2.5 rounded-2xl text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5"
+                            style={{
+                              backgroundColor: 'var(--bg-elevated)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>{lang === 'en' ? 'Reset filters' : 'Сбросить фильтры'}</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowCreateModal(true)}
+                          className="min-h-[44px] px-5 py-2.5 text-white text-xs font-bold rounded-2xl cursor-pointer flex items-center gap-1.5"
+                          style={{ backgroundColor: 'var(--accent-primary)' }}
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>{t.createEventAction}</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={`cards-grid-${effectiveQuickCategory}-${activeFiltersCount}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+                    >
+                      {displayEvents.map(event => {
+                        const recReason = recommendationReasonMap.get(event.id);
+                        return (
+                          <EventCard
+                            key={event.id}
+                            event={event}
+                            currentUser={currentUser}
+                            onOpenDetails={setSelectedEventForDetail}
+                            onToggleSave={handleToggleSaveEvent}
+                            lang={lang}
+                            isRecommended={Boolean(recReason) && hasAnyActiveFilter}
+                            matchReason={hasAnyActiveFilter ? recReason : undefined}
+                          />
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+            </motion.div>
+          )}
 
         {/* VIEW 2: MY EVENTS & CHATS TAB */}
         {activeTab === 'chats' && (
@@ -2282,6 +2392,16 @@ export default function App() {
           onSelectEvent={(ev) => setSelectedEventForDetail(ev)}
         />
       )}
+
+      <FeedFiltersSheet
+        isOpen={showFiltersSheet}
+        filters={feedFilters}
+        onChange={setFeedFilters}
+        onReset={() => setFeedFilters(DEFAULT_FEED_FILTERS)}
+        onClose={() => setShowFiltersSheet(false)}
+        resultCount={displayEvents.length}
+        lang={lang}
+      />
 
       <AnimatePresence>
         {showInviteModal && (
