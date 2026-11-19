@@ -70,6 +70,10 @@ interface HeaderProps {
   onOpenAuth?: () => void;
   onLogout?: () => void;
   isCloudConnected?: boolean;
+  isAdminSession?: boolean;
+  isImpersonatingTestUser?: boolean;
+  adminOwnName?: string;
+  onReturnToAdminAccount?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -90,6 +94,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   isCloudConnected = false,
+  isAdminSession = false,
+  isImpersonatingTestUser = false,
+  adminOwnName,
+  onReturnToAdminAccount,
 }) => {
   const t = UI_TEXT[lang];
   const [showNotifications, setShowNotifications] = useState(false);
@@ -190,8 +198,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Share2 className="w-4 h-4" />
           </motion.button>
 
-          {/* Admin Panel Trigger (if admin) */}
-          {currentUser.role === 'admin' && (
+          {/* Admin Panel Trigger (strictly for verified Admin session) */}
+          {isAdminSession && (
             <motion.button
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.95 }}
@@ -631,8 +639,68 @@ export const Header: React.FC<HeaderProps> = ({
                     borderColor: 'var(--border-subtle)',
                   }}
                 >
-                  {(onOpenAuth || onLogout) && (
+                  {/* Current Account Info Header */}
+                  <div
+                    className="px-3.5 py-3 border-b flex items-center gap-2.5"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <img
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.name}
+                      referrerPolicy="no-referrer"
+                      className="w-9 h-9 rounded-full object-cover shrink-0 border"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="text-xs font-bold truncate"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {currentUser.name}
+                        </span>
+                        {isAdminSession && (
+                          <span
+                            className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider shrink-0"
+                            style={{
+                              backgroundColor: isImpersonatingTestUser ? '#FEF1EE' : '#162946',
+                              color: isImpersonatingTestUser ? '#E4482A' : '#FFFFFF',
+                            }}
+                          >
+                            {isImpersonatingTestUser ? 'Тест' : 'Админ'}
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className="text-[11px] truncate"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        {currentUser.email || currentUser.city}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(onOpenAuth || onLogout || (isAdminSession && isImpersonatingTestUser)) && (
                     <div className="p-2 border-b space-y-1.5" style={{ borderColor: 'var(--border-subtle)' }}>
+                      {isAdminSession && isImpersonatingTestUser && onReturnToAdminAccount && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserSwitcher(false);
+                            onReturnToAdminAccount();
+                          }}
+                          className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                          style={{ backgroundColor: '#162946' }}
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" style={{ color: '#F06A4B' }} />
+                          <span className="truncate">
+                            Вернуться в админ ({adminOwnName?.split(' ')[0] || 'Админ'})
+                          </span>
+                        </button>
+                      )}
                       {onOpenAuth && (
                         <button
                           type="button"
@@ -703,87 +771,97 @@ export const Header: React.FC<HeaderProps> = ({
                       )}
                     </div>
                   )}
-                  <div
-                    className="p-3 border-b flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--text-muted)',
-                    }}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{t.switchDemoAccount}</span>
-                  </div>
-                  <div className="p-1.5 space-y-1">
-                    {availableUsers.map((u) => {
-                      const isCurrent = u.id === currentUser.id;
-                      return (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => {
-                            onSwitchUser(u.id);
-                            setShowUserSwitcher(false);
-                          }}
-                          className="w-full p-2.5 rounded-2xl flex items-center gap-3 text-left transition-colors cursor-pointer"
-                          style={{
-                            backgroundColor: isCurrent
-                              ? 'var(--accent-soft)'
-                              : 'transparent',
-                          }}
-                        >
-                          <div className="relative shrink-0">
-                            <img
-                              src={u.avatarUrl}
-                              alt={u.name}
-                              referrerPolicy="no-referrer"
-                              className="w-9 h-9 rounded-full object-cover block"
-                            />
-                            <span
-                              className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--bg-surface)] ${
-                                u.onlineStatus === 'offline'
-                                  ? 'bg-slate-400'
-                                  : u.onlineStatus === 'recent'
-                                  ? 'bg-amber-400'
-                                  : 'bg-emerald-500'
-                              }`}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <span
-                                className="text-xs font-bold truncate"
-                                style={{ color: 'var(--text-primary)' }}
-                              >
-                                {u.name}
-                              </span>
-                              <span className="text-[11px] font-bold text-amber-500 shrink-0 tabular-nums">
-                                ★ {u.reliability.score}
-                              </span>
-                            </div>
-                            <div
-                              className="text-[11px] truncate flex items-center gap-1.5 mt-0.5"
-                              style={{ color: 'var(--text-muted)' }}
+
+                  {/* Test Users Switcher — STRICTLY visible ONLY to verified Admin accounts */}
+                  {isAdminSession && (
+                    <>
+                      <div
+                        className="p-3 border-b flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider"
+                        style={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        <Users className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                        <span>
+                          {lang === 'en'
+                            ? 'Admin · Test Accounts'
+                            : 'Админ · Тестовые пользователи'}
+                        </span>
+                      </div>
+                      <div className="p-1.5 space-y-1 max-h-64 overflow-y-auto">
+                        {availableUsers.map((u) => {
+                          const isCurrent = u.id === currentUser.id;
+                          return (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => {
+                                onSwitchUser(u.id);
+                                setShowUserSwitcher(false);
+                              }}
+                              className="w-full p-2.5 rounded-2xl flex items-center gap-3 text-left transition-colors cursor-pointer"
+                              style={{
+                                backgroundColor: isCurrent
+                                  ? 'var(--accent-soft)'
+                                  : 'transparent',
+                              }}
                             >
-                              <span className="truncate">
-                                {u.occupation
-                                  ? `${u.occupation} · `
-                                  : u.role === 'admin'
-                                  ? 'Модератор · '
-                                  : ''}
-                                {u.reliability.attendanceRate}%
-                              </span>
-                              <OnlineStatusBadge
-                                status={u.onlineStatus}
-                                size="sm"
-                                showText={false}
-                              />
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                              <div className="relative shrink-0">
+                                <img
+                                  src={u.avatarUrl}
+                                  alt={u.name}
+                                  referrerPolicy="no-referrer"
+                                  className="w-9 h-9 rounded-full object-cover block"
+                                />
+                                <span
+                                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--bg-surface)] ${
+                                    u.onlineStatus === 'offline'
+                                      ? 'bg-slate-400'
+                                      : u.onlineStatus === 'recent'
+                                      ? 'bg-amber-400'
+                                      : 'bg-emerald-500'
+                                  }`}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span
+                                    className="text-xs font-bold truncate"
+                                    style={{ color: 'var(--text-primary)' }}
+                                  >
+                                    {u.name}
+                                  </span>
+                                  <span className="text-[11px] font-bold text-amber-500 shrink-0 tabular-nums">
+                                    ★ {u.reliability.score}
+                                  </span>
+                                </div>
+                                <div
+                                  className="text-[11px] truncate flex items-center gap-1.5 mt-0.5"
+                                  style={{ color: 'var(--text-muted)' }}
+                                >
+                                  <span className="truncate">
+                                    {u.occupation
+                                      ? `${u.occupation} · `
+                                      : u.role === 'admin'
+                                      ? 'Модератор · '
+                                      : ''}
+                                    {u.reliability.attendanceRate}%
+                                  </span>
+                                  <OnlineStatusBadge
+                                    status={u.onlineStatus}
+                                    size="sm"
+                                    showText={false}
+                                  />
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

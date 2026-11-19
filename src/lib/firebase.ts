@@ -3,6 +3,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  updateProfile as updateFirebaseProfile,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -98,9 +103,120 @@ export function sanitizeValidId(rawId: string): string {
   return cleaned || 'doc_1';
 }
 
+// Bootstrapped admin emails matching firestore.rules isAdmin()
+export const ADMIN_EMAILS = ['nako4343@gmail.com'];
+
 export async function signInWithGooglePopup(): Promise<FirebaseUser> {
   const result = await signInWithPopup(auth, googleAuthProvider);
   return result.user;
+}
+
+export async function signInWithEmailPassword(
+  email: string,
+  password: string
+): Promise<FirebaseUser> {
+  const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+  return result.user;
+}
+
+export async function registerWithEmailPassword(
+  email: string,
+  password: string,
+  displayName?: string
+): Promise<FirebaseUser> {
+  const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  if (displayName && displayName.trim()) {
+    try {
+      await updateFirebaseProfile(result.user, { displayName: displayName.trim().slice(0, 80) });
+    } catch {
+      // ignore displayName update errors
+    }
+  }
+  try {
+    await sendEmailVerification(result.user);
+  } catch {
+    // ignore rate-limit or verification send errors
+  }
+  return result.user;
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email.trim());
+}
+
+export async function resendEmailVerification(): Promise<void> {
+  if (auth.currentUser && !auth.currentUser.emailVerified) {
+    await sendEmailVerification(auth.currentUser);
+  }
+}
+
+/**
+ * Checks whether the currently authenticated Firebase user has Admin privileges.
+ * Matches firestore.rules isAdmin(): bootstrapped admin email OR /admins/{uid} document.
+ */
+export async function checkIsCloudAdmin(fbUser: FirebaseUser | null): Promise<boolean> {
+  if (!fbUser) return false;
+  const emailLower = (fbUser.email || '').trim().toLowerCase();
+  if (emailLower && ADMIN_EMAILS.includes(emailLower)) {
+    return true;
+  }
+  try {
+    const cleanUid = sanitizeValidId(fbUser.uid);
+    const snap = await getDoc(doc(db, 'admins', cleanUid));
+    return snap.exists();
+  } catch {
+    return false;
+  }
+}
+
+export function getFirebaseAuthErrorMessage(error: unknown, isEn = false): string {
+  const code = (error as { code?: string })?.code || '';
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+      return isEn
+        ? 'Invalid email or password. Please check your credentials.'
+        : 'Неверный логин или пароль. Проверьте данные и попробуйте снова.';
+    case 'auth/user-not-found':
+      return isEn
+        ? 'Account not found. Please sign up first.'
+        : 'Аккаунт с таким email не найден. Сначала создайте учётную запись через «Регистрация».';
+    case 'auth/email-already-in-use':
+      return isEn
+        ? 'This email is already registered. Please sign in with your password.'
+        : 'Этот email уже зарегистрирован в базе. Нажмите «Ко входу» и введите ваш пароль.';
+    case 'auth/invalid-email':
+      return isEn
+        ? 'Please enter a valid email address.'
+        : 'Укажите корректный адрес электронной почты (Email).';
+    case 'auth/weak-password':
+      return isEn
+        ? 'Password must be at least 6 characters long.'
+        : 'Пароль слишком простой — минимум 6 символов.';
+    case 'auth/too-many-requests':
+      return isEn
+        ? 'Too many failed attempts. Please wait a minute and try again.'
+        : 'Слишком много попыток входа. Подождите немного и попробуйте снова.';
+    case 'auth/operation-not-allowed':
+    case 'auth/configuration-not-found':
+      return isEn
+        ? 'Email/Password sign-in is not enabled yet in Firebase Console (Authentication → Sign-in method).'
+        : 'Вход по Email и паролю ещё не включён в Firebase Console (Authentication → Sign-in method → Email/Password).';
+    case 'auth/popup-closed-by-user':
+      return isEn ? 'Sign-in popup was closed.' : 'Окно входа через Google было закрыто.';
+    case 'auth/unauthorized-domain':
+      return isEn
+        ? 'This domain is not authorized in Firebase Console (Authentication → Settings → Authorized domains).'
+        : 'Домен не добавлен в Firebase Console (Authentication → Settings → Authorized domains).';
+    case 'auth/network-request-failed':
+      return isEn
+        ? 'Network error. Please check your internet connection.'
+        : 'Ошибка сети. Проверьте подключение к интернету.';
+    default:
+      return isEn
+        ? 'Authentication failed. Please check your credentials.'
+        : 'Не удалось выполнить вход. Проверьте email и пароль.';
+  }
 }
 
 export async function signOutCloudUser(): Promise<void> {

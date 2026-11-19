@@ -28,6 +28,7 @@ import { InviteUsersModal } from './components/InviteUsersModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { FeedFiltersSheet } from './components/FeedFiltersSheet.tsx';
 import { RecommendedSlider } from './components/RecommendedSlider.tsx';
+import { KompaLogoMark } from './components/KompaLogo.tsx';
 import { EventItem, UserProfile, AppNotification, UserReview } from './types/index.ts';
 import { api } from './services/api.ts';
 import { clientLocalStore } from './services/clientLocalStore.ts';
@@ -44,6 +45,7 @@ import {
   auth,
   onAuthStateChanged,
   FirebaseUser,
+  checkIsCloudAdmin,
   fetchCloudSeekers,
   fetchCloudUserProfile,
   sanitizeValidId,
@@ -217,28 +219,17 @@ export default function App() {
   const [showSafetyGuide, setShowSafetyGuide] = useState<boolean>(false);
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [showDemoShareModal, setShowDemoShareModal] = useState<boolean>(false);
-  const [isAuthCompleted, setIsAuthCompleted] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('kompa_auth_completed_v11') === 'true';
-    } catch {
-      return false;
-    }
-  });
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('kompa_auth_completed_v11') !== 'true';
-    } catch {
-      return true;
-    }
-  });
-  const [authModalMode, setAuthModalMode] = useState<'gate' | 'edit'>(() => {
-    try {
-      return localStorage.getItem('kompa_auth_completed_v11') === 'true' ? 'edit' : 'gate';
-    } catch {
-      return 'gate';
-    }
-  });
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
+  const [isAuthCompleted, setIsAuthCompleted] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'gate' | 'edit'>('gate');
   const [cloudUser, setCloudUser] = useState<FirebaseUser | null>(null);
+  const [isAdminSession, setIsAdminSession] = useState<boolean>(false);
+  const [adminOwnProfile, setAdminOwnProfile] = useState<UserProfile | null>(null);
+
+  const isImpersonatingTestUser = Boolean(
+    isAdminSession && adminOwnProfile && currentUser.id !== adminOwnProfile.id
+  );
 
   const handleLogout = async () => {
     try {
@@ -248,42 +239,118 @@ export default function App() {
     }
     await signOutCloudUser().catch(() => {});
     setCloudUser(null);
+    setIsAdminSession(false);
+    setAdminOwnProfile(null);
     setIsAuthCompleted(false);
+    setShowAdminModal(false);
+    setShowAuthModal(false);
     setAuthModalMode('gate');
-    setShowAuthModal(true);
   };
 
-  // Listen to Firebase Auth state and sync cloud seekers/profile
+  // Strict real Firebase Auth listener: entry requires a verified account stored in Firebase Auth
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async fbUser => {
       setCloudUser(fbUser);
-      if (fbUser) {
+      if (!fbUser) {
+        setIsAdminSession(false);
+        setAdminOwnProfile(null);
+        setIsAuthCompleted(false);
+        setShowAdminModal(false);
+        setShowAuthModal(false);
+        setAuthModalMode('gate');
+        setAuthChecked(true);
+        return;
+      }
+
+      try {
+        const uid = sanitizeValidId(fbUser.uid);
+        const [adminFlag, cloudProf] = await Promise.all([
+          checkIsCloudAdmin(fbUser).catch(() => false),
+          fetchCloudUserProfile(uid).catch(() => null),
+        ]);
+
+        setIsAdminSession(adminFlag);
+        setIsAuthCompleted(true);
+        setShowAuthModal(false);
         try {
-          const uid = sanitizeValidId(fbUser.uid);
-          const cloudProf = await fetchCloudUserProfile(uid);
-          if (cloudProf && cloudProf.name) {
-            const registered = clientLocalStore.registerOrSwitchCloudUser({
-              ...clientLocalStore.getMe(),
-              ...cloudProf,
-              id: uid,
-              email: fbUser.email || cloudProf.email || 'user@kompa.app',
-              onlineStatus: 'online',
-              lastSeen: 'Онлайн сейчас',
-            } as UserProfile);
-            setCurrentUser({ ...registered });
-          }
-          const cloudSeekersList = await fetchCloudSeekers();
-          if (Array.isArray(cloudSeekersList) && cloudSeekersList.length > 0) {
-            for (const s of cloudSeekersList) {
-              if (!clientLocalStore.users.has(s.id)) {
-                clientLocalStore.users.set(s.id, s);
-              }
-            }
-            setSeekers(clientLocalStore.getSeekers());
-          }
+          localStorage.setItem('kompa_auth_completed_v11', 'true');
         } catch {
-          // ignore initial cloud sync errors
+          // ignore storage errors
         }
+
+        const existingLocal = clientLocalStore.users.get(uid);
+        const resolvedName =
+          cloudProf?.name ||
+          existingLocal?.name ||
+          fbUser.displayName ||
+          (fbUser.email ? fbUser.email.split('@')[0] : 'Участник Kompa');
+
+        const cleanFallback: UserProfile = existingLocal || {
+          id: uid,
+          name: resolvedName,
+          age: 25,
+          gender: 'female',
+          city: 'Москва',
+          avatarUrl:
+            fbUser.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedName)}&background=FF5A36&color=fff&size=256&bold=true`,
+          photos: fbUser.photoURL ? [fbUser.photoURL] : [],
+          bio: '',
+          interests: [],
+          occupation: '',
+          companyOrIndustry: '',
+          openToInvites: true,
+          openToInvitesNote: '',
+          onlineStatus: 'online',
+          lastSeen: 'Онлайн сейчас',
+          reliability: {
+            score: 5.0,
+            eventsAttended: 0,
+            eventsOrganized: 0,
+            cancellations: 0,
+            noShows: 0,
+            attendanceRate: 100,
+            positiveReviewsCount: 0,
+          },
+          isPhoneVerified: false,
+          isEmailVerified: Boolean(fbUser.emailVerified),
+          isIdentityVerified: false,
+          email: fbUser.email || 'user@kompa.app',
+          role: adminFlag ? 'admin' : 'user',
+          status: 'active',
+        };
+
+        const syncedProfile: UserProfile = {
+          ...cleanFallback,
+          ...(cloudProf || {}),
+          id: uid,
+          name: resolvedName,
+          email: fbUser.email || cloudProf?.email || existingLocal?.email || 'user@kompa.app',
+          role: adminFlag ? 'admin' : 'user',
+          isEmailVerified: Boolean(fbUser.emailVerified),
+          onlineStatus: 'online',
+          lastSeen: 'Онлайн сейчас',
+        };
+
+        const registered = clientLocalStore.registerOrSwitchCloudUser(syncedProfile);
+        if (adminFlag) {
+          setAdminOwnProfile({ ...registered });
+        }
+        setCurrentUser({ ...registered });
+
+        const cloudSeekersList = await fetchCloudSeekers().catch(() => []);
+        if (Array.isArray(cloudSeekersList) && cloudSeekersList.length > 0) {
+          for (const s of cloudSeekersList) {
+            if (!clientLocalStore.users.has(s.id)) {
+              clientLocalStore.users.set(s.id, s);
+            }
+          }
+          setSeekers(clientLocalStore.getSeekers());
+        }
+      } catch {
+        // ignore secondary sync errors
+      } finally {
+        setAuthChecked(true);
       }
     });
     return () => unsub();
@@ -407,6 +474,9 @@ export default function App() {
         interests: editInterests,
       });
       setCurrentUser({ ...updated });
+      if (isAdminSession && adminOwnProfile && updated.id === adminOwnProfile.id) {
+        setAdminOwnProfile({ ...updated });
+      }
       setIsEditingProfile(false);
       api.aiGetRecommendations().then(recs => setAiRecommendations(recs)).catch(() => {});
     } catch (err) {
@@ -414,16 +484,35 @@ export default function App() {
     }
   };
 
+  // Strictly restricted to verified Admin accounts for testing with demo personas
   const handleSwitchUser = async (userId: string) => {
+    if (!isAdminSession) return;
     setIsLoading(true);
     setIsEditingProfile(false);
     try {
       const res = await api.switchUser(userId);
-      setCurrentUser(res.user);
+      setCurrentUser({ ...res.user });
       setInviteNoteDraft(res.user.openToInvitesNote || '');
       await loadData();
     } catch (err) {
       console.error('Switch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReturnToAdminAccount = async () => {
+    if (!isAdminSession || !adminOwnProfile) return;
+    setIsLoading(true);
+    setIsEditingProfile(false);
+    try {
+      const restored = clientLocalStore.registerOrSwitchCloudUser({
+        ...adminOwnProfile,
+        role: 'admin',
+      });
+      setCurrentUser({ ...restored });
+      setInviteNoteDraft(restored.openToInvitesNote || '');
+      await loadData();
     } finally {
       setIsLoading(false);
     }
@@ -636,6 +725,57 @@ export default function App() {
     participationStatusFilter === 'all' ? true : getEventAppStatus(ev) === participationStatusFilter
   );
 
+  // While Firebase Auth verifies persisted session on boot, render clean branded loader (no feed leak)
+  if (!authChecked) {
+    return (
+      <div
+        className="min-h-screen w-full flex flex-col items-center justify-center gap-3 p-6"
+        style={{ backgroundColor: '#FAF7F2' }}
+      >
+        <KompaLogoMark size={84} variant="standalone" animated={false} />
+        <span className="text-xs font-semibold" style={{ color: '#85776E' }}>
+          Проверка учётной записи...
+        </span>
+      </div>
+    );
+  }
+
+  // Strict Auth Gate: unauthenticated visitors CANNOT view feed or test users until logged in via database
+  if (!cloudUser) {
+    return (
+      <AuthModal
+        key="strict-gate"
+        mode="gate"
+        currentUser={currentUser}
+        cloudUser={null}
+        isInitialGate={true}
+        onClose={() => {
+          if (auth.currentUser) {
+            setShowAuthModal(false);
+          }
+        }}
+        onLogout={handleLogout}
+        onProfileRegistered={updatedProfile => {
+          try {
+            localStorage.setItem('kompa_auth_completed_v11', 'true');
+          } catch {
+            // ignore storage errors
+          }
+          setIsAuthCompleted(true);
+          const saved = clientLocalStore.registerOrSwitchCloudUser(updatedProfile);
+          if (updatedProfile.role === 'admin') {
+            setIsAdminSession(true);
+            setAdminOwnProfile({ ...saved });
+          }
+          setCurrentUser({ ...saved });
+          setSeekers(clientLocalStore.getSeekers());
+          loadData();
+        }}
+        lang={lang}
+      />
+    );
+  }
+
   return (
     <div
       id="top"
@@ -645,57 +785,78 @@ export default function App() {
         color: 'var(--text-primary)',
       }}
     >
-      {/* 1. SLEEK STUDIO ROLE SWITCHER BAR FOR TESTING */}
-      <aside
-        aria-label="Панель переключения ролей"
-        className="w-full max-w-full overflow-hidden text-white text-[11px] py-1.5 px-3 sm:px-4 pt-safe border-b border-white/10"
-        style={{ backgroundColor: 'var(--hero-grad-from)' }}
-      >
-        <div className="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 min-w-0">
-          <span className="hidden md:inline font-semibold text-white/75 shrink-0">
-            Режим просмотра ролей:
-          </span>
+      {/* 1. ADMIN-ONLY TESTING BAR (Completely hidden from regular users) */}
+      {isAdminSession && (
+        <aside
+          aria-label="Панель тестирования администратора"
+          className="w-full max-w-full overflow-hidden text-white text-[11px] py-1.5 px-3 sm:px-4 pt-safe border-b border-white/10"
+          style={{ backgroundColor: 'var(--hero-grad-from)' }}
+        >
+          <div className="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 min-w-0">
+            <span className="hidden md:inline font-semibold text-white/80 shrink-0">
+              Админ · Тест-пользователи:
+            </span>
 
-          <div className="w-full md:w-auto max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {availableUsers.map(u => (
+            <div className="w-full md:w-auto max-w-full min-w-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              {adminOwnProfile && (
+                <button
+                  type="button"
+                  onClick={handleReturnToAdminAccount}
+                  className="px-2.5 py-1 rounded-lg text-[11px] transition-all shrink-0 cursor-pointer whitespace-nowrap"
+                  style={{
+                    backgroundColor: !isImpersonatingTestUser ? 'var(--accent-primary)' : 'rgba(255,255,255,0.14)',
+                    color: '#FFFFFF',
+                    fontWeight: !isImpersonatingTestUser ? 700 : 600,
+                  }}
+                >
+                  Мой админ
+                </button>
+              )}
+
+              {availableUsers.map(u => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => handleSwitchUser(u.id)}
+                  className="px-2.5 py-1 rounded-lg text-[11px] transition-all shrink-0 cursor-pointer whitespace-nowrap"
+                  style={{
+                    backgroundColor: u.id === currentUser.id ? 'var(--accent-primary)' : 'rgba(255,255,255,0.09)',
+                    color: '#FFFFFF',
+                    fontWeight: u.id === currentUser.id ? 700 : 500,
+                  }}
+                >
+                  {u.id === 'user-anna' ? 'Анна (Орг.)' : 
+                   u.id === 'user-mikhail' ? 'Михаил (Кандидат)' :
+                   u.id === 'user-elena' ? 'Елена (Гость)' : 'Модератор'}
+                </button>
+              ))}
+
               <button
-                key={u.id}
-                onClick={() => handleSwitchUser(u.id)}
-                className="px-2.5 py-1 rounded-lg text-[11px] transition-all shrink-0 cursor-pointer whitespace-nowrap"
-                style={{
-                  backgroundColor: u.id === currentUser.id ? 'var(--accent-primary)' : 'rgba(255,255,255,0.09)',
-                  color: '#FFFFFF',
-                  fontWeight: u.id === currentUser.id ? 700 : 500,
-                }}
+                type="button"
+                onClick={() => setShowDemoShareModal(true)}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-white/15 hover:bg-white/25 transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-auto md:ml-1 active:scale-95 whitespace-nowrap"
+                title="Поделиться ссылкой и QR-кодом"
               >
-                {u.id === 'user-anna' ? 'Анна (Орг.)' : 
-                 u.id === 'user-mikhail' ? 'Михаил (Кандидат)' :
-                 u.id === 'user-elena' ? 'Елена (Гость)' : 'Модератор'}
+                <QrCode className="w-3 h-3 text-amber-300 shrink-0" />
+                <span>QR-код</span>
               </button>
-            ))}
-
-            <button
-              onClick={() => setShowDemoShareModal(true)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white bg-white/15 hover:bg-white/25 transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-auto md:ml-1 active:scale-95 whitespace-nowrap"
-              title="Поделиться ссылкой и QR-кодом"
-            >
-              <QrCode className="w-3 h-3 text-amber-300 shrink-0" />
-              <span>QR-код</span>
-            </button>
+            </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       {/* 2. HEADER WITH SINGLE RIGHT-ALIGNED THEME & LANGUAGE SWITCHERS */}
       <Header
         currentUser={currentUser}
-        availableUsers={availableUsers}
+        availableUsers={isAdminSession ? availableUsers : []}
         onSwitchUser={handleSwitchUser}
         notifications={notifications}
         onNotificationClick={handleNotificationClick}
         onMarkAllRead={handleMarkAllNotificationsRead}
         onOpenSafetyGuide={() => setShowSafetyGuide(true)}
-        onOpenAdmin={() => setShowAdminModal(true)}
+        onOpenAdmin={() => {
+          if (isAdminSession) setShowAdminModal(true);
+        }}
         onOpenDemoShare={() => setShowDemoShareModal(true)}
         onOpenAuth={() => {
           setAuthModalMode('edit');
@@ -703,6 +864,10 @@ export default function App() {
         }}
         onLogout={handleLogout}
         isCloudConnected={isAuthCompleted || Boolean(cloudUser)}
+        isAdminSession={isAdminSession}
+        isImpersonatingTestUser={isImpersonatingTestUser}
+        adminOwnName={adminOwnProfile?.name}
+        onReturnToAdminAccount={handleReturnToAdminAccount}
         activePalette={activePalette}
         onChangePalette={setActivePalette}
         lang={lang}
@@ -2495,7 +2660,7 @@ export default function App() {
         />
       )}
 
-      {showAdminModal && (
+      {showAdminModal && isAdminSession && (
         <AdminPanelModal
           onClose={() => setShowAdminModal(false)}
           onActionComplete={loadData}

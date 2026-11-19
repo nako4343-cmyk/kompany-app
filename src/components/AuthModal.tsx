@@ -36,8 +36,15 @@ import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'fi
 import { UserProfile } from '../types/index.ts';
 import {
   auth,
+  signInWithEmailPassword,
+  registerWithEmailPassword,
+  signInWithGooglePopup,
+  sendPasswordReset,
+  fetchCloudUserProfile,
+  checkIsCloudAdmin,
   signOutCloudUser,
   syncUserProfileToCloud,
+  getFirebaseAuthErrorMessage,
   FirebaseUser,
   sanitizeValidId,
 } from '../lib/firebase.ts';
@@ -469,41 +476,136 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return 5 + interests.length * 3;
   }, [interests]);
 
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const handleLoginSubmit = async () => {
-    const cleanLogin = loginIdentifier.trim();
-    const cleanPass = loginPassword.trim();
-    if (!cleanLogin) {
-      setErrorMessage('Введите телефон или электронную почту');
+    const cleanEmail = loginIdentifier.trim().toLowerCase();
+    const cleanPass = loginPassword;
+
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setErrorMessage('Введите корректный Email, указанный при регистрации');
       triggerHaptic([12, 30, 12]);
       return;
     }
-    if (cleanPass.length < 4) {
-      setErrorMessage('Введите пароль (не менее 4 символов)');
+    if (cleanPass.length < 6) {
+      setErrorMessage('Введите пароль (минимум 6 символов)');
       triggerHaptic([12, 30, 12]);
       return;
     }
 
+    setIsLoggingIn(true);
     setErrorMessage('');
-    triggerHaptic([10, 25, 12]);
+    setStatusMessage('');
 
-    const isEmail = cleanLogin.includes('@');
-    const resolvedName =
-      name.trim() ||
-      currentUser.name ||
-      (isEmail ? cleanLogin.split('@')[0] : 'Участник Kompa');
+    try {
+      const fbUser = await signInWithEmailPassword(cleanEmail, cleanPass);
+      const uid = sanitizeValidId(fbUser.uid);
+      const [cloudProf, isAdmin] = await Promise.all([
+        fetchCloudUserProfile(uid).catch(() => null),
+        checkIsCloudAdmin(fbUser).catch(() => false),
+      ]);
 
-    const updatedProfile: UserProfile = {
-      ...currentUser,
-      name: resolvedName,
-      email: isEmail ? cleanLogin : currentUser.email || 'user@kompa.app',
-      phoneNumber: !isEmail ? cleanLogin : currentUser.phoneNumber || '+7 (999) 000-00-00',
-      avatarUrl: avatarUrl || currentUser.avatarUrl || createInitialsAvatarDataUrl(resolvedName),
-      onlineStatus: 'online',
-      lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
-    };
+      const resolvedName =
+        cloudProf?.name ||
+        fbUser.displayName ||
+        cleanEmail.split('@')[0] ||
+        'Участник Kompa';
 
-    onProfileRegistered(updatedProfile);
-    onClose();
+      const updatedProfile: UserProfile = {
+        ...currentUser,
+        ...(cloudProf || {}),
+        id: uid,
+        name: resolvedName,
+        email: fbUser.email || cleanEmail,
+        role: isAdmin ? 'admin' : 'user',
+        isEmailVerified: Boolean(fbUser.emailVerified),
+        avatarUrl:
+          cloudProf?.avatarUrl ||
+          fbUser.photoURL ||
+          createInitialsAvatarDataUrl(resolvedName),
+        onlineStatus: 'online',
+        lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
+      };
+
+      triggerHaptic([10, 25, 12]);
+      onProfileRegistered(updatedProfile);
+      onClose();
+    } catch (err) {
+      triggerHaptic([20, 40, 20]);
+      setErrorMessage(getFirebaseAuthErrorMessage(err, isEn));
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoggingIn(true);
+    setErrorMessage('');
+    setStatusMessage('');
+    try {
+      const fbUser = await signInWithGooglePopup();
+      const uid = sanitizeValidId(fbUser.uid);
+      const [cloudProf, isAdmin] = await Promise.all([
+        fetchCloudUserProfile(uid).catch(() => null),
+        checkIsCloudAdmin(fbUser).catch(() => false),
+      ]);
+
+      const resolvedName =
+        cloudProf?.name ||
+        fbUser.displayName ||
+        (fbUser.email ? fbUser.email.split('@')[0] : 'Участник Kompa');
+
+      const updatedProfile: UserProfile = {
+        ...currentUser,
+        ...(cloudProf || {}),
+        id: uid,
+        name: resolvedName,
+        email: fbUser.email || currentUser.email || 'user@kompa.app',
+        role: isAdmin ? 'admin' : 'user',
+        isEmailVerified: Boolean(fbUser.emailVerified),
+        isIdentityVerified: true,
+        avatarUrl:
+          cloudProf?.avatarUrl ||
+          fbUser.photoURL ||
+          createInitialsAvatarDataUrl(resolvedName),
+        onlineStatus: 'online',
+        lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
+      };
+
+      if (!cloudProf && fbUser.emailVerified) {
+        await syncUserProfileToCloud(updatedProfile).catch(() => {});
+      }
+
+      triggerHaptic([10, 25, 12]);
+      onProfileRegistered(updatedProfile);
+      onClose();
+    } catch (err) {
+      triggerHaptic([20, 40, 20]);
+      setErrorMessage(getFirebaseAuthErrorMessage(err, isEn));
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const cleanEmail = loginIdentifier.trim().toLowerCase();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setErrorMessage('Сначала введите ваш Email в поле логина, чтобы получить ссылку на сброс пароля');
+      triggerHaptic([12, 30, 12]);
+      return;
+    }
+    setIsLoggingIn(true);
+    setErrorMessage('');
+    setStatusMessage('');
+    try {
+      await sendPasswordReset(cleanEmail);
+      setStatusMessage(`Письмо для сброса пароля отправлено на ${cleanEmail}`);
+      triggerHaptic([10, 25, 10]);
+    } catch (err) {
+      setErrorMessage(getFirebaseAuthErrorMessage(err, isEn));
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const validateStep1Fields = (): boolean => {
@@ -521,8 +623,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setErrorMessage('Укажите корректную электронную почту');
       return false;
     }
-    if (registerPassword.trim().length < 4) {
-      setErrorMessage('Придумайте пароль (минимум 4 символа)');
+    if (registerPassword.trim().length < 6) {
+      setErrorMessage('Придумайте пароль (минимум 6 символов для защиты аккаунта)');
       return false;
     }
     return true;
@@ -654,9 +756,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setStatusMessage('');
 
     try {
-      const activeFbUser = auth.currentUser;
-      const uid = activeFbUser ? sanitizeValidId(activeFbUser.uid) : currentUser.id;
       const cleanName = name.trim().slice(0, 80) || 'Участник Kompa';
+      const cleanEmail = email.trim().toLowerCase().slice(0, 120);
+      let activeFbUser = auth.currentUser;
+
+      // In fresh registration, ALWAYS create the real account in Firebase Auth database
+      if (!isEditProfileMode && !activeFbUser) {
+        activeFbUser = await registerWithEmailPassword(
+          cleanEmail,
+          registerPassword,
+          cleanName
+        );
+      }
+
+      if (!activeFbUser && !isEditProfileMode) {
+        setErrorMessage('Не удалось создать учётную запись в базе. Попробуйте снова.');
+        return;
+      }
+
+      const uid = activeFbUser ? sanitizeValidId(activeFbUser.uid) : currentUser.id;
+      const isAdmin = activeFbUser
+        ? await checkIsCloudAdmin(activeFbUser).catch(() => false)
+        : currentUser.role === 'admin';
       const finalAvatar = avatarUrl || createInitialsAvatarDataUrl(cleanName);
 
       const updatedProfile: UserProfile = {
@@ -675,23 +796,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         interests: interests.length > 0 ? interests.slice(0, 10) : ['Настольные игры'],
         openToInvites,
         openToInvitesNote: openToInvitesNote.trim().slice(0, 300),
-        email: email.trim().slice(0, 120),
-        isEmailVerified: true,
-        isPhoneVerified: isSmsVerified || true,
+        email: activeFbUser?.email || cleanEmail || currentUser.email,
+        role: isAdmin ? 'admin' : 'user',
+        isEmailVerified: Boolean(activeFbUser?.emailVerified),
+        isPhoneVerified: isSmsVerified || currentUser.isPhoneVerified,
         isIdentityVerified: Boolean(avatarUrl),
         onlineStatus: 'online',
         lastSeen: isEn ? 'Online now' : 'Онлайн сейчас',
       };
 
-      if (activeFbUser) {
-        await syncUserProfileToCloud(updatedProfile);
+      if (activeFbUser && activeFbUser.emailVerified) {
+        await syncUserProfileToCloud(updatedProfile).catch(() => {});
       }
 
       onProfileRegistered(updatedProfile);
       triggerHaptic([15, 40, 20]);
+      if (!isEditProfileMode && activeFbUser && !activeFbUser.emailVerified) {
+        setStatusMessage('Аккаунт создан в базе! Мы отправили письмо для подтверждения вашей почты.');
+      }
       navigateToStep(4);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Ошибка сохранения профиля');
+      triggerHaptic([20, 40, 20]);
+      setErrorMessage(getFirebaseAuthErrorMessage(err, isEn));
     } finally {
       setIsSaving(false);
     }
@@ -1131,29 +1257,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       exit={{ opacity: 0, x: -32 }}
                       className="space-y-3.5"
                     >
-                      {/* Field 1: Login */}
+                      {/* Field 1: Email Login */}
                       <motion.div variants={fadeItemVariants} className="space-y-1.5">
                         <label
                           className="block text-xs font-semibold px-1"
                           style={{ color: PALETTE.textSecondary }}
                         >
-                          Логин
+                          Email (логин)
                         </label>
                         <div
                           className="flex items-center gap-3 px-4 min-h-[50px] rounded-2xl transition-all duration-150"
                           style={getFieldStyle('loginId')}
                         >
-                          <User
+                          <Mail
                             className="w-4 h-4 shrink-0"
                             style={{ color: PALETTE.textMuted }}
                           />
                           <input
-                            type="text"
+                            type="email"
+                            inputMode="email"
+                            autoComplete="email"
                             value={loginIdentifier}
                             onFocus={() => setFocusedField('loginId')}
                             onBlur={() => setFocusedField(null)}
                             onChange={e => setLoginIdentifier(e.target.value)}
-                            placeholder="Телефон или электронная почта"
+                            placeholder="Электронная почта (Email)"
                             style={{ color: PALETTE.textPrimary }}
                             className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:text-[#A3968D] font-medium appearance-none"
                           />
@@ -1178,10 +1306,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           />
                           <input
                             type={showLoginPassword ? 'text' : 'password'}
+                            autoComplete="current-password"
                             value={loginPassword}
                             onFocus={() => setFocusedField('loginPass')}
                             onBlur={() => setFocusedField(null)}
                             onChange={e => setLoginPassword(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleLoginSubmit();
+                            }}
                             placeholder="Введите ваш пароль"
                             style={{ color: PALETTE.textPrimary }}
                             className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:text-[#A3968D] font-medium appearance-none"
@@ -1201,13 +1333,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         </div>
                       </motion.div>
 
-                      {/* Remember Me Checkbox */}
+                      {/* Remember Me & Forgot Password */}
                       <motion.div
                         variants={fadeItemVariants}
-                        className="flex items-center justify-start pt-0.5 px-1"
+                        className="flex items-center justify-between pt-0.5 px-1 gap-2"
                       >
                         <label
-                          className="inline-flex items-center gap-2.5 text-xs font-medium cursor-pointer"
+                          className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer"
                           style={{ color: PALETTE.textSecondary }}
                         >
                           <input
@@ -1219,6 +1351,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           />
                           <span>Запомнить меня</span>
                         </label>
+                        <button
+                          type="button"
+                          disabled={isLoggingIn}
+                          onClick={handleForgotPassword}
+                          className="text-xs font-semibold hover:underline cursor-pointer disabled:opacity-50"
+                          style={{ color: PALETTE.accentPrimary }}
+                        >
+                          Забыли пароль?
+                        </button>
                       </motion.div>
 
                       {/* Bottom Action Row: Left "Войти" & Right "Регистрация" */}
@@ -1230,27 +1371,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.985 }}
                           type="button"
+                          disabled={isLoggingIn}
                           onClick={handleLoginSubmit}
-                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all"
+                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold text-white flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-60"
                           style={{
                             background: `linear-gradient(180deg, ${PALETTE.accentGradFrom} 0%, ${PALETTE.accentGradTo} 100%)`,
                             boxShadow: `0 10px 24px -6px ${PALETTE.accentShadow}, inset 0 1px 0 rgba(255, 255, 255, 0.22)`,
                           }}
                         >
-                          <span>Войти</span>
+                          <span>{isLoggingIn ? 'Проверка...' : 'Войти'}</span>
                         </motion.button>
 
                         <motion.button
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.985 }}
                           type="button"
+                          disabled={isLoggingIn}
                           onClick={() => {
                             triggerHaptic(8);
                             setErrorMessage('');
+                            setStatusMessage('');
                             setAuthMode('register');
                             setStepState([1, 1]);
                           }}
-                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                          className="min-h-[50px] px-4 rounded-2xl text-sm font-display font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors disabled:opacity-60"
                           style={{
                             backgroundColor: PALETTE.accentSoftBg,
                             color: PALETTE.accentSoftText,
@@ -1259,6 +1403,48 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         >
                           <span>Регистрация</span>
                         </motion.button>
+                      </motion.div>
+
+                      {/* Google Sign-In Divider + Button */}
+                      <motion.div variants={fadeItemVariants} className="pt-1 space-y-2.5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-px flex-1" style={{ backgroundColor: PALETTE.cardBorder }} />
+                          <span className="text-[11px] font-medium" style={{ color: PALETTE.textMuted }}>
+                            или
+                          </span>
+                          <div className="h-px flex-1" style={{ backgroundColor: PALETTE.cardBorder }} />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isLoggingIn}
+                          onClick={handleGoogleSignIn}
+                          className="w-full min-h-[46px] px-4 rounded-2xl text-xs font-bold flex items-center justify-center gap-2.5 cursor-pointer transition-colors disabled:opacity-60"
+                          style={{
+                            backgroundColor: PALETTE.fieldBg,
+                            border: `1.5px solid ${PALETTE.fieldBorder}`,
+                            color: PALETTE.textNavy,
+                          }}
+                        >
+                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              fill="#4285F4"
+                              d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
+                            />
+                            <path
+                              fill="#34A853"
+                              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"
+                            />
+                            <path
+                              fill="#FBBC05"
+                              d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"
+                            />
+                            <path
+                              fill="#EA4335"
+                              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"
+                            />
+                          </svg>
+                          <span>Войти через Google</span>
+                        </button>
                       </motion.div>
                     </motion.div>
                   ) : (
@@ -1370,7 +1556,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               onFocus={() => setFocusedField('regPass')}
                               onBlur={() => setFocusedField(null)}
                               onChange={e => setRegisterPassword(e.target.value)}
-                              placeholder="Придумайте пароль *"
+                              placeholder="Придумайте пароль (от 6 символов) *"
                               style={{ color: PALETTE.textPrimary }}
                               className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[15px] placeholder:text-[#A3968D] font-medium appearance-none"
                             />
