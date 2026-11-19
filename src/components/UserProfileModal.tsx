@@ -174,8 +174,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   {profile.isPhoneVerified && (
                     <>
                       <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>·</span>
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span
+                        className="inline-flex items-center gap-1 font-medium"
+                        style={{ color: 'var(--accent-text)' }}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                         <span>Телефон подтверждён</span>
                       </span>
                     </>
@@ -194,8 +197,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
                 {profile.openToInvites && (
                   <div className="pt-1">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
-                      <CalendarCheck className="w-3.5 h-3.5" />
+                    <span
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border"
+                      style={{
+                        backgroundColor: 'var(--accent-soft)',
+                        borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                        color: 'var(--accent-text)',
+                      }}
+                    >
+                      <CalendarCheck className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                       <span>Жду приглашений на мероприятие</span>
                     </span>
                     {profile.openToInvitesNote && (

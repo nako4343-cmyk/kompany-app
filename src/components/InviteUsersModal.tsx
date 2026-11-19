@@ -150,8 +150,15 @@ export const InviteUsersModal: React.FC<InviteUsersModalProps> = ({
           }}
         >
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/12 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
-              <Users className="w-3.5 h-3.5" />
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold uppercase tracking-wider"
+              style={{
+                backgroundColor: 'var(--accent-soft)',
+                borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                color: 'var(--accent-text)',
+              }}
+            >
+              <Users className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
               <span>
                 {lang === 'en'
                   ? 'Participant Finder · Open to Invites'
@@ -660,13 +667,23 @@ export const InviteUsersModal: React.FC<InviteUsersModalProps> = ({
 
                         <div className="shrink-0 flex items-center gap-2 self-end sm:self-center">
                           {alreadyApproved ? (
-                            <span className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1.5">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span
+                              className="px-3.5 py-2 rounded-xl text-xs font-bold border inline-flex items-center gap-1.5"
+                              style={{
+                                backgroundColor: 'var(--accent-soft)',
+                                borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                                color: 'var(--accent-text)',
+                              }}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                               <span>{lang === 'en' ? 'In Group' : 'Уже в компании'}</span>
                             </span>
                           ) : alreadyInvited ? (
-                            <span className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white inline-flex items-center gap-1.5 shadow-xs">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span
+                              className="px-3.5 py-2 rounded-xl text-xs font-bold text-white inline-flex items-center gap-1.5 shadow-xs"
+                              style={{ backgroundColor: '#162946' }}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#F06A4B]" />
                               <span>{lang === 'en' ? 'Invited ✓' : 'Приглашен(а) ✓'}</span>
                             </span>
                           ) : (

@@ -10,9 +10,9 @@ export const SafetyGuideModal: React.FC<SafetyGuideModalProps> = ({ onClose }) =
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
       <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in slide-in-from-bottom duration-200">
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-emerald-800">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-base font-bold text-slate-900">
+          <div className="flex items-center gap-2 text-[#162946]">
+            <ShieldCheck className="w-5 h-5 text-[#E8614D]" />
+            <h2 className="text-base font-bold text-[#162946]">
               Кодекс доверия и безопасности
             </h2>
           </div>
@@ -51,8 +51,8 @@ export const SafetyGuideModal: React.FC<SafetyGuideModalProps> = ({ onClose }) =
               Золотые правила первого знакомства:
             </h3>
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#ECE4DA] flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-[#E8614D] shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-slate-900 block">Только общественные места</span>
                 Встречайтесь в ресторанах, кафе, парках, антикафе или на концертах. Никогда не соглашайтесь на встречи в безлюдных промзонах или закрытых частных квартирах на первом этапе.
@@ -76,7 +76,7 @@ export const SafetyGuideModal: React.FC<SafetyGuideModalProps> = ({ onClose }) =
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px]">
+          <div className="p-3 rounded-xl bg-[#FEF1EE] border border-[#FAD4C8] text-[#162946] text-[11px]">
             ⚡ Если вы заметили подозрительное объявление, используйте кнопку <b>«Пожаловаться»</b> или <b>«Заблокировать»</b>. Наша система модерации работает круглосуточно.
           </div>
         </div>

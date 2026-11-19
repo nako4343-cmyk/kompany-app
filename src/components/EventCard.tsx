@@ -311,8 +311,15 @@ export const EventCard: React.FC<EventCardProps> = ({
                   {t.youAreHost}
                 </span>
               ) : appStatus === 'accepted' ? (
-                <span className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1.5 whitespace-nowrap">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                <span
+                  className="px-3.5 py-2 rounded-2xl text-xs font-bold border inline-flex items-center gap-1.5 whitespace-nowrap"
+                  style={{
+                    backgroundColor: 'var(--accent-soft)',
+                    borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                    color: 'var(--accent-text)',
+                  }}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
                   <span>{t.statusApproved}</span>
                 </span>
               ) : appStatus === 'pending' ? (

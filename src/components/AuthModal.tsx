@@ -29,6 +29,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  Search,
+  ChevronDown,
 } from 'lucide-react';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { UserProfile } from '../types/index.ts';
@@ -103,7 +105,76 @@ const INTEREST_CATALOG: Array<{
   { tag: 'Путешествие', labelEn: 'Weekend Trips', icon: MapPin },
 ];
 
-const CITY_PRESETS = ['Москва', 'Санкт-Петербург', 'Казань', 'Екатеринбург'];
+const CITY_CATALOG = [
+  'Москва',
+  'Санкт-Петербург',
+  'Казань',
+  'Екатеринбург',
+  'Новосибирск',
+  'Нижний Новгород',
+  'Краснодар',
+  'Сочи',
+  'Самара',
+  'Ростов-на-Дону',
+  'Уфа',
+  'Красноярск',
+  'Воронеж',
+  'Пермь',
+  'Волгоград',
+  'Челябинск',
+  'Омск',
+  'Тюмень',
+  'Калининград',
+  'Саратов',
+  'Тольятти',
+  'Барнаул',
+  'Ижевск',
+  'Махачкала',
+  'Хабаровск',
+  'Ульяновск',
+  'Иркутск',
+  'Владивосток',
+  'Ярославль',
+  'Ставрополь',
+  'Севастополь',
+  'Симферополь',
+  'Томск',
+  'Кемерово',
+  'Набережные Челны',
+  'Оренбург',
+  'Новокузнецк',
+  'Рязань',
+  'Пенза',
+  'Липецк',
+  'Киров',
+  'Чебоксары',
+  'Тула',
+  'Курск',
+  'Тверь',
+  'Брянск',
+  'Иваново',
+  'Белгород',
+  'Сургут',
+  'Архангельск',
+  'Калуга',
+  'Смоленск',
+  'Владимир',
+  'Мурманск',
+  'Грозный',
+  'Владикавказ',
+  'Якутск',
+  'Южно-Сахалинск',
+  'Пятигорск',
+  'Геленджик',
+  'Анапа',
+  'Минск',
+  'Алматы',
+  'Астана',
+  'Ереван',
+  'Тбилиси',
+  'Батуми',
+  'Дубай',
+];
 
 const slideVariants: Variants = {
   enter: (direction: number) => ({
@@ -270,6 +341,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [age, setAge] = useState<number>(currentUser.age || 27);
   const [gender, setGender] = useState<'female' | 'male'>(currentUser.gender || 'female');
   const [city, setCity] = useState(currentUser.city || 'Москва');
+  const [cityQuery, setCityQuery] = useState(currentUser.city || 'Москва');
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const cityContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const filteredCities = useMemo(() => {
+    const q = cityQuery.trim().toLowerCase();
+    if (!q) return CITY_CATALOG.slice(0, 14);
+    const startsWithMatches = CITY_CATALOG.filter(c => c.toLowerCase().startsWith(q));
+    const includesMatches = CITY_CATALOG.filter(
+      c => !c.toLowerCase().startsWith(q) && c.toLowerCase().includes(q)
+    );
+    return [...startsWithMatches, ...includesMatches].slice(0, 14);
+  }, [cityQuery]);
+
+  useEffect(() => {
+    if (!isCityDropdownOpen) return;
+    const handleOutside = (event: MouseEvent | TouchEvent) => {
+      if (cityContainerRef.current && !cityContainerRef.current.contains(event.target as Node)) {
+        setIsCityDropdownOpen(false);
+        setCityQuery(prev => (prev.trim() ? prev.trim() : city));
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [isCityDropdownOpen, city]);
   const [occupation, setOccupation] = useState<string>(() => {
     if (isInitialGate && currentUser.occupation?.includes('Арт-директор')) {
       return '';
@@ -943,9 +1043,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="mb-3.5 px-3.5 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium flex items-center gap-2"
+                    className="mb-3.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-2.5"
+                    style={{
+                      backgroundColor: PALETTE.accentSoftBg,
+                      border: `1px solid ${PALETTE.accentSoftBorder}`,
+                      color: PALETTE.textNavy,
+                    }}
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: PALETTE.accentPrimary,
+                        color: '#FFFFFF',
+                      }}
+                    >
+                      <Check className="w-3 h-3 stroke-[2.8]" />
+                    </span>
                     <span>{statusMessage}</span>
                   </motion.div>
                 )}
@@ -964,7 +1077,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </AnimatePresence>
 
               {/* MAIN CONTENT AREA: LOGIN VIEW OR 4-STEP REGISTRATION WIZARD */}
-              <div className="relative overflow-hidden">
+              <div className="relative overflow-visible">
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
                   {authMode === 'login' ? (
                     <motion.div
@@ -1376,7 +1489,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         >
                           <motion.div variants={fadeItemVariants} className="grid grid-cols-12 gap-2">
                             <div
-                              className="col-span-5 flex items-center justify-between px-3 min-h-[46px] rounded-2xl"
+                              className="col-span-5 flex items-center justify-between px-2 min-h-[48px] rounded-2xl"
                               style={{
                                 backgroundColor: PALETTE.fieldBg,
                                 border: `1.5px solid ${PALETTE.fieldBorder}`,
@@ -1384,28 +1497,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             >
                               <button
                                 type="button"
+                                aria-label="Уменьшить возраст"
                                 onClick={() => {
                                   triggerHaptic(5);
                                   setAge(prev => Math.max(18, prev - 1));
                                 }}
-                                className="w-7 h-7 rounded-xl font-bold flex items-center justify-center cursor-pointer"
+                                className="w-7 h-7 rounded-xl font-bold flex items-center justify-center leading-none shrink-0 cursor-pointer transition-transform active:scale-95"
                                 style={{
                                   backgroundColor: PALETTE.cardBg,
-                                  color: PALETTE.textPrimary,
+                                  color: PALETTE.textNavy,
                                   border: `1px solid ${PALETTE.fieldBorder}`,
                                 }}
                               >
                                 −
                               </button>
-                              <div className="text-center">
+                              <div className="flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 text-center">
                                 <span
-                                  className="text-sm font-mono-num font-extrabold block leading-none"
+                                  className="block text-[15px] font-mono-num font-extrabold leading-none"
                                   style={{ color: PALETTE.textPrimary }}
                                 >
                                   {age}
                                 </span>
                                 <span
-                                  className="text-[10px]"
+                                  className="block text-[10px] font-medium leading-none"
                                   style={{ color: PALETTE.textMuted }}
                                 >
                                   лет
@@ -1413,14 +1527,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               </div>
                               <button
                                 type="button"
+                                aria-label="Увеличить возраст"
                                 onClick={() => {
                                   triggerHaptic(5);
                                   setAge(prev => Math.min(90, prev + 1));
                                 }}
-                                className="w-7 h-7 rounded-xl font-bold flex items-center justify-center cursor-pointer"
+                                className="w-7 h-7 rounded-xl font-bold flex items-center justify-center leading-none shrink-0 cursor-pointer transition-transform active:scale-95"
                                 style={{
                                   backgroundColor: PALETTE.cardBg,
-                                  color: PALETTE.textPrimary,
+                                  color: PALETTE.textNavy,
                                   border: `1px solid ${PALETTE.fieldBorder}`,
                                 }}
                               >
@@ -1428,7 +1543,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               </button>
                             </div>
 
-                            <div className="col-span-7 grid grid-cols-2 gap-2">
+                            <div className="col-span-7 grid grid-cols-2 gap-1.5">
                               {(['female', 'male'] as const).map(g => {
                                 const active = gender === g;
                                 return (
@@ -1439,7 +1554,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                       triggerHaptic(6);
                                       setGender(g);
                                     }}
-                                    className="px-3 min-h-[46px] rounded-2xl text-xs font-bold transition-all cursor-pointer"
+                                    className="px-2 min-h-[48px] rounded-2xl text-xs font-bold transition-all cursor-pointer truncate"
                                     style={{
                                       backgroundColor: active
                                         ? PALETTE.accentSoftBg
@@ -1459,33 +1574,164 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </div>
                           </motion.div>
 
-                          <motion.div variants={fadeItemVariants} className="grid grid-cols-2 gap-2">
-                            <div
-                              className="flex items-center gap-2 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
-                              style={getFieldStyle('city')}
-                            >
-                              <MapPin
-                                className="w-3.5 h-3.5 shrink-0"
-                                style={{ color: PALETTE.textMuted }}
-                              />
-                              <input
-                                type="text"
-                                value={city}
-                                onFocus={() => setFocusedField('city')}
-                                onBlur={() => setFocusedField(null)}
-                                onChange={e => setCity(e.target.value)}
-                                placeholder="Город"
-                                style={{ color: PALETTE.textPrimary }}
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs placeholder:text-[#A3968D] font-medium appearance-none"
-                              />
+                          {/* Searchable City Picker + Occupation */}
+                          <motion.div variants={fadeItemVariants} className="space-y-2">
+                            <div ref={cityContainerRef} className="relative z-30">
+                              <div
+                                className="flex items-center gap-2.5 px-3.5 min-h-[48px] rounded-2xl transition-all duration-150"
+                                style={getFieldStyle('city')}
+                              >
+                                <Search
+                                  className="w-4 h-4 shrink-0"
+                                  style={{
+                                    color: isCityDropdownOpen
+                                      ? PALETTE.accentPrimary
+                                      : PALETTE.textMuted,
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={cityQuery}
+                                  onFocus={() => {
+                                    setFocusedField('city');
+                                    setIsCityDropdownOpen(true);
+                                  }}
+                                  onBlur={() => setFocusedField(null)}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    setCityQuery(val);
+                                    setCity(val);
+                                    setIsCityDropdownOpen(true);
+                                  }}
+                                  placeholder="Поиск города (например, Москва, Сочи...)"
+                                  style={{ color: PALETTE.textPrimary }}
+                                  className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[14px] placeholder:text-[#A3968D] font-medium appearance-none"
+                                />
+                                {cityQuery ? (
+                                  <button
+                                    type="button"
+                                    aria-label="Очистить поиск города"
+                                    onMouseDown={e => e.preventDefault()}
+                                    onClick={() => {
+                                      setCityQuery('');
+                                      setIsCityDropdownOpen(true);
+                                    }}
+                                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                                    style={{
+                                      backgroundColor: PALETTE.cardBorder,
+                                      color: PALETTE.textSecondary,
+                                    }}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <ChevronDown
+                                    className="w-4 h-4 shrink-0"
+                                    style={{ color: PALETTE.textMuted }}
+                                  />
+                                )}
+                              </div>
+
+                              <AnimatePresence>
+                                {isCityDropdownOpen && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                                    transition={{ duration: 0.16, ease: STUDIO_EASE }}
+                                    className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 rounded-2xl overflow-hidden shadow-xl"
+                                    style={{
+                                      backgroundColor: PALETTE.cardBg,
+                                      border: `1.5px solid ${PALETTE.cardBorder}`,
+                                      boxShadow:
+                                        '0 18px 38px -10px rgba(22, 41, 70, 0.18), 0 4px 12px -2px rgba(22, 41, 70, 0.06)',
+                                    }}
+                                  >
+                                    <div className="max-h-44 overflow-y-auto p-1.5 space-y-0.5">
+                                      {filteredCities.length > 0 ? (
+                                        filteredCities.map(itemCity => {
+                                          const isSelected =
+                                            city.trim().toLowerCase() === itemCity.toLowerCase();
+                                          return (
+                                            <button
+                                              key={itemCity}
+                                              type="button"
+                                              onMouseDown={e => e.preventDefault()}
+                                              onClick={() => {
+                                                triggerHaptic(5);
+                                                setCity(itemCity);
+                                                setCityQuery(itemCity);
+                                                setIsCityDropdownOpen(false);
+                                              }}
+                                              className="w-full px-3 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                                              style={{
+                                                backgroundColor: isSelected
+                                                  ? PALETTE.accentSoftBg
+                                                  : 'transparent',
+                                                color: isSelected
+                                                  ? PALETTE.accentSoftText
+                                                  : PALETTE.textNavy,
+                                              }}
+                                            >
+                                              <span className="flex items-center gap-2 min-w-0">
+                                                <MapPin
+                                                  className="w-3.5 h-3.5 shrink-0"
+                                                  style={{
+                                                    color: isSelected
+                                                      ? PALETTE.accentPrimary
+                                                      : PALETTE.textMuted,
+                                                  }}
+                                                />
+                                                <span className="truncate">{itemCity}</span>
+                                              </span>
+                                              {isSelected && (
+                                                <Check
+                                                  className="w-3.5 h-3.5 shrink-0"
+                                                  style={{ color: PALETTE.accentPrimary }}
+                                                />
+                                              )}
+                                            </button>
+                                          );
+                                        })
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onMouseDown={e => e.preventDefault()}
+                                          onClick={() => {
+                                            const custom = cityQuery.trim();
+                                            if (!custom) return;
+                                            triggerHaptic(5);
+                                            setCity(custom);
+                                            setCityQuery(custom);
+                                            setIsCityDropdownOpen(false);
+                                          }}
+                                          className="w-full px-3 py-2.5 rounded-xl text-left text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                                          style={{
+                                            backgroundColor: PALETTE.accentSoftBg,
+                                            color: PALETTE.accentSoftText,
+                                          }}
+                                        >
+                                          <MapPin
+                                            className="w-3.5 h-3.5 shrink-0"
+                                            style={{ color: PALETTE.accentPrimary }}
+                                          />
+                                          <span className="truncate">
+                                            Выбрать «{cityQuery.trim()}»
+                                          </span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
 
                             <div
-                              className="flex items-center gap-2 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
+                              className="flex items-center gap-2.5 px-3.5 min-h-[46px] rounded-2xl transition-all duration-150"
                               style={getFieldStyle('occupation')}
                             >
                               <Briefcase
-                                className="w-3.5 h-3.5 shrink-0"
+                                className="w-4 h-4 shrink-0"
                                 style={{ color: PALETTE.textMuted }}
                               />
                               <input
@@ -1494,41 +1740,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 onFocus={() => setFocusedField('occupation')}
                                 onBlur={() => setFocusedField(null)}
                                 onChange={e => setOccupation(e.target.value)}
-                                placeholder="Сфера / занятие"
+                                placeholder="Сфера деятельности / занятие"
                                 style={{ color: PALETTE.textPrimary }}
-                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-xs placeholder:text-[#A3968D] font-medium appearance-none"
+                                className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[14px] placeholder:text-[#A3968D] font-medium appearance-none"
                               />
                             </div>
-                          </motion.div>
-
-                          <motion.div variants={fadeItemVariants} className="flex flex-wrap gap-1.5">
-                            {CITY_PRESETS.map(c => {
-                              const active = city === c;
-                              return (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  onClick={() => {
-                                    triggerHaptic(5);
-                                    setCity(c);
-                                  }}
-                                  className="px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer"
-                                  style={{
-                                    backgroundColor: active
-                                      ? PALETTE.accentSoftBg
-                                      : PALETTE.fieldBg,
-                                    color: active
-                                      ? PALETTE.accentSoftText
-                                      : PALETTE.textMuted,
-                                    border: active
-                                      ? `1px solid ${PALETTE.accentSoftBorder}`
-                                      : `1px solid ${PALETTE.fieldBorder}`,
-                                  }}
-                                >
-                                  {c}
-                                </button>
-                              );
-                            })}
                           </motion.div>
 
                           <motion.div variants={fadeItemVariants} className="space-y-1.5">
@@ -1624,8 +1840,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           className="space-y-4 text-center"
                         >
                           <motion.div variants={fadeItemVariants} className="space-y-1">
-                            <div className="inline-flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
-                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            <div
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                              style={{
+                                backgroundColor: PALETTE.accentSoftBg,
+                                border: `1px solid ${PALETTE.accentSoftBorder}`,
+                                color: PALETTE.textNavy,
+                              }}
+                            >
+                              <ShieldCheck
+                                className="w-4 h-4 shrink-0"
+                                style={{ color: PALETTE.accentPrimary }}
+                              />
                               <span>Профиль и телефон подтверждены</span>
                             </div>
                             <h3

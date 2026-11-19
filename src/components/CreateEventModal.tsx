@@ -1247,8 +1247,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           {step === 6 && (
             <div className="space-y-4">
               {/* Privacy Warning Banner */}
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs flex items-start gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+              <div
+                className="p-3.5 rounded-2xl border text-xs flex items-start gap-2.5"
+                style={{
+                  backgroundColor: 'var(--accent-soft)',
+                  borderColor: 'color-mix(in srgb, var(--accent-primary) 28%, transparent)',
+                }}
+              >
+                <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--accent-primary)' }} />
                 <div>
                   <span className="font-bold block mb-0.5" style={{ color: 'var(--text-primary)' }}>
                     Принцип безопасности Kompa + Яндекс Карты

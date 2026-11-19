@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="hidden sm:flex p-2 rounded-xl transition-colors cursor-pointer hover:opacity-80 shrink-0"
             style={{ color: 'var(--text-secondary)' }}
           >
-            <ShieldCheck className="w-5 h-5 text-emerald-500" />
+            <ShieldCheck className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
           </motion.button>
 
           {/* Share Link Button (visible on sm+, inside user menu on mobile) */}
@@ -666,7 +666,7 @@ export const Header: React.FC<HeaderProps> = ({
                             color: 'var(--text-primary)',
                           }}
                         >
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <ShieldCheck className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
                           <span className="truncate">{lang === 'en' ? 'Safety' : 'Безопасность'}</span>
                         </button>
                         <button

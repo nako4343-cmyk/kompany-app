@@ -239,8 +239,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               </div>
 
               {/* Security scan status */}
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+              <div
+                className="p-4 rounded-2xl border flex items-start gap-3"
+                style={{
+                  backgroundColor: 'var(--accent-soft)',
+                  borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                }}
+              >
+                <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--accent-primary)' }} />
                 <div className="text-xs">
                   <span
                     className="font-bold block mb-1"

@@ -31,9 +31,9 @@ ${event.organizerPhone ? `Телефон организатора: ${event.organ
       <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom duration-200">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-emerald-800">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-sm font-bold text-slate-900">
+          <div className="flex items-center gap-2 text-[#162946]">
+            <ShieldCheck className="w-5 h-5 text-[#E8614D]" />
+            <h2 className="text-sm font-bold text-[#162946]">
               Поделиться встречей с близким
             </h2>
           </div>
@@ -47,8 +47,8 @@ ${event.organizerPhone ? `Телефон организатора: ${event.organ
 
         {/* Body */}
         <div className="p-5 space-y-4 overflow-y-auto">
-          <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="p-3 bg-[#FEF1EE] rounded-2xl border border-[#FAD4C8] text-xs text-[#162946] flex items-start gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-[#E8614D] shrink-0 mt-0.5" />
             <div>
               <span className="font-bold block mb-0.5">Функция «Доверенный контакт»</span>
               Перед выходом отправьте информацию родственнику или близкому другу. Он будет знать, с кем и где вы находитесь.
@@ -70,7 +70,7 @@ ${event.organizerPhone ? `Телефон организатора: ${event.organ
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 text-emerald-400" />
+                <Check className="w-4 h-4 text-[#F06A4B]" />
                 <span>Скопировано в буфер обмена!</span>
               </>
             ) : (

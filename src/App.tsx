@@ -637,7 +637,7 @@ export default function App() {
 
                 <div className="relative z-10 flex items-center justify-between gap-2">
                   <div className="text-xs font-semibold text-white/90 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <ShieldCheck className="w-4 h-4 text-[#F06A4B]" />
                     <span>{t.heroKicker}</span>
                   </div>
                 </div>
@@ -1133,9 +1133,14 @@ export default function App() {
                                 setInviteModalEventId(ev.id);
                                 setShowInviteModal(true);
                               }}
-                              className="px-3.5 py-2.5 rounded-2xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition-colors hover:border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                              className="px-3.5 py-2.5 rounded-2xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition-colors"
+                              style={{
+                                backgroundColor: 'var(--accent-soft)',
+                                color: 'var(--accent-text)',
+                                borderColor: 'color-mix(in srgb, var(--accent-primary) 28%, transparent)',
+                              }}
                             >
-                              <UserPlus className="w-3.5 h-3.5" />
+                              <UserPlus className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                               <span>{t.inviteFromListBtn}</span>
                             </button>
                             <button
@@ -1201,9 +1206,10 @@ export default function App() {
                                   <button
                                     type="button"
                                     onClick={() => handleRespondToApplication(app.id, 'accept')}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-white cursor-pointer flex items-center gap-1"
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center gap-1"
+                                    style={{ backgroundColor: '#162946' }}
                                   >
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-[#F06A4B]" />
                                     <span>{t.acceptBtn}</span>
                                   </button>
                                   <button
@@ -1258,13 +1264,30 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setParticipationStatusFilter('accepted')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border"
+                    style={
                       participationStatusFilter === 'accepted'
-                        ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
-                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/15'
-                    }`}
+                        ? {
+                            backgroundColor: '#162946',
+                            color: '#FFFFFF',
+                            borderColor: '#162946',
+                          }
+                        : {
+                            backgroundColor: 'var(--accent-soft)',
+                            color: 'var(--accent-text)',
+                            borderColor: 'color-mix(in srgb, var(--accent-primary) 26%, transparent)',
+                          }
+                    }
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <CheckCircle2
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={{
+                        color:
+                          participationStatusFilter === 'accepted'
+                            ? '#F06A4B'
+                            : 'var(--accent-primary)',
+                      }}
+                    />
                     <span>{t.statusApproved}</span>
                     <span className="opacity-85 tabular-nums">{participationCounts.accepted}</span>
                   </button>
@@ -1322,9 +1345,9 @@ export default function App() {
                         label: t.statusApproved,
                         subtext: t.statusApprovedSub,
                         badgeClass:
-                          'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-                        accentBarClass: 'bg-emerald-500',
-                        subtextClass: 'text-emerald-600 dark:text-emerald-400',
+                          'bg-[#FEF1EE] text-[#162946] border-[#FAD4C8]',
+                        accentBarClass: 'bg-[#E8614D]',
+                        subtextClass: 'text-[#C9381C]',
                         Icon: CheckCircle2,
                       },
                       pending: {
@@ -1453,9 +1476,10 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => handleRespondToApplication(ev.myApplicationId!, 'accept')}
-                                  className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-500 text-white flex items-center gap-1 cursor-pointer shadow-xs"
+                                  className="px-3.5 py-2 rounded-2xl text-xs font-bold text-white flex items-center gap-1 cursor-pointer shadow-xs"
+                                  style={{ backgroundColor: '#162946' }}
                                 >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F06A4B]" />
                                   <span>{t.acceptBtn}</span>
                                 </button>
                               )}
@@ -1617,9 +1641,12 @@ export default function App() {
 
                   <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
                     {currentUser.isPhoneVerified && (
-                      <span className="font-semibold text-emerald-500 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Телефон подтвержден
+                      <span
+                        className="font-semibold flex items-center gap-1"
+                        style={{ color: 'var(--accent-text)' }}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                        Телефон подтверждён
                       </span>
                     )}
                     {currentUser.isIdentityVerified && (
@@ -1649,17 +1676,20 @@ export default function App() {
                 className="p-4 sm:p-5 rounded-3xl border space-y-3.5"
                 style={{
                   backgroundColor: currentUser.openToInvites
-                    ? 'color-mix(in srgb, #10b981 8%, var(--bg-elevated))'
+                    ? 'var(--accent-soft)'
                     : 'var(--bg-elevated)',
                   borderColor: currentUser.openToInvites
-                    ? 'rgba(16, 185, 129, 0.35)'
+                    ? 'color-mix(in srgb, var(--accent-primary) 28%, transparent)'
                     : 'var(--border-subtle)',
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <CalendarCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <CalendarCheck
+                        className="w-4 h-4 shrink-0"
+                        style={{ color: 'var(--accent-primary)' }}
+                      />
                       <span className="text-xs sm:text-sm font-display font-bold" style={{ color: 'var(--text-primary)' }}>
                         {lang === 'en'
                           ? 'Badge: "Open to Event Invitations"'
@@ -1678,12 +1708,12 @@ export default function App() {
                     onClick={() => handleToggleOpenToInvites(!currentUser.openToInvites)}
                     className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                       currentUser.openToInvites
-                        ? 'bg-emerald-500 text-white shadow-xs'
+                        ? 'text-white shadow-xs'
                         : 'border'
                     }`}
                     style={
                       currentUser.openToInvites
-                        ? undefined
+                        ? { backgroundColor: '#162946' }
                         : {
                             backgroundColor: 'var(--bg-surface)',
                             borderColor: 'var(--border-subtle)',
@@ -1691,7 +1721,12 @@ export default function App() {
                           }
                     }
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2
+                      className="w-3.5 h-3.5"
+                      style={{
+                        color: currentUser.openToInvites ? '#F06A4B' : 'var(--text-muted)',
+                      }}
+                    />
                     <span>
                       {currentUser.openToInvites
                         ? lang === 'en'
@@ -1705,7 +1740,10 @@ export default function App() {
                 </div>
 
                 {currentUser.openToInvites && (
-                  <div className="space-y-2.5 pt-2 border-t border-emerald-500/20">
+                  <div
+                    className="space-y-2.5 pt-2 border-t"
+                    style={{ borderColor: 'color-mix(in srgb, var(--accent-primary) 20%, transparent)' }}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[11px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
                         {lang === 'en' ? 'Your gender for search filters:' : 'Ваш пол для фильтров подбора:'}

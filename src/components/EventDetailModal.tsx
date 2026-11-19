@@ -736,9 +736,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
                       {activeEvent.organizerPhone && (
                         <div className="flex items-center gap-2 text-xs">
-                          <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                          <Phone className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                           <span style={{ color: 'var(--text-secondary)' }}>Связь с организатором:</span>
-                          <a href={`tel:${activeEvent.organizerPhone}`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline tabular-nums">
+                          <a
+                            href={`tel:${activeEvent.organizerPhone}`}
+                            className="font-bold hover:underline tabular-nums"
+                            style={{ color: 'var(--accent-text)' }}
+                          >
                             {activeEvent.organizerPhone}
                           </a>
                         </div>
@@ -749,9 +753,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenChat(activeEvent.id)}
-                          className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="py-2.5 px-3 rounded-xl text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-opacity hover:opacity-95 cursor-pointer"
+                          style={{ backgroundColor: '#162946' }}
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <MessageSquare className="w-4 h-4 text-[#F06A4B]" />
                           <span>Чат компании</span>
                         </button>
 
@@ -779,7 +784,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                             color: 'var(--text-primary)',
                           }}
                         >
-                          <Shield className="w-4 h-4 text-emerald-500" />
+                          <Shield className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                           <span>Карточка близким</span>
                         </button>
                       </div>
@@ -909,7 +914,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                                   type="button"
                                   disabled={isSubmittingDecision}
                                   onClick={() => handleDecision(app.id, 'accept')}
-                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                  className="px-3 py-1.5 text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-95 cursor-pointer"
+                                  style={{ backgroundColor: 'var(--accent-primary)' }}
                                 >
                                   <Check className="w-3.5 h-3.5" />
                                   <span>Принять</span>
@@ -1126,22 +1132,27 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenChat(activeEvent.id)}
-                className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                className="px-5 py-3 rounded-2xl text-white text-xs font-bold flex items-center gap-2 transition-opacity hover:opacity-95 cursor-pointer shadow-sm"
+                style={{ backgroundColor: '#162946' }}
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4 text-[#F06A4B]" />
                 <span>Открыть чат компании</span>
               </button>
             </div>
           ) : isApproved ? (
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <div
+                className="flex items-center gap-2 text-xs font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: 'var(--accent-primary)' }} />
                 <span>Вы в составе участников! Точный адрес открыт.</span>
               </div>
               <button
                 type="button"
                 onClick={() => onOpenChat(activeEvent.id)}
-                className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition-colors cursor-pointer shrink-0"
+                className="px-5 py-3 text-white rounded-2xl text-xs font-bold transition-opacity hover:opacity-95 cursor-pointer shrink-0"
+                style={{ backgroundColor: '#162946' }}
               >
                 В чат встречи
               </button>
