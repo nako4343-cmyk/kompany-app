@@ -395,18 +395,18 @@ export const KompaWordmark: React.FC<KompaWordmarkProps> = ({
 }) => {
   const sizeStyles = {
     sm: {
-      container: 'pl-1 pr-2.5 py-1 rounded-[10px] gap-1',
-      kBox: 'w-[22px] h-[22px] rounded-[7px] text-[15px]',
+      container: 'pl-1 pr-2.5 py-1 rounded-[10px] gap-[2px]',
+      kBox: 'w-[21px] h-[21px] rounded-[6px] text-[16px]',
       restText: 'text-[16px]',
     },
     md: {
-      container: 'pl-1.5 pr-4 py-1.5 rounded-[15px] gap-1.5',
-      kBox: 'w-[34px] h-[34px] rounded-[10px] text-[24px]',
+      container: 'pl-1.5 pr-3.5 py-1.5 rounded-[14px] gap-[3px]',
+      kBox: 'w-[32px] h-[32px] rounded-[9px] text-[26px]',
       restText: 'text-[27px]',
     },
     lg: {
-      container: 'pl-2 pr-5 py-2 rounded-[19px] gap-2',
-      kBox: 'w-[44px] h-[44px] rounded-[13px] text-[32px]',
+      container: 'pl-2 pr-4.5 py-2 rounded-[18px] gap-[3.5px]',
+      kBox: 'w-[42px] h-[42px] rounded-[12px] text-[34px]',
       restText: 'text-[36px]',
     },
   }[size];
@@ -430,7 +430,7 @@ export const KompaWordmark: React.FC<KompaWordmarkProps> = ({
       >
         K
       </span>
-      <span className={sizeStyles.restText} style={{ color: '#FFFFFF' }}>
+      <span className={`${sizeStyles.restText} -tracking-[0.03em]`} style={{ color: '#FFFFFF' }}>
         ompa
       </span>
     </span>
