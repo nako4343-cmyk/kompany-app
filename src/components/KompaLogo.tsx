@@ -385,8 +385,8 @@ export interface KompaWordmarkProps {
 
 /**
  * Official Kompa Wordmark Badge:
- * - Black rectangle with rounded corners (#111318)
- * - Capital letter "K" in theme carrot-coral (#F0593B)
+ * - Rounded rectangle in the logo's deep navy color (#162946)
+ * - Capital letter "K" in pure white (#FFFFFF) centered inside a rounded coral-orange square (#E8614D)
  * - Remaining letters "ompa" in pure white (#FFFFFF)
  */
 export const KompaWordmark: React.FC<KompaWordmarkProps> = ({
@@ -395,30 +395,44 @@ export const KompaWordmark: React.FC<KompaWordmarkProps> = ({
 }) => {
   const sizeStyles = {
     sm: {
-      container: 'px-2.5 py-1 rounded-[10px]',
-      text: 'text-[16px]',
+      container: 'pl-1 pr-2.5 py-1 rounded-[10px] gap-1',
+      kBox: 'w-[22px] h-[22px] rounded-[7px] text-[15px]',
+      restText: 'text-[16px]',
     },
     md: {
-      container: 'px-4 py-1.5 rounded-[14px]',
-      text: 'text-[27px]',
+      container: 'pl-1.5 pr-4 py-1.5 rounded-[15px] gap-1.5',
+      kBox: 'w-[34px] h-[34px] rounded-[10px] text-[24px]',
+      restText: 'text-[27px]',
     },
     lg: {
-      container: 'px-5 py-2 rounded-[18px]',
-      text: 'text-[36px]',
+      container: 'pl-2 pr-5 py-2 rounded-[19px] gap-2',
+      kBox: 'w-[44px] h-[44px] rounded-[13px] text-[32px]',
+      restText: 'text-[36px]',
     },
   }[size];
 
   return (
     <span
-      className={`inline-flex items-baseline justify-center font-display font-extrabold leading-none tracking-[-0.035em] select-none ${sizeStyles.container} ${sizeStyles.text} ${className}`}
+      className={`inline-flex items-center justify-center font-display font-extrabold leading-none tracking-[-0.03em] select-none ${sizeStyles.container} ${className}`}
       style={{
-        backgroundColor: '#111318',
+        backgroundColor: '#162946',
         boxShadow:
-          '0 8px 20px -6px rgba(17, 19, 24, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+          '0 10px 24px -8px rgba(22, 41, 70, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
       }}
     >
-      <span style={{ color: '#F0593B' }}>K</span>
-      <span style={{ color: '#FFFFFF' }}>ompa</span>
+      <span
+        className={`inline-flex items-center justify-center font-extrabold leading-none shrink-0 ${sizeStyles.kBox}`}
+        style={{
+          background: 'linear-gradient(135deg, #F06A4B 0%, #E8614D 100%)',
+          color: '#FFFFFF',
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+        }}
+      >
+        K
+      </span>
+      <span className={sizeStyles.restText} style={{ color: '#FFFFFF' }}>
+        ompa
+      </span>
     </span>
   );
 };
