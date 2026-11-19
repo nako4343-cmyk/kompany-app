@@ -47,6 +47,7 @@ interface AuthModalProps {
   currentUser: UserProfile;
   cloudUser: FirebaseUser | null;
   isInitialGate?: boolean;
+  mode?: 'gate' | 'edit';
   onClose: () => void;
   onProfileRegistered: (updatedProfile: UserProfile) => void;
   onLogout?: () => void;
@@ -274,6 +275,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   currentUser,
   cloudUser,
   isInitialGate = false,
+  mode,
   onClose,
   onProfileRegistered,
   onLogout,
@@ -283,11 +285,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Explicit mode takes precedence: 'edit' ALWAYS opens directly into questionnaire editing (never login/splash)
+  const startsInEditMode = mode ? mode === 'edit' : !isInitialGate;
+
   // Lock whether the modal was opened as initial registration gate vs editing "Моя анкета"
-  const [isEditProfileMode, setIsEditProfileMode] = useState<boolean>(() => !isInitialGate);
+  const [isEditProfileMode, setIsEditProfileMode] = useState<boolean>(() => startsInEditMode);
 
   // Launch Splash Screen (3.2s duration on initial gate; instant open when editing "Моя анкета")
-  const [showLogoSplash, setShowLogoSplash] = useState<boolean>(() => isInitialGate);
+  const [showLogoSplash, setShowLogoSplash] = useState<boolean>(() => !startsInEditMode);
 
   useEffect(() => {
     if (!showLogoSplash) return;
@@ -299,13 +304,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Auth Flow Mode:
   // 'login' = Sunset Coral Login Screen (initial gate)
-  // 'register' = 4-Step Registration Flow OR direct Step 3 Questionnaire Editor when !isInitialGate
+  // 'register' = 4-Step Registration Flow OR direct Step 3 Questionnaire Editor in edit mode
   const [authMode, setAuthMode] = useState<'login' | 'register'>(() =>
-    isInitialGate ? 'login' : 'register'
+    startsInEditMode ? 'register' : 'login'
   );
   const [[wizardStep, direction], setStepState] = useState<[1 | 2 | 3 | 4, number]>(() =>
-    isInitialGate ? [1, 1] : [3, 1]
+    startsInEditMode ? [3, 1] : [1, 1]
   );
+
+  // Guard: if explicitly opened in 'edit' mode, never show splash or login screen
+  useEffect(() => {
+    if (mode === 'edit') {
+      setIsEditProfileMode(true);
+      setShowLogoSplash(false);
+      setAuthMode('register');
+      setStepState(([prevStep]) => (prevStep === 3 || prevStep === 4 ? [prevStep, 1] : [3, 1]));
+    }
+  }, [mode]);
 
   const navigateToStep = (nextStep: 1 | 2 | 3 | 4) => {
     triggerHaptic(8);
@@ -388,7 +403,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (!url) return false;
     if (url.startsWith('data:image/')) return true;
     if (url.includes('googleusercontent.com')) return true;
-    if (!isInitialGate && !url.includes('images.unsplash.com')) return true;
+    if (startsInEditMode && !url.includes('images.unsplash.com')) return true;
     return false;
   };
 
@@ -397,8 +412,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  const [bio] = useState<string>(() => {
-    if (isInitialGate) return '';
+  const [bio, setBio] = useState<string>(() => {
+    if (!startsInEditMode) return '';
     return currentUser.bio || '';
   });
 
@@ -875,24 +890,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 className="hidden"
               />
 
-              {/* Top Close / SignOut Row (only when opened manually from inside the app) */}
+              {/* Top Navigation Row in Questionnaire Edit Mode (Back + Close, never accidental logout) */}
               {isEditProfileMode && (
                 <div className="flex items-center justify-between mb-3">
                   <button
                     type="button"
-                    onClick={handleSignOutClick}
+                    onClick={() => {
+                      triggerHaptic(6);
+                      if (wizardStep === 4) {
+                        navigateToStep(3);
+                      } else {
+                        onClose();
+                      }
+                    }}
                     className="min-h-[36px] px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
                     style={{
                       backgroundColor: PALETTE.fieldBg,
                       color: PALETTE.textSecondary,
                     }}
                   >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Выйти</span>
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Назад</span>
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
+                    aria-label="Закрыть редактирование анкеты"
                     className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
                     style={{
                       backgroundColor: PALETTE.fieldBg,
@@ -1789,6 +1812,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                                 className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[14px] placeholder:text-[#A3968D] font-medium appearance-none"
                               />
                             </div>
+
+                            {isEditProfileMode && (
+                              <div
+                                className="px-3.5 py-2.5 rounded-2xl transition-all duration-150"
+                                style={getFieldStyle('editBio')}
+                              >
+                                <textarea
+                                  rows={2}
+                                  maxLength={300}
+                                  value={bio}
+                                  onFocus={() => setFocusedField('editBio')}
+                                  onBlur={() => setFocusedField(null)}
+                                  onChange={e => setBio(e.target.value)}
+                                  placeholder="Коротко о себе (хобби, формат встреч)..."
+                                  style={{ color: PALETTE.textPrimary }}
+                                  className="w-full bg-transparent border-0 outline-none ring-0 focus:outline-none focus:ring-0 text-[13px] placeholder:text-[#A3968D] font-medium resize-none leading-snug appearance-none"
+                                />
+                              </div>
+                            )}
                           </motion.div>
 
                           <motion.div variants={fadeItemVariants} className="space-y-1.5">

@@ -231,6 +231,13 @@ export default function App() {
       return true;
     }
   });
+  const [authModalMode, setAuthModalMode] = useState<'gate' | 'edit'>(() => {
+    try {
+      return localStorage.getItem('kompa_auth_completed_v11') === 'true' ? 'edit' : 'gate';
+    } catch {
+      return 'gate';
+    }
+  });
   const [cloudUser, setCloudUser] = useState<FirebaseUser | null>(null);
 
   const handleLogout = async () => {
@@ -242,6 +249,7 @@ export default function App() {
     await signOutCloudUser().catch(() => {});
     setCloudUser(null);
     setIsAuthCompleted(false);
+    setAuthModalMode('gate');
     setShowAuthModal(true);
   };
 
@@ -689,7 +697,10 @@ export default function App() {
         onOpenSafetyGuide={() => setShowSafetyGuide(true)}
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenDemoShare={() => setShowDemoShareModal(true)}
-        onOpenAuth={() => setShowAuthModal(true)}
+        onOpenAuth={() => {
+          setAuthModalMode('edit');
+          setShowAuthModal(true);
+        }}
         onLogout={handleLogout}
         isCloudConnected={isAuthCompleted || Boolean(cloudUser)}
         activePalette={activePalette}
@@ -2500,9 +2511,11 @@ export default function App() {
 
       {showAuthModal && (
         <AuthModal
+          key={authModalMode}
+          mode={authModalMode}
           currentUser={currentUser}
           cloudUser={cloudUser}
-          isInitialGate={!isAuthCompleted}
+          isInitialGate={authModalMode === 'gate' && !isAuthCompleted}
           onClose={() => {
             try {
               localStorage.setItem('kompa_auth_completed_v11', 'true');
